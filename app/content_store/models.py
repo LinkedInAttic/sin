@@ -12,5 +12,7 @@ class ContentStore(models.Model):
 
   config = models.TextField()
 
+  created = models.DateTimeField(auto_now_add=True)
+
   status = models.SmallIntegerField(choices=to_choices(enum.STORE_STATUS))
 
