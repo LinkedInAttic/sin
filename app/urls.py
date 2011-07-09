@@ -14,4 +14,9 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
     # url(r'^admin/', include(admin.site.urls)),
+	(r'^store/new-index/(?P<index_name>.+)/$','content_store.views.newIndex'),
+	(r'^store/get-size/(?P<index_name>.+)/$','content_store.views.getSize'),
+	(r'^store/get-doc/(?P<id>\d+)/$','content_store.views.getDoc'),
+	(r'^store/add-doc/(?P<id>\d+)/$','content_store.views.addDoc'),
+	(r'^store/available/(?P<index_name>.+)/$','content_store.views.available'),
 )
