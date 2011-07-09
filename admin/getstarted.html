@@ -1,0 +1,25 @@
+<html>
+  <head><title></title></head>
+  <body>
+	<h1 align="center">Get Started</h1>
+	<h2 align="center">1. Install client library</h2>
+		<ul>
+			<li>Download client library <a>here</a></li>
+			<li>Install: <pre><code>python setup.py install</code></pre>
+			</li>
+		</ul>
+	<h2 align="center">2. Do it</h2>
+	<p>
+	<pre><code>
+		from sin-client import SinClient
+		
+		
+		client = SinClient('localhost',6666)
+		idx = client.newIndex('myidx')
+		
+		print idx.isStarted()
+		
+	</code></pre>
+	</p>
+  </body>
+</html>
