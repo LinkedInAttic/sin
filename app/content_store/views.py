@@ -1,6 +1,7 @@
 import random, os, subprocess
 from django.conf import settings
 from django.http import HttpResponse
+from django.template import loader
 
 from content_store.models import ContentStore
 
@@ -42,12 +43,65 @@ def startStore(request, store_name):
 
   store_home = os.path.join(settings.STORE_HOME, store_name)
   index = os.path.join(store_home, 'index')
+  try:
+    os.makedirs(index)
+  except:
+    pass
   conf = os.path.join(store_home, 'conf')
+  try:
+    os.makedirs(conf)
+  except:
+    pass
   logs = os.path.join(store_home, 'logs')
+  try:
+    os.makedirs(logs)
+  except:
+    pass
 
   # TODO:wonlay: generate conf
+  sensei_properties = loader.render_to_string(
+    'sensei-conf/sensei.properties', {
+      'store': store,
+      'index': index,
+    })
+  sensei_custom_facets = loader.render_to_string(
+    'sensei-conf/custom-facets.xml', {
+    })
+  sensei_plugins = loader.render_to_string(
+    'sensei-conf/plugins.xml', {
+    })
+
+  out_file = open(os.path.join(conf, 'sensei.properties'), 'w+')
+  try:
+    out_file.write(sensei_properties)
+    out_file.flush()
+  finally:
+    out_file.close()
+
+  out_file = open(os.path.join(conf, 'custom-facets.xml'), 'w+')
+  try:
+    out_file.write(sensei_custom_facets)
+    out_file.flush()
+  finally:
+    out_file.close()
+
+  out_file = open(os.path.join(conf, 'schema.json'), 'w+')
+  try:
+    out_file.write(store.config)
+    out_file.flush()
+  finally:
+    out_file.close()
+
+  out_file = open(os.path.join(conf, 'plugins.xml'), 'w+')
+  try:
+    out_file.write(sensei_plugins)
+    out_file.flush()
+  finally:
+    out_file.close()
 
   cmd = ["java", "-server", "-d64", "-Xmx1g", "-Xms1g", "-XX:NewSize=256m", "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf]
+
+  print ' '.join(cmd)
 
   p = subprocess.Popen(cmd, cwd=settings.SENSEI_HOME)
   running[store_name] = p.pid
