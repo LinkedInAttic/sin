@@ -10,6 +10,7 @@ import urllib
 import urllib2
 import json
 import time
+import kafka
 
 class Sindex:
 	opener = None

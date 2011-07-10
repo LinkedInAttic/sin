@@ -2,6 +2,7 @@ import random, os, subprocess
 from django.conf import settings
 from django.http import HttpResponse
 from django.template import loader
+from django.http import Http404
 
 from content_store.models import ContentStore
 
@@ -11,6 +12,8 @@ running = {
 }
 
 def newStore(request,store_name):
+  if ContentStore.objects.filter(name=store_name).exists():
+	raise Http404('store: %s already exists.' % store_name)
   store = ContentStore(name=store_name, sensei_port=random.randint(10000, 15000), broker_port=random.randint(15000, 20000))
   store.save()
   resp = {
