@@ -6,13 +6,13 @@ from content_store.models import ContentStore
 from utils import json
 
 def newStore(request,index_name):
-  store = ContentStore(name=index_name, sensei_port=random.randint(10000, 15000), brocker_port=random.randint(15000, 20000))
+  store = ContentStore(name=index_name, sensei_port=random.randint(10000, 15000), broker_port=random.randint(15000, 20000))
   store.save()
   resp = {
     'id': store.id,
     'name': store.name,
     'sensei_port': store.sensei_port,
-    'brocker_port': store.brocker_port,
+    'broker_port': store.broker_port,
     'config': store.config,
     'created': store.created,
     'status': store.status,
@@ -45,7 +45,7 @@ def stores(request):
       'id': store.id,
       'name': store.name,
       'sensei_port': store.sensei_port,
-      'brocker_port': store.brocker_port,
+      'broker_port': store.broker_port,
       'config': store.config,
       'created': store.created,
       'status': store.status,

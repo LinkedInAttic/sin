@@ -8,7 +8,7 @@ from utils.enum import to_choices
 class ContentStore(models.Model):
   name = models.CharField(max_length=20, unique=True)
   sensei_port = models.IntegerField(unique=True)
-  brocker_port = models.IntegerField(unique=True)
+  broker_port = models.IntegerField(unique=True)
 
   config = models.TextField(default="{}")
 

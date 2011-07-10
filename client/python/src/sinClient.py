@@ -16,14 +16,19 @@ class Sindex:
 	name = None
 	senseiClient = None
 	baseurl = None
+	config = None
+	created = None
 	
-	def __init__(self,name,url,senseiClient):
+	def __init__(self,id,name,created,url,config,senseiClient):
+		self.id = id
 		self.name = name
+		self.created = created
 		self.senseiClient = senseiClient
 		self.opener = urllib2.build_opener()
 		self.opener.addheaders = [('User-agent', 'Python-urllib/2.5')]
 		self.opener.addheaders = [('User-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_7) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.91 Safari/534.30')]
 		self.baseurl = url
+		self.config = config
 	
 	def available(self):
 		url = '%s/%s/%s' % (self.baseurl,'available',self.name)
@@ -73,20 +78,23 @@ class SinClient:
 		self.opener.addheaders = [('User-agent', 'Python-urllib/2.5')]
 		self.opener.addheaders = [('User-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_7) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.91 Safari/534.30')]
 	
-	def newIndex(self,name):
+	def newStore(self,name):
 		baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
-		url = '%s/%s/%s' % (baseurl,'new-index',name)
+		url = '%s/%s/%s' % (baseurl,'new-store',name)
 		print url
 		urlReq = urllib2.Request(url)
 		res = self.opener.open(urlReq)
 		jsonObj = dict(json.loads(res.read()))
 		
-		senseiHost = jsonObj['sensei-host']
-		senseiPort = jsonObj['sensei-port']
-		senseiPath = jsonObj['sensei-path']
+		brokerPort = jsonObj['broker_port']
+		senseiPort = jsonObj['sensei_port']
+		storeId = jsonObj['id']
+		storeConfig = jsonObj.get('config')
+		storeCreated = jsonObj['created']
+		storeStatus = jsonObj['status']
 		
-		senseiClient = SenseiClient(senseiHost,senseiPort,senseiPath)
-		sindex = Sindex(name,baseurl,senseiClient)
+		senseiClient = SenseiClient(self.host,brokerPort,'sensei')
+		sindex = Sindex(storeId,name,storeCreated,baseurl,storeConfig,senseiClient)
 		while not sindex.available():
 			time.sleep(0.5)
 		
@@ -95,7 +103,7 @@ class SinClient:
 
 if __name__ == '__main__':
 	client = SinClient()
-	idx = client.newIndex('test')
+	idx = client.newStore('test')
 	print idx.available()
 	print idx.getSize()
 	print idx.getDoc(123)
