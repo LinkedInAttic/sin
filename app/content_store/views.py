@@ -1,9 +1,12 @@
-import random
+import random, os, subprocess
 from django.http import HttpResponse
 
 from content_store.models import ContentStore
 
 from utils import json
+
+running = {
+}
 
 def newStore(request,index_name):
   store = ContentStore(name=index_name, sensei_port=random.randint(10000, 15000), broker_port=random.randint(15000, 20000))
@@ -18,6 +21,29 @@ def newStore(request,index_name):
     'status': store.status,
   }
   return HttpResponse(json.json_encode(resp))
+
+def stopStore(request, index_name):
+  global running
+
+  pid = running.get(index_name)
+  if pid:
+    os.system('kill %s' % pid)
+    del running[index_name]
+
+  return HttpResponse(json.json_encode({}))
+
+def startStore(request, index_name):
+  global running
+
+  pid = subprocess.Popen(["java", ""]).pid
+  running[index_name] = pid
+
+  return HttpResponse(json.json_encode({}))
+
+def restartStore(request, index_name):
+  stopStore(request, index_name)
+  return startStore(request, index_name)
+
 
 def getSize(request,index_name):
   resp = {'store':index_name,"size":0}
