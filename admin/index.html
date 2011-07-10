@@ -14,6 +14,79 @@
     <script type="text/javascript" src="http://documentcloud.github.com/underscore/underscore.js" ></script>
     <script type="text/javascript" src="http://documentcloud.github.com/backbone/backbone.js" ></script>
     <script type="text/javascript" src="js/core.js" ></script>
+    <script id="content-store-tmpl" type="text/x-mustache-tmpl">
+      <label>{{ name }}</label>:
+      {{#attr.desc}}<p class="help">({{ attr.desc }})</p>{{/attr.desc}}
+      <div>
+        {{#attr.rw}}
+          <textarea class="attr-editor inline-top-block">{{ value }}</textarea>
+          <input class="save inline-top-block" type="button" value="Save" />
+        {{/attr.rw}}
+        {{^attr.rw}}<pre>{{ value }}</pre>{{/attr.rw}}
+      </div>
+    </script>
+    <script id="content-store-tmpl" type="text/x-mustache-tmpl">
+      <label>{{ name }}</label>:
+      {{#attr.desc}}<p class="help">({{ attr.desc }})</p>{{/attr.desc}}
+      <div>
+        {{#attr.rw}}
+          <textarea class="attr-editor inline-top-block">{{ value }}</textarea>
+          <input class="save inline-top-block" type="button" value="Save" />
+        {{/attr.rw}}
+        {{^attr.rw}}<pre>{{ value }}</pre>{{/attr.rw}}
+      </div>
+    </script>
+    <script id="content-store-tmpl" type="text/x-mustache-tmpl">
+      <div>
+        <div><a href="javascript:_void();">Search</a> | <a href="javascript:_void();>Manage</a> | <span>{{ status }}</span></div>
+        <h2>{{ name }}</h2>
+        <div>
+          <p>Current Size: {{ numDocs }} documents</p>
+        </div>
+        <div>
+          <h3>Columns</h3>
+          <div>
+            <div>Name: firstname Type: string <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+            <div>Name: lastname Type: string <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+          </div>
+          <div>
+            Name: <input type="text" value="" />
+            Type:
+            <select>
+              <option value="int">int</option>
+              <option value="short">short</option>
+              <option value="char">char</option>
+              <option value="long">long</option>
+              <option value="float">float</option>
+              <option value="double">double</option>
+              <option value="string">string</option>
+              <option value="date">date</option>
+              <option value="text">text</option>
+            </select>
+            <input type="button" value="Add" />
+          </div>
+        </div>
+        <div>
+          <h3>Facets</h3>
+          <div>
+            <div>Name: firstname Type: simple <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+            <div>Name: lastname Type: simple <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+          </div>
+          <div>
+            Name: <input type="text" value="" />
+            Type:
+            <select>
+              <option value="simple">simple</option>
+              <option value="path">path</option>
+              <option value="range">range</option>
+              <option value="multi">multi</option>
+              <option value="compact-multi">compact-multi</option>
+            </select>
+            <input type="button" value="Add" />
+          </div>
+        </div>
+      </div>
+    </script>
   </head>
   <body>
     <h1 align="center">Dashboard</h1>

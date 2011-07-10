@@ -7,12 +7,12 @@ from utils.enum import to_choices
 
 class ContentStore(models.Model):
   name = models.CharField(max_length=20, unique=True)
-  node_port = models.IntegerField(unique=True)
+  sensei_port = models.IntegerField(unique=True)
   brocker_port = models.IntegerField(unique=True)
 
-  config = models.TextField()
+  config = models.TextField(default="{}")
 
   created = models.DateTimeField(auto_now_add=True)
 
-  status = models.SmallIntegerField(choices=to_choices(enum.STORE_STATUS))
+  status = models.SmallIntegerField(choices=to_choices(enum.STORE_STATUS), default=enum.STORE_STATUS['init'])
 

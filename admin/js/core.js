@@ -1,58 +1,121 @@
 $(function() {
-  // Humanize size value
-  var humanvalue = ['B','KB','MB','GB']
-  function humanize(bytes) {
-    curbytes = bytes
-    iterations = 0
-    while (curbytes>1024) {
-      iterations++
-      curbytes=curbytes/1024
-      }
-    return curbytes.toFixed(1) + ' ' + humanvalue[iterations]
-  };
+  var _void = function(){};
 
-  $.parseJSON = _.wrap($.parseJSON, function(func, text){
-    text = text.replace(/([^\\])":\s*([^,}{"]+ [^,}{"]+)/g, '$1":"$2"')
-    return func(text);
+  window.ContentStoreModel = Backbone.Model.extend({
+    defaults: {
+    },
+
+    initialize: function() {
+      _.bindAll(this, 'read', 'create', 'update');
+      ContentStoreModel.__super__.initialize.call(this);
+    },
+
+    read: function() {
+    },
+
+    create: function () {
+    },
+
+    update: function () {
+    }
   });
-  
-  function strToJmx(type, value) {
-    switch(type) {
-      case "int":
-      case "long":
-        var num = Number(value);
-        if (isNaN(num))
-          throw 'Cannot convert "' + value + '" to a number.';
-        return num;
-      case "boolean":
-        if (/true/i.test(value))
-          return true;
-        else if (/false/i.test(value))
-          return false;
-        else
-          throw 'Cannot convert "' + value + '" to a boolean.';
-      case "java.lang.String":
-        return value; 
-      case "java.util.Date":
-        return new Date(value);
-      default:
-        return $.parseJSON(value);
-    }
-  };
 
-  function generateJmxUrl(jmxBase, jmxUrl) {
-    var url = null;
-    if(jmxBase)
-      url = jmxBase;
-    if (jmxUrl) {
-      if (url != null)
-        url += encodeURIComponent(jmxUrl);
-      else
-        url = jmxUrl;
-    }
+  window.ContentColumnModel = Backbone.Model.extend({
+  });
 
-    return url;
-  }
+  window.ContentFacetModel = Backbone.Model.extend({
+  });
+
+  window.ContentColumnCollection = Backbone.Collection.extend({
+    model: ContentColumnModel
+  });
+
+  window.ContentFacetCollection = Backbone.Collection.extend({
+    model: ContentFacetModel
+  });
+
+  window.ContentStoreCollection = Backbone.Collection.extend({
+    model: ContentStoreModel
+  });
+
+  window.ContentColumnView = Backbone.View.extend({
+    template: $('#content-column-tmpl').html(),
+
+    className: 'content-column-item',
+
+    initialize: function() {
+      _.bindAll(this, 'showEditor', 'render');
+      this.model.bind('change', this.render);
+      this.model.view = this;
+    },
+
+    showEditor: function() {
+    },
+
+    render: function() {
+      $(this.el).html($.mustache(this.template, this.model.toJSON()));
+      this.$('.edit').bind('click', this.showEditor);
+      return this;
+    }
+  });
+
+  window.ContentFacetView = Backbone.View.extend({
+    template: $('#content-facet-tmpl').html(),
+
+    className: 'content-facet-item',
+
+    initialize: function() {
+      _.bindAll(this, 'showEditor', 'render');
+      this.model.bind('change', this.render);
+      this.model.view = this;
+    },
+
+    showEditor: function() {
+    },
+
+    render: function() {
+      $(this.el).html($.mustache(this.template, this.model.toJSON()));
+      this.$('.edit').bind('click', this.showEditor);
+      return this;
+    }
+  });
+
+  window.ContentStoreView = Backbone.View.extend({
+    template: $('#content-store-tmpl').html(),
+
+    className: 'content-store-item',
+
+    initialize: function() {
+      _.bindAll(this, 'showManage', 'render');
+      this.model.bind('change', this.render);
+      this.model.view = this;
+    },
+
+    showManage: function() {
+    },
+
+    render: function() {
+      $(this.el).html($.mustache(this.template, this.model.toJSON()));
+      this.$('.manage').bind('click', this.showManage);
+      return this;
+    }
+  });
+
+  window.SinView = Backbone.View.extend({
+    initialize: function() {
+      _.bindAll(this, "render");
+    },
+
+    render: function() {
+      var el = $(this.el);
+
+      this.collection.each(function(store) {
+        el.append(store.render().el);
+      });
+
+      return this;
+    }
+  });
 
   window.JMXModel = Backbone.Model.extend({
     defaults: {
@@ -753,7 +816,7 @@ $(function() {
     }
   };
 
-  var SinSpace = Backbone.Controller.extend({
+  var SinSpace = Backbone.Router.extend({
     routes: {
       'dashboard':        'dashboard', //#dashboard
       '.*':               'index',
@@ -769,7 +832,7 @@ $(function() {
     index: function() {
       //console.log('>>> index called');
       this.dashboard();
-      this.saveLocation('dashboard');
+      this.navigate('dashboard');
     },
 
     dashboard: function() {
