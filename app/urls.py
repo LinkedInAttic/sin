@@ -14,10 +14,10 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
     # url(r'^admin/', include(admin.site.urls)),
-	(r'^store/new-store/(?P<index_name>[^/]+)/$','content_store.views.newStore'),
-	(r'^store/get-size/(?P<index_name>[^/]+)/$','content_store.views.getSize'),
-	(r'^store/get-doc/(?P<id>\d+)/(?P<index_name>[^/]+)/$','content_store.views.getDoc'),
-	(r'^store/add-doc/(?P<id>\d+)/(?P<index_name>[^/]+)/$','content_store.views.addDoc'),
-	(r'^store/available/(?P<index_name>[^/]+)/$','content_store.views.available'),
+	(r'^store/new-store/(?P<store_name>[^/]+)/$','content_store.views.newStore'),
+	(r'^store/get-size/(?P<store_name>[^/]+)/$','content_store.views.getSize'),
+	(r'^store/get-doc/(?P<id>\d+)/(?P<store_name>[^/]+)/$','content_store.views.getDoc'),
+	(r'^store/add-doc/(?P<id>\d+)/(?P<store_name>[^/]+)/$','content_store.views.addDoc'),
+	(r'^store/available/(?P<store_name>[^/]+)/$','content_store.views.available'),
 	(r'^store/stores/$','content_store.views.stores'),
 )
