@@ -36,6 +36,9 @@ class Sindex:
 		urlReq = urllib2.Request(url)
 		res = self.opener.open(urlReq)
 		jsonObj = dict(json.loads(res.read()))
+		if not jsonObj['ok']:
+			print "error: %s" % jsonObj.get('error','unknown error')
+			return False
 		return jsonObj.get('available',False)
 	
 	def addDoc(self,uid,doc):
@@ -86,6 +89,10 @@ class SinClient:
 		urlReq = urllib2.Request(url)
 		res = self.opener.open(urlReq)
 		jsonObj = dict(json.loads(res.read()))
+		
+		if not jsonObj['ok']:
+			print "error: %s" % jsonObj.get('error','unknown error')
+			return None
 		
 		brokerPort = jsonObj['broker_port']
 		senseiPort = jsonObj['sensei_port']
