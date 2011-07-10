@@ -3,6 +3,17 @@
   <head> 
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
     <title>sin</title>
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+    // <![CDATA[
+    google.load("jquery", "1.6.1");
+    google.load("jqueryui", "1.8.13");
+    // ]]>
+    </script>
+    <script type="text/javascript" src="js/mustache.js" ></script>
+    <script type="text/javascript" src="http://documentcloud.github.com/underscore/underscore.js" ></script>
+    <script type="text/javascript" src="http://documentcloud.github.com/backbone/backbone.js" ></script>
+    <script type="text/javascript" src="js/core.js" ></script>
   </head>
   <body>
     <h1 align="center">Dashboard</h1>
@@ -12,7 +23,49 @@
         <h2>MemberStore</h2>
         <div>
           <p>Current Size: <span>100</span> documents</p>
+        </div>
         <div>
+          <h3>Columns</h3>
+          <div>
+            <div>Name: firstname Type: string <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+            <div>Name: lastname Type: string <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+          </div>
+          <div>
+            Name: <input type="text" value="" />
+            Type:
+            <select>
+              <option value="int">int</option>
+              <option value="short">short</option>
+              <option value="char">char</option>
+              <option value="long">long</option>
+              <option value="float">float</option>
+              <option value="double">double</option>
+              <option value="string">string</option>
+              <option value="date">date</option>
+              <option value="text">text</option>
+            </select>
+            <input type="button" value="Add" />
+          </div>
+        </div>
+        <div>
+          <h3>Facets</h3>
+          <div>
+            <div>Name: firstname Type: simple <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+            <div>Name: lastname Type: simple <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+          </div>
+          <div>
+            Name: <input type="text" value="" />
+            Type:
+            <select>
+              <option value="simple">simple</option>
+              <option value="path">path</option>
+              <option value="range">range</option>
+              <option value="multi">multi</option>
+              <option value="compact-multi">compact-multi</option>
+            </select>
+            <input type="button" value="Add" />
+          </div>
+        </div>
       </div>
     </div>
   </body>
