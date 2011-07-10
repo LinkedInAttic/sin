@@ -1,6 +1,27 @@
 $(function() {
   var _void = function(){};
 
+  window.ContentColumnModel = Backbone.Model.extend({
+  });
+
+  window.ContentFacetParamModel = Backbone.Model.extend({
+  });
+
+  window.ContentFacetModel = Backbone.Model.extend({
+  });
+
+  window.ContentColumnCollection = Backbone.Collection.extend({
+    model: ContentColumnModel
+  });
+
+  window.ContentFacetParamCollection = Backbone.Collection.extend({
+    model: ContentFacetParamModel
+  });
+
+  window.ContentFacetCollection = Backbone.Collection.extend({
+    model: ContentFacetModel
+  });
+
   window.ContentStoreModel = Backbone.Model.extend({
     defaults: {
     },
@@ -8,6 +29,37 @@ $(function() {
     initialize: function() {
       _.bindAll(this, 'read', 'create', 'update');
       ContentStoreModel.__super__.initialize.call(this);
+      // console.log(this.get('config'));
+      var columns = new ContentColumnCollection;
+      var table = myconf['table'];
+      if (table) {
+        _.each(table.columns, function(col) {
+          var column = new ContentColumnModel(col);
+          var view = new ContentColumnView({model: column});
+          columns.add(column);
+        });
+      }
+
+      var facets = new ContentFacetCollection;
+      _.each(myconf.facets, function(obj) {
+        var facet = new ContentFacetModel(obj);
+        var params = new ContentFacetParamCollection;
+        _.each(obj.params, function(param) {
+          var p = new ContentFacetParamModel(param);
+          var pv = new ContentFacetParamView({model: p});
+          params.add(p);
+        });
+        facet.set({
+          params: params
+        });
+        var view = new ContentFacetView({model: facet});
+        facets.add(facet);
+      });
+
+      this.set({
+        columns: columns,
+        facets: facets
+      });
     },
 
     read: function() {
@@ -20,28 +72,39 @@ $(function() {
     }
   });
 
-  window.ContentColumnModel = Backbone.Model.extend({
-  });
-
-  window.ContentFacetModel = Backbone.Model.extend({
-  });
-
-  window.ContentColumnCollection = Backbone.Collection.extend({
-    model: ContentColumnModel
-  });
-
-  window.ContentFacetCollection = Backbone.Collection.extend({
-    model: ContentFacetModel
-  });
-
   window.ContentStoreCollection = Backbone.Collection.extend({
-    model: ContentStoreModel
+    model: ContentStoreModel,
+    url: '/store/stores/'
   });
 
   window.ContentColumnView = Backbone.View.extend({
     template: $('#content-column-tmpl').html(),
 
     className: 'content-column-item',
+
+    initialize: function() {
+      _.bindAll(this, 'showEditor', 'render');
+      this.model.bind('change', this.render);
+      this.model.view = this;
+    },
+
+    showEditor: function() {
+    },
+
+    render: function() {
+      $(this.el).html($.mustache(this.template, this.model.toJSON()));
+      this.$('select').val(this.model.get('type'));
+
+      this.$('.edit').bind('click', this.showEditor);
+
+      return this;
+    }
+  });
+
+  window.ContentFacetParamView = Backbone.View.extend({
+    template: $('#content-facet-param-tmpl').html(),
+
+    className: 'content-facet-param-item',
 
     initialize: function() {
       _.bindAll(this, 'showEditor', 'render');
@@ -75,7 +138,15 @@ $(function() {
 
     render: function() {
       $(this.el).html($.mustache(this.template, this.model.toJSON()));
+      this.$('select').val(this.model.get('type'));
+
+      var container = this.$('.facet-params');
+      this.model.get('params').each(function(obj) {
+        container.append(obj.view.render().el);
+      });
+
       this.$('.edit').bind('click', this.showEditor);
+
       return this;
     }
   });
@@ -96,6 +167,17 @@ $(function() {
 
     render: function() {
       $(this.el).html($.mustache(this.template, this.model.toJSON()));
+
+      var columns = this.$('.columns');
+      this.model.get('columns').each(function(obj) {
+        columns.append(obj.view.render().el);
+      });
+
+      var facets = this.$('.facets');
+      this.model.get('facets').each(function(obj) {
+        facets.append(obj.view.render().el);
+      });
+
       this.$('.manage').bind('click', this.showManage);
       return this;
     }
@@ -108,670 +190,19 @@ $(function() {
 
     render: function() {
       var el = $(this.el);
+      // console.log(this.collection);
+      window.t = this.collection;
 
       this.collection.each(function(store) {
-        el.append(store.render().el);
+        if (!store.view) {
+          var view = new ContentStoreView({
+            model: store
+          });
+        }
+        el.append(store.view.render().el);
       });
 
       return this;
-    }
-  });
-
-  window.JMXModel = Backbone.Model.extend({
-    defaults: {
-      lazy: false,
-      jmxBase: 'sensei/admin/jmx/'
-    },
-
-    url: function() {
-      return generateJmxUrl(this.get('jmxBase'), this.get('jmxUrl'));
-    },
-
-    initialize: function() {
-      _.bindAll(this, 'read', 'create', 'update');
-      JMXModel.__super__.initialize.call(this);
-      if (!this.get('lazy'))
-        this.fetch();
-    },
-
-    read: function() {
-      //console.log('>>> jmx read called.');
-      //console.log('>>> jmx url: ' + this.url());
-      var jmx = new Jolokia({url: this.url()});
-      var req = _.clone(this.get('req'));
-      if (req.type != 'list' && req.type != 'exec')
-        req.type = 'read';
-      res = jmx.request(req);
-      if (_.isUndefined(res.id)) {
-        if (_.isUndefined(this.id))
-          res.id = this.cid;
-      }
-      return res;
-    },
-
-    create: function() {
-      return this.update();
-    },
-
-    update: function() {
-      var jmx = new Jolokia({url: this.url()});
-      var req = _.clone(this.get('req'));
-      if (req.type != 'list' && req.type != 'exec') {
-        req.type = 'write';
-        req.value = this.get('value');
-      }
-      res = jmx.request(req);
-      if (_.isUndefined(res.id)) {
-        if (_.isUndefined(this.id))
-          res.id = this.cid;
-      }
-
-      if (req.type != 'exec') {
-        // Jmx may return old value.
-        res.value = req.value;
-      }
-      return res;
-    }
-  });
-
-  window.JMXAttrModel = JMXModel.extend({
-  });
-
-  window.JMXAttrCollection = Backbone.Collection.extend({
-    model: JMXAttrModel
-  });
-
-  window.JMXAttrView = Backbone.View.extend({
-    template: $('#jmx-attr-tmpl').html(),
-
-    className: 'jmx-item',
-
-    initialize: function() {
-      _.bindAll(this, 'render', 'save', 'syncFromEditor');
-      this.model.bind('change', this.render);
-      this.model.view = this;
-    },
-
-    save: function() {
-      humanMsg.displayMsg("Saving...");
-      try {
-        this.syncFromEditor();
-      }
-      catch(e) {
-        humanMsg.displayMsg(e);
-        return;
-      }
-      this.model.save(this.model, {
-        success: function(m, res) {
-          humanMsg.displayMsg("Saved");
-        },
-        error: function(m, res) {
-          humanMsg.displayMsg("Error: " + res);
-        }
-      });
-    },
-
-    syncFromEditor: function() {
-      this.model.set({value: strToJmx(this.model.get('attr').type, this.$('.attr-editor').val())});
-    },
-
-    render: function() {
-      //console.log(this.model.get('attr'));
-      //console.log(this.model.toJSON());
-      $(this.el).html($.mustache(this.template, this.model.toJSON()));
-      this.$('.save').bind('click', this.save);
-      return this;
-    }
-  });
-
-  window.JMXOpModel = JMXModel.extend({
-  });
-
-  window.JMXOpCollection = Backbone.Collection.extend({
-    model: JMXOpModel
-  });
-
-  window.JMXOpView = Backbone.View.extend({
-    template: $('#jmx-op-tmpl').html(),
-
-    initialize: function() {
-      _.bindAll(this, 'render', 'save', 'syncFromEditor');
-      this.model.bind('change', this.render);
-      this.model.view = this;
-    },
-
-    save: function () {
-      humanMsg.displayMsg("Calling...");
-      try {
-        this.syncFromEditor();
-      }
-      catch(e) {
-        humanMsg.displayMsg(e);
-        return;
-      }
-      this.model.save(this.model, {
-        success: function(m, res) {
-          if (m.get('op').ret != 'void')
-            humanMsg.displayMsg(m.get('value'));
-          else
-            humanMsg.displayMsg("Success");
-        },
-        error: function(m, res) {
-          humanMsg.displayMsg("Error: " + res);
-        }
-      });
-    },
-
-    syncFromEditor: function() {
-      var me = this;
-      var args = [];
-      me.$('.arg').each(function(index, arg){
-        args.push(strToJmx(me.model.get('op').args[index].type, $(arg).val()));
-      });
-
-      me.model.get('req').arguments = args;
-    },
-
-    render: function() {
-      //console.log(this.model.toJSON());
-      if (_.isUndefined(this.rendered)) {
-        $(this.el).html($.mustache(this.template, this.model.toJSON()));
-        this.$('.call').bind('click', this.save);
-        this.rendered = true;
-      }
-      return this;
-    }
-  });
-
-  window.MBeanModel = Backbone.Model.extend({
-  });
-
-  window.MBeanView = Backbone.View.extend({
-    template: $('#jmx-mbean-tmpl').html(),
-
-    initialize: function () {
-      _.bindAll(this, 'render', 'refresh');
-      this.model.view = this;
-    },
-
-    refresh: function() {
-      //console.log('>>> refresh called.');
-      this.model.get('attrs').forEach(function(attr){
-        attr.fetch();
-      });
-    },
-
-    render: function() {
-      //console.log(this.model);
-      this.options.parentView.$('.jmx-main-area').children().hide();
-      if (_.isUndefined(this.rendered)) {
-        $(this.el).html($.mustache(this.template, this.model.toJSON()));
-        var me = this;
-        this.model.get('attrs').forEach(function(attr) {
-          me.$('.attrs').append(attr.fetch().view.el);
-        });
-        this.model.get('ops').forEach(function(op) {
-          me.$('.ops').append(op.view.render().el);
-        });
-        this.refreshInput = this.$('.refresh');
-        this.refreshInput.bind('click', this.refresh);
-        this.options.parentView.$('.jmx-main-area').append(this.el);
-        this.rendered = true;
-      }
-      $(this.el).show();
-    }
-  });
-
-  window.JMXTreeViewModel = JMXModel.extend({
-    defaults: _.defaults({
-      req: {type: 'list'}
-    }, JMXModel.prototype.defaults),
-
-    initialize: function() {
-      _.bindAll(this, 'toTree');
-      JMXTreeViewModel.__super__.initialize.call(this);
-    },
-
-    toTree: function() {
-      var data = {
-        "json_data" : {data: []},
-        "plugins" : [ "themes", "json_data", "ui" ]
-      };
-      var jmx = this.get('value');
-      for (var folderName in jmx) {
-        if(_.isString(folderName)) {
-          var folder = jmx[folderName];
-          var folderNode = {data: folderName, metadata: folder};
-          folderNode.children = [];
-          for (var mbeanName in folder) {
-            if (_.isString(mbeanName)) {
-              var mbean = folder[mbeanName];
-              mbean.objectName = folderName+':'+mbeanName;
-
-              var attrs = new JMXAttrCollection();
-              if (!_.isUndefined(mbean.attr)) {
-                for (var name in mbean.attr) {
-                  if (_.isString(name)) {
-                    var attr = new JMXAttrModel({
-                      lazy: true,
-                      name: name,
-                      attr: mbean.attr[name],
-                      req: {mbean: mbean.objectName, attribute: name},
-                      jmxUrl: this.get('jmxUrl')
-                    });
-                    var view = new JMXAttrView({model: attr});
-                    attrs.add(attr);
-                  }
-                }
-              }
-
-              var ops = new JMXOpCollection();
-              if (!_.isUndefined(mbean.op)) {
-                for (var name in mbean.op) {
-                  if (_.isString(name)) {
-                    var op = new JMXOpModel({
-                      lazy: true,
-                      name: name,
-                      op: mbean.op[name],
-                      req: {type: 'exec', mbean: mbean.objectName, operation: name},
-                      jmxUrl: this.get('jmxUrl')
-                    });
-                    var view = new JMXOpView({model: op});
-                    ops.add(op);
-                  }
-                }
-              }
-
-              mbean.model = new MBeanModel({attrs: attrs, ops: ops});
-              var view = new MBeanView({model: mbean.model, parentView: this.view});
-
-              var mbeanNode = {data: mbeanName.replace(/,/ig, ', '), metadata: mbean};
-              folderNode.children.push(mbeanNode);
-              /*
-              mbeanNode.children = [];
-              if (!_.isUndefined(mbean.attr)) {
-                var attrNode = {data: 'attr', metadata: mbean.attr};
-                mbeanNode.children.push(attrNode);
-                attrNode.children = [];
-                for (var name in mbean.attr) {
-                  if (_.isString(name)) {
-                    var val = mbean.attr[name];
-                    var node = {data: name, metadata: val};
-                    attrNode.children.push(node);
-                  }
-                }
-              }
-              if (!_.isUndefined(mbean.op)) {
-                var opNode = {data: 'op', metadata: mbean.op};
-                mbeanNode.children.push(opNode);
-                opNode.children = [];
-                for (var name in mbean.op) {
-                  if (_.isString(name)) {
-                    var val = mbean.op[name];
-                    var node = {data: name, metadata: val};
-                    opNode.children.push(node);
-                  }
-                }
-              }
-              */
-            }
-          }
-          data.json_data.data.push(folderNode);
-        }
-      }
-      return data;
-    }
-  });
-
-  window.JMXTimedDataModel = JMXModel.extend({
-    defaults: _.defaults({
-      sampleSize: 100,
-      viewOptions: {},
-      interval: 5000
-    }, JMXModel.prototype.defaults),
-    initialize: function() {
-      _.bindAll(this, 'refresh', 'newData', 'format');
-      this.bind('change', this.newData);
-      //console.log('>>> JMXTimedDataModel.initialize');
-      this.dataTable = new google.visualization.DataTable();
-      this.dataTable.addColumn('datetime', 'Time');
-      this.dataTable.addColumn(this.get('dataType'), this.get('dataLabel'));
-
-      JMXTimedDataModel.__super__.initialize.call(this);
-
-      _.delay(this.refresh, 1000);
-
-      window.setInterval(this.refresh, this.get('interval'));
-    },
-
-    refresh: function() {
-      //console.log('>>> timed data refresh called.');
-      this.fetch();
-    },
-
-    newData: function() {
-      if (!_.isUndefined(this.get('data')))
-        this.dataTable.addRow([new Date(), this.get('data')]);
-        if (this.dataTable.getNumberOfRows() > this.get('sampleSize')) {
-          this.dataTable.removeRow(0);
-        }
-    },
-
-    parse: function(res) {
-      res.data = res.value;
-      return res;
-    },
-
-    format: function() {
-      var formatter = new google.visualization.DateFormat({pattern: "HH:mm:ss"});
-      formatter.format(this.dataTable, 0);
-    }
-  });
-
-  window.RTModel = JMXTimedDataModel.extend({
-    defaults: _.defaults({
-      serviceName: 'sensei',
-      dataType: 'number',
-      dataLabel: 'Response Time (ms)'
-    }, JMXTimedDataModel.prototype.defaults),
-
-    initialize: function() {
-      RTModel.__super__.initialize.call(this);
-      //console.log('>>> this.get("serviceName")', this.get('serviceName'));
-      this.set({
-        req: {
-          mbean: "com.linkedin.norbert:type=NetworkServerStatistics,service="+this.get('serviceName'),
-          attribute: "AverageRequestProcessingTime"
-        }
-      });
-    }
-  });
-
-  window.RPSModel = JMXTimedDataModel.extend({
-    defaults: _.defaults({
-      serviceName: 'sensei',
-      dataType: 'number',
-      dataLabel: 'Requests Per Second'
-    }, JMXTimedDataModel.prototype.defaults),
-
-    initialize: function() {
-      RPSModel.__super__.initialize.call(this);
-      this.set({
-        req: {
-          mbean: "com.linkedin.norbert:type=NetworkServerStatistics,service="+this.get('serviceName'),
-          attribute: "RequestsPerSecond"
-        }
-      });
-    }
-  });
-
-  window.EPMModel = JMXTimedDataModel.extend({
-    defaults: _.defaults({
-      req: {mbean: "com.senseidb:indexing-manager=stream-data-provider", attribute: "EventsPerMinute"},
-      dataType: 'number',
-      dataLabel: 'Events Per Minute',
-      interval: 60000
-    }, JMXTimedDataModel.prototype.defaults),
-
-    initialize: function() {
-      EPMModel.__super__.initialize.call(this);
-    }
-  });
-
-  window.CPUModel = JMXTimedDataModel.extend({
-    defaults: _.defaults({
-      req: {mbean: "java.lang:type=OperatingSystem", attribute: "ProcessCpuTime"},
-      dataType: 'number',
-      dataLabel: 'CPU Usage (%)'
-    }, JMXTimedDataModel.prototype.defaults),
-
-    initialize: function() {
-      _.bindAll(this, 'format');
-      CPUModel.__super__.initialize.call(this);
-    },
-
-    parse: function(res) {
-      var now = new Date().getTime();
-      if (!_.isUndefined(this.preCPUTime)) {
-        res.data = (res.value - this.preCPUTime)/10000.0/(now - this.preTime)
-      }
-      this.preTime = now;
-      this.preCPUTime = res.value;
-
-      return res;
-    },
-
-    format: function() {
-      CPUModel.__super__.format.call(this);
-      var formatter = new google.visualization.NumberFormat({suffix: "%"});
-      formatter.format(this.dataTable, 1);
-      //console.log(this.dataTable.toJSON());
-    }
-  });
-
-  window.MemModel = JMXTimedDataModel.extend({
-    defaults: _.defaults({
-      req: {mbean: "java.lang:type=Memory", attribute: "HeapMemoryUsage"},
-      dataType: 'number',
-      dataLabel: 'Heap Mem Usage'
-    }, JMXTimedDataModel.prototype.defaults),
-
-    initialize: function() {
-      MemModel.__super__.initialize.call(this);
-    },
-
-    parse: function(res) {
-      res.data = res.value.used;
-      return res;
-    },
-
-    format: function() {
-      MemModel.__super__.format.call(this);
-      for (var i=0; i<this.dataTable.getNumberOfRows(); ++i) {
-        this.dataTable.setCell(i, 1, this.dataTable.getValue(i, 1), humanize(this.dataTable.getValue(i, 1)));
-      }
-      //console.log(this.dataTable.toJSON());
-    }
-  });
-
-  window.TimedDataView = Backbone.View.extend({
-    initialize: function() {
-      _.bindAll(this, 'render');
-      this.model.bind('change', this.render);
-      this.model.view = this;
-    },
-
-    render: function() {
-      if (_.isUndefined(this.chart))
-        this.chart = new google.visualization.LineChart(this.el);
-
-      if (_.isFunction(this.model.format))
-        this.model.format();
-
-      if ($(this.el).is(":visible"))
-        this.chart.draw(this.model.dataTable, _.defaults({width: '100%', height: 200, title: this.model.get('dataLabel')}, this.model.get('viewOptions')));
-    }
-  });
-
-  window.SenseiNode = Backbone.Model.extend({
-    initialize: function() {
-      //console.log('>>> SenseiNode.initialize called');
-      this.jmxModel = new JMXTreeViewModel({jmxUrl: this.get('adminlink')});
-      new JMXView({model: this.jmxModel});
-    }
-  });
-
-  window.SenseiNodes = Backbone.Collection.extend({
-    model: SenseiNode,
-
-    initialize: function() {
-      _.bindAll(this, 'added', 'removed');
-      this.bind('add', this.added);
-      this.bind('remove', this.removed);
-    },
-
-    comparator: function(node) {
-      return node.id;
-    },
-
-    added: function(node) {
-      if (!node.get('added')) {
-        node.set({added: true});
-        $(node.overview.parentView.el).append(node.overview.render().el);
-      }
-    },
-
-    removed: function(node) {
-      if (node.get('added')) {
-        node.set({added: false});
-        $(node.overview.render().el).detach();
-      }
-    }
-  });
-
-  window.SenseiNodeOverview = Backbone.View.extend({
-    className: 'node-overview',
-
-    template: $('#node-overview-tmpl').html(),
-
-    initialize: function() {
-      _.bindAll(this, 'render', 'initializeSubViews');
-      this.model.overview = this;
-    },
-
-    initializeSubViews: function() {
-      if (_.isUndefined(this.model.rt)) {
-        var jmx = this.model.jmxModel.get('value');
-        var serviceName = 'sensei';
-        try {
-          for(key in jmx['com.linkedin.norbert']) {
-            if (_.isString(key)) {
-              var m = /serviceName=([^,]+)/.exec(key);
-              if (m)
-                serviceName = m[1];
-            }
-          }
-        }
-        catch(e) {
-          console.log(e);
-        }
-        //console.log('>>> serviceName: ' + serviceName);
-
-        this.model.rt = new RTModel({serviceName: serviceName, jmxUrl: this.model.get('adminlink')});
-        new TimedDataView({model: this.model.rt, el: this.$('.rt').get(0)});
-
-        this.model.rps = new RPSModel({serviceName: serviceName, jmxUrl: this.model.get('adminlink')});
-        new TimedDataView({model: this.model.rps, el: this.$('.rps').get(0)});
-
-        this.model.epm = new EPMModel({serviceName: serviceName, jmxUrl: this.model.get('adminlink')});
-        new TimedDataView({model: this.model.epm, el: this.$('.epm').get(0)});
-
-        this.model.cpu = new CPUModel({serviceName: serviceName, jmxUrl: this.model.get('adminlink')});
-        new TimedDataView({model: this.model.cpu, el: this.$('.cpu').get(0)});
-
-        this.model.mem = new MemModel({serviceName: serviceName, jmxUrl: this.model.get('adminlink')});
-        new TimedDataView({model: this.model.mem, el: this.$('.mem').get(0)});
-      }
-    },
-
-    render: function() {
-      //console.log('>>> SenseiNodeOverview render');
-      $(this.el).html($.mustache(this.template, this.model.toJSON()));
-
-      this.initializeSubViews();
-
-      return this;
-    }
-  });
-
-  window.JMXView = Backbone.View.extend({
-    template: $('#jmx-tmpl').html(),
-
-    initialize: function() {
-      _.bindAll(this, 'render');
-      this.model.view = this;
-    },
-
-    render: function() {
-      var me = this;
-      $(this.el).html($.mustache(this.template, this.model.toJSON()));
-      $('#main-container').append(this.el);
-      this.$('.tree-nav').jstree(this.model.toTree()).bind('select_node.jstree', function(e, data) {
-        me.$('.jmx-main-area').children().hide();
-        try {
-          if (!_.isUndefined(data.inst.get_json()[0].metadata.model))
-            data.inst.get_json()[0].metadata.model.view.render();
-        }
-        catch(e) {
-          console.log(e);
-        }
-      });
-    }
-  });
-
-  window.SenseiNodesView = Backbone.View.extend({
-    initialize: function() {
-    },
-
-    render: function() {
-      $('#main-container').append(this.el);
-    }
-  });
-
-  window.SenseiSystemInfo = Backbone.Model.extend({
-    defaults: {
-      dateToLocaleString: function(text) {
-        return function(text, render) {
-          return new Date(parseInt(render(text))).toLocaleString();
-        }
-      }
-    },
-
-    url: function() {
-      return 'sensei/sysinfo';
-    }
-  });
-
-  window.SenseiSystemInfoView = Backbone.View.extend({
-    el: $("#sysinfo"),
-
-    template: $('#sysinfo-tmpl').html(),
-
-    initialize: function() {
-      _.bindAll(this, 'infoChanged', 'render');
-      this.model.bind('change', this.infoChanged);
-      this.model.view = this;
-
-      this.model.nodes = new SenseiNodes();
-      this.model.nodesView = new SenseiNodesView({collection: this.model.nodes});
-    },
-
-    updateSenseiNodes: function(clusterinfo) {
-      //console.log('>>> updateSenseiNodes');
-      var me = this;
-      clusterinfo.forEach(function(node) {
-        var nodeView = new SenseiNodeOverview({model: node});
-        nodeView.parentView = me.model.nodesView;
-      });
-
-      me.model.nodes.remove(me.model.nodes.reject(function(node) {
-        return clusterinfo.get(node.id);
-      }));
-      me.model.nodes.add(clusterinfo.reject(function(node){
-        return me.model.nodes.get(node.id);
-      }));
-    },
-
-    infoChanged: function() {
-      //console.log('>>> infoChanged');
-      this.updateSenseiNodes(new SenseiNodes(this.model.get('clusterinfo'), {silent: true}));
-      this.render();
-    },
-
-    render: function() {
-      var jsonModel = this.model.toJSON();
-      // Localize lastmodified:
-      $(this.el).html($.mustache(this.template, jsonModel));
     }
   });
 
@@ -836,6 +267,16 @@ $(function() {
     },
 
     dashboard: function() {
+      var stores = new ContentStoreCollection;
+      var sinView = new SinView({
+        collection: stores
+      });
+      stores.fetch();
+      // console.log(stores);
+      _.delay(function() {
+        $('#main-area').empty().append(sinView.render().el);
+      }, 200);
+
                  /*$('#nav-node').text("");*/
                  /*$('#main-container').children().hide();*/
 
@@ -870,3 +311,217 @@ $(function() {
   window.sinSpace = new SinSpace();
   Backbone.history.start();
 });
+
+
+window.myconf = {
+    "facets": [
+        {
+            "depends": "",
+            "dynamic": "",
+            "name": "color",
+            "params": [],
+            "type": "simple"
+        },
+        {
+            "depends": "",
+            "dynamic": "",
+            "name": "category",
+            "params": [],
+            "type": "simple"
+        },
+        {
+            "depends": "",
+            "dynamic": "",
+            "name": "city",
+            "params": [{
+                "name": "separator",
+                "value": "/"
+            }],
+            "type": "path"
+        },
+        {
+            "depends": "",
+            "dynamic": "",
+            "name": "makemodel",
+            "params": [],
+            "type": "path"
+        },
+        {
+            "depends": "",
+            "dynamic": "",
+            "name": "year",
+            "params": [
+                {
+                    "name": "range",
+                    "value": "1993-1994"
+                },
+                {
+                    "name": "range",
+                    "value": "1995-1996"
+                },
+                {
+                    "name": "range",
+                    "value": "1997-1998"
+                },
+                {
+                    "name": "range",
+                    "value": "1999-2000"
+                },
+                {
+                    "name": "range",
+                    "value": "2001-2002"
+                }
+            ],
+            "type": "range"
+        },
+        {
+            "depends": "",
+            "dynamic": "",
+            "name": "mileage",
+            "params": [
+                {
+                    "name": "range",
+                    "value": "*-12500"
+                },
+                {
+                    "name": "range",
+                    "value": "12501-15000"
+                },
+                {
+                    "name": "range",
+                    "value": "15001-17500"
+                },
+                {
+                    "name": "range",
+                    "value": "17501-*"
+                }
+            ],
+            "type": "range"
+        },
+        {
+            "depends": "",
+            "dynamic": "",
+            "name": "price",
+            "params": [
+                {
+                    "name": "range",
+                    "value": "*,6700"
+                },
+                {
+                    "name": "range",
+                    "value": "6800,9900"
+                },
+                {
+                    "name": "range",
+                    "value": "10000,13100"
+                },
+                {
+                    "name": "range",
+                    "value": "13200,17300"
+                },
+                {
+                    "name": "range",
+                    "value": "17400,*"
+                }
+            ],
+            "type": "range"
+        },
+        {
+            "depends": "",
+            "dynamic": "",
+            "name": "tags",
+            "params": [],
+            "type": "multi"
+        }
+    ],
+    "table": {
+        "columns": [
+            {
+                "from": "",
+                "index": "",
+                "multi": false,
+                "name": "color",
+                "store": "",
+                "termvector": "",
+                "type": "string"
+            },
+            {
+                "from": "",
+                "index": "",
+                "multi": false,
+                "name": "category",
+                "store": "",
+                "termvector": "",
+                "type": "string"
+            },
+            {
+                "from": "",
+                "index": "",
+                "multi": false,
+                "name": "city",
+                "store": "",
+                "termvector": "",
+                "type": "string"
+            },
+            {
+                "from": "",
+                "index": "",
+                "multi": false,
+                "name": "makemodel",
+                "store": "",
+                "termvector": "",
+                "type": "string"
+            },
+            {
+                "from": "",
+                "index": "",
+                "multi": false,
+                "name": "year",
+                "store": "",
+                "termvector": "",
+                "type": "int"
+            },
+            {
+                "from": "",
+                "index": "",
+                "multi": false,
+                "name": "price",
+                "store": "",
+                "termvector": "",
+                "type": "float"
+            },
+            {
+                "from": "",
+                "index": "",
+                "multi": false,
+                "name": "mileage",
+                "store": "",
+                "termvector": "",
+                "type": "int"
+            },
+            {
+                "delimiter": ",",
+                "from": "",
+                "index": "",
+                "multi": true,
+                "name": "tags",
+                "store": "",
+                "termvector": "",
+                "type": "string"
+            },
+            {
+                "from": "",
+                "index": "ANALYZED",
+                "multi": false,
+                "name": "contents",
+                "store": "NO",
+                "termvector": "NO",
+                "type": "text"
+            }
+        ],
+        "compress-src-data": true,
+        "delete-field": "",
+        "src-data-store": "src_data",
+        "uid": "id"
+    }
+};

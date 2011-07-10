@@ -14,7 +14,7 @@
     <script type="text/javascript" src="http://documentcloud.github.com/underscore/underscore.js" ></script>
     <script type="text/javascript" src="http://documentcloud.github.com/backbone/backbone.js" ></script>
     <script type="text/javascript" src="js/core.js" ></script>
-    <script id="content-store-tmpl" type="text/x-mustache-tmpl">
+    <!--script id="content-column-tmpl" type="text/x-mustache-tmpl">
       <label>{{ name }}</label>:
       {{#attr.desc}}<p class="help">({{ attr.desc }})</p>{{/attr.desc}}
       <div>
@@ -24,35 +24,90 @@
         {{/attr.rw}}
         {{^attr.rw}}<pre>{{ value }}</pre>{{/attr.rw}}
       </div>
-    </script>
-    <script id="content-store-tmpl" type="text/x-mustache-tmpl">
-      <label>{{ name }}</label>:
-      {{#attr.desc}}<p class="help">({{ attr.desc }})</p>{{/attr.desc}}
+    </script-->
+    <script id="content-column-tmpl" type="text/x-mustache-tmpl">
       <div>
-        {{#attr.rw}}
-          <textarea class="attr-editor inline-top-block">{{ value }}</textarea>
-          <input class="save inline-top-block" type="button" value="Save" />
-        {{/attr.rw}}
-        {{^attr.rw}}<pre>{{ value }}</pre>{{/attr.rw}}
+        <div>
+        Name: {{ name }}; Type: {{ type }}; From: {{ from }}; Index: {{ index }}; Multi: {{ multi }}; Store: {{ store }};
+        Term Vector: {{ termvector }};
+        <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+      </div>
+      <div>
+        Name: <input type="text" value="{{ name }}" />
+        Type:
+        <select class="type">
+          <option value="int">int</option>
+          <option value="short">short</option>
+          <option value="char">char</option>
+          <option value="long">long</option>
+          <option value="float">float</option>
+          <option value="double">double</option>
+          <option value="string">string</option>
+          <option value="date">date</option>
+          <option value="text">text</option>
+        </select>
+        From: <input type="text" value="{{ from }}" />
+        Index: <input type="text" value="{{ index }}" />
+        Multi: <input type="text" value="{{ multi }}" />
+        Store: <input type="text" value="{{ store }}" />
+        Term Vector: <input type="text" value="{{ termvector }}" />
+        <input type="button" value="OK" />
+      </div>
+    </script>
+    <script id="content-facet-param-tmpl" type="text/x-mustache-tmpl">
+      <div>
+        <div>Name: {{ name }} Value: {{ value }} <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+      </div>
+      <div>
+        Name: <input class="param-name" type="text" value="{{ name }}" />
+        Value: <input class="param-value" type="text" value="{{ value }}" />
+        <input type="button" value="OK" />
+      </div>
+    </script>
+    <script id="content-facet-tmpl" type="text/x-mustache-tmpl">
+      <div>
+        <div>Name: {{ name }} Type: {{ type }} <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+      </div>
+      <div>
+        Name: <input type="text" value="{{ name }}" />
+        Type:
+        <select>
+          <option value="simple">simple</option>
+          <option value="path">path</option>
+          <option value="range">range</option>
+          <option value="multi">multi</option>
+          <option value="compact-multi">compact-multi</option>
+        </select>
+        <br />
+        Params:
+        <div>
+          <div class="facet-params">
+          </div>
+          <div>
+            Name: <input class="param-name" type="text" />
+            Value: <input class="param-value" type="text" />
+            <input class="add-param" type="button" value="Add Param" />
+          </div>
+        </div>
+        <br />
+        <input type="button" value="OK" />
       </div>
     </script>
     <script id="content-store-tmpl" type="text/x-mustache-tmpl">
       <div>
-        <div><a href="javascript:_void();">Search</a> | <a href="javascript:_void();>Manage</a> | <span>{{ status }}</span></div>
+        <div><a href="javascript:_void();">Search</a> | <a href="javascript:_void();">Manage</a> | <span>{{ status }}</span></div>
         <h2>{{ name }}</h2>
         <div>
           <p>Current Size: {{ numDocs }} documents</p>
         </div>
         <div>
           <h3>Columns</h3>
-          <div>
-            <div>Name: firstname Type: string <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
-            <div>Name: lastname Type: string <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+          <div class="columns">
           </div>
           <div>
-            Name: <input type="text" value="" />
+            Name: <input type="text" value="{{ name }}" />
             Type:
-            <select>
+            <select class="type">
               <option value="int">int</option>
               <option value="short">short</option>
               <option value="char">char</option>
@@ -63,25 +118,62 @@
               <option value="date">date</option>
               <option value="text">text</option>
             </select>
+            From: <input type="text" value="{{ from }}" />
+            Index:
+            <select class="index">
+              <option value=""></option>
+              <option value="ANALYZED">ANALYZED</option>
+            </select>
+            Multi:
+            <select class="multi">
+              <option value="false">false</option>
+              <option value="true">true</option>
+            </select>
+            Store: <input type="text" value="{{ store }}" />
+            <select class="store">
+              <option value=""></option>
+              <option value="NO">NO</option>
+            </select>
+            Term Vector:
+            <select class="termvector">
+              <option value=""></option>
+              <option value="NO">NO</option>
+            </select>
             <input type="button" value="Add" />
           </div>
         </div>
         <div>
           <h3>Facets</h3>
-          <div>
-            <div>Name: firstname Type: simple <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
-            <div>Name: lastname Type: simple <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+          <div class="facets">
           </div>
           <div>
             Name: <input type="text" value="" />
             Type:
-            <select>
+            <select class="type">
               <option value="simple">simple</option>
               <option value="path">path</option>
               <option value="range">range</option>
               <option value="multi">multi</option>
               <option value="compact-multi">compact-multi</option>
             </select>
+            Depends: <input class="depends" type="text" value="" />
+            Dynamic:
+            <select class="dynamic">
+              <option value="false">false</option>
+              <option value="true">true</option>
+            </select>
+            <br />
+            Params:
+            <div>
+              <div class="facet-params">
+              </div>
+              <div>
+                Name: <input class="param-name" type="text" />
+                Value: <input class="param-value" type="text" />
+                <input type="button" value="Add Param" />
+              </div>
+            </div>
+            <br />
             <input type="button" value="Add" />
           </div>
         </div>
@@ -91,54 +183,7 @@
   <body>
     <h1 align="center">Dashboard</h1>
     <div>
-      <div>
-        <div><a>Search</a> | <a>Manage</a> | <span>Running</span></div>
-        <h2>MemberStore</h2>
-        <div>
-          <p>Current Size: <span>100</span> documents</p>
-        </div>
-        <div>
-          <h3>Columns</h3>
-          <div>
-            <div>Name: firstname Type: string <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
-            <div>Name: lastname Type: string <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
-          </div>
-          <div>
-            Name: <input type="text" value="" />
-            Type:
-            <select>
-              <option value="int">int</option>
-              <option value="short">short</option>
-              <option value="char">char</option>
-              <option value="long">long</option>
-              <option value="float">float</option>
-              <option value="double">double</option>
-              <option value="string">string</option>
-              <option value="date">date</option>
-              <option value="text">text</option>
-            </select>
-            <input type="button" value="Add" />
-          </div>
-        </div>
-        <div>
-          <h3>Facets</h3>
-          <div>
-            <div>Name: firstname Type: simple <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
-            <div>Name: lastname Type: simple <input type="button" value="Edit" /> <input type="button" value="Remove" /></div>
-          </div>
-          <div>
-            Name: <input type="text" value="" />
-            Type:
-            <select>
-              <option value="simple">simple</option>
-              <option value="path">path</option>
-              <option value="range">range</option>
-              <option value="multi">multi</option>
-              <option value="compact-multi">compact-multi</option>
-            </select>
-            <input type="button" value="Add" />
-          </div>
-        </div>
+      <div id="main-area">
       </div>
     </div>
   </body>
