@@ -13,10 +13,15 @@ running = {
 
 def newStore(request,store_name):
   if ContentStore.objects.filter(name=store_name).exists():
-	raise Http404('store: %s already exists.' % store_name)
+	resp = {
+		'ok' : False,
+		'error' : 'store: %s already esists.' % store_name
+	}
+	return HttpResponse(json.json_encode(resp))
   store = ContentStore(name=store_name, sensei_port=random.randint(10000, 15000), broker_port=random.randint(15000, 20000))
   store.save()
   resp = {
+	'ok' : True,
     'id': store.id,
     'name': store.name,
     'sensei_port': store.sensei_port,
@@ -133,7 +138,10 @@ def addDoc(request,store_name,id):
   return HttpResponse(json.json_encode(resp))
 
 def available(request,store_name):
-  resp = {'store':store_name,"available":True}
+  if ContentStore.objects.filter(name=store_name).exists():
+  	resp = {'ok':True,'store':store_name,"available":True}
+  else:
+	resp = {'ok':False,'error':'store: %s does not exist.' % store_name}
   return HttpResponse(json.json_encode(resp))
 
 def stores(request):
