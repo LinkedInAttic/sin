@@ -31,7 +31,8 @@ $(function() {
       ContentStoreModel.__super__.initialize.call(this);
       // console.log(this.get('config'));
       var columns = new ContentColumnCollection;
-      var table = myconf['table'];
+      var config = eval('('+this.get('config')+')');
+      var table = config['table'];
       if (table) {
         _.each(table.columns, function(col) {
           var column = new ContentColumnModel(col);
@@ -41,7 +42,7 @@ $(function() {
       }
 
       var facets = new ContentFacetCollection;
-      _.each(myconf.facets, function(obj) {
+      _.each(config.facets, function(obj) {
         var facet = new ContentFacetModel(obj);
         var params = new ContentFacetParamCollection;
         _.each(obj.params, function(param) {
@@ -275,7 +276,7 @@ $(function() {
       // console.log(stores);
       _.delay(function() {
         $('#main-area').empty().append(sinView.render().el);
-      }, 200);
+      }, 500);
 
                  /*$('#nav-node').text("");*/
                  /*$('#main-container').children().hide();*/
@@ -312,216 +313,3 @@ $(function() {
   Backbone.history.start();
 });
 
-
-window.myconf = {
-    "facets": [
-        {
-            "depends": "",
-            "dynamic": "",
-            "name": "color",
-            "params": [],
-            "type": "simple"
-        },
-        {
-            "depends": "",
-            "dynamic": "",
-            "name": "category",
-            "params": [],
-            "type": "simple"
-        },
-        {
-            "depends": "",
-            "dynamic": "",
-            "name": "city",
-            "params": [{
-                "name": "separator",
-                "value": "/"
-            }],
-            "type": "path"
-        },
-        {
-            "depends": "",
-            "dynamic": "",
-            "name": "makemodel",
-            "params": [],
-            "type": "path"
-        },
-        {
-            "depends": "",
-            "dynamic": "",
-            "name": "year",
-            "params": [
-                {
-                    "name": "range",
-                    "value": "1993-1994"
-                },
-                {
-                    "name": "range",
-                    "value": "1995-1996"
-                },
-                {
-                    "name": "range",
-                    "value": "1997-1998"
-                },
-                {
-                    "name": "range",
-                    "value": "1999-2000"
-                },
-                {
-                    "name": "range",
-                    "value": "2001-2002"
-                }
-            ],
-            "type": "range"
-        },
-        {
-            "depends": "",
-            "dynamic": "",
-            "name": "mileage",
-            "params": [
-                {
-                    "name": "range",
-                    "value": "*-12500"
-                },
-                {
-                    "name": "range",
-                    "value": "12501-15000"
-                },
-                {
-                    "name": "range",
-                    "value": "15001-17500"
-                },
-                {
-                    "name": "range",
-                    "value": "17501-*"
-                }
-            ],
-            "type": "range"
-        },
-        {
-            "depends": "",
-            "dynamic": "",
-            "name": "price",
-            "params": [
-                {
-                    "name": "range",
-                    "value": "*,6700"
-                },
-                {
-                    "name": "range",
-                    "value": "6800,9900"
-                },
-                {
-                    "name": "range",
-                    "value": "10000,13100"
-                },
-                {
-                    "name": "range",
-                    "value": "13200,17300"
-                },
-                {
-                    "name": "range",
-                    "value": "17400,*"
-                }
-            ],
-            "type": "range"
-        },
-        {
-            "depends": "",
-            "dynamic": "",
-            "name": "tags",
-            "params": [],
-            "type": "multi"
-        }
-    ],
-    "table": {
-        "columns": [
-            {
-                "from": "",
-                "index": "",
-                "multi": false,
-                "name": "color",
-                "store": "",
-                "termvector": "",
-                "type": "string"
-            },
-            {
-                "from": "",
-                "index": "",
-                "multi": false,
-                "name": "category",
-                "store": "",
-                "termvector": "",
-                "type": "string"
-            },
-            {
-                "from": "",
-                "index": "",
-                "multi": false,
-                "name": "city",
-                "store": "",
-                "termvector": "",
-                "type": "string"
-            },
-            {
-                "from": "",
-                "index": "",
-                "multi": false,
-                "name": "makemodel",
-                "store": "",
-                "termvector": "",
-                "type": "string"
-            },
-            {
-                "from": "",
-                "index": "",
-                "multi": false,
-                "name": "year",
-                "store": "",
-                "termvector": "",
-                "type": "int"
-            },
-            {
-                "from": "",
-                "index": "",
-                "multi": false,
-                "name": "price",
-                "store": "",
-                "termvector": "",
-                "type": "float"
-            },
-            {
-                "from": "",
-                "index": "",
-                "multi": false,
-                "name": "mileage",
-                "store": "",
-                "termvector": "",
-                "type": "int"
-            },
-            {
-                "delimiter": ",",
-                "from": "",
-                "index": "",
-                "multi": true,
-                "name": "tags",
-                "store": "",
-                "termvector": "",
-                "type": "string"
-            },
-            {
-                "from": "",
-                "index": "ANALYZED",
-                "multi": false,
-                "name": "contents",
-                "store": "NO",
-                "termvector": "NO",
-                "type": "text"
-            }
-        ],
-        "compress-src-data": true,
-        "delete-field": "",
-        "src-data-store": "src_data",
-        "uid": "id"
-    }
-};
