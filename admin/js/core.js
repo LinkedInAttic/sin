@@ -1,5 +1,5 @@
 $(function() {
-  var _void = function(){};
+  window._void = function(){};
 
   window.ContentColumnModel = Backbone.Model.extend({
   });
@@ -157,8 +157,26 @@ $(function() {
 
     className: 'content-store-item',
 
+	
+	events:{
+		'click .deleteStore': 'deleteStore'
+	},
+	
+	deleteStore: function(){
+		var model = this.model;
+		$.getJSON('/store/delete-store/'+model.get('name'),function(resp){
+			if (resp["ok"]){
+				sinView.collection.remove(model);
+				$('#main-area').empty().append(sinView.render().el);
+			}
+			else{
+				alert(resp["msg"]);
+			}	
+		});
+	},
+
     initialize: function() {
-      _.bindAll(this, 'showManage', 'render');
+      _.bindAll(this, 'showManage', 'render','deleteStore');
       this.model.bind('change', this.render);
       this.model.view = this;
     },
@@ -187,10 +205,11 @@ $(function() {
   window.SinView = Backbone.View.extend({
     initialize: function() {
       _.bindAll(this, "render");
+//	  this.collection.bind('add', function(){alert('change event')});
     },
 
     render: function() {
-      var el = $(this.el);
+      var el = $(this.el).empty();
       // console.log(this.collection);
       window.t = this.collection;
 
@@ -268,8 +287,8 @@ $(function() {
     },
 
     dashboard: function() {
-      var stores = new ContentStoreCollection;
-      var sinView = new SinView({
+      window.stores = new ContentStoreCollection;
+      window.sinView = new SinView({
         collection: stores
       });
       stores.fetch();
