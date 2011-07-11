@@ -15,7 +15,7 @@ def newStore(request,store_name):
   if ContentStore.objects.filter(name=store_name).exists():
 	resp = {
 		'ok' : False,
-		'error' : 'store: %s already esists.' % store_name
+		'error' : 'store: %s already exists.' % store_name
 	}
 	return HttpResponse(json.json_encode(resp))
   store = ContentStore(name=store_name, sensei_port=random.randint(10000, 15000), broker_port=random.randint(15000, 20000))
@@ -32,6 +32,21 @@ def newStore(request,store_name):
   }
   return HttpResponse(json.json_encode(resp))
 
+
+def deleteStore(request,store_name):
+	if not ContentStore.objects.filter(name=store_name).exists():
+		resp = {
+			'ok' : False,
+			'msg' : 'store: %s does not exist.' % store_name
+		}
+		return HttpResponse(json.json_encode(resp))
+	ContentStore.objects.filter(name=store_name).delete()
+	resp = {
+		'ok' : True,
+		'msg' : 'store: %s successfully deleted.' % store_name
+	}
+	return HttpResponse(json.json_encode(resp))
+	
 def stopStore(request, store_name):
   global running
 

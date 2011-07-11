@@ -91,8 +91,8 @@ class SinClient:
 		jsonObj = dict(json.loads(res.read()))
 		
 		if not jsonObj['ok']:
-			print "error: %s" % jsonObj.get('error','unknown error')
-			return None
+			errorMsg = "error: %s" % jsonObj.get('error','unknown error')
+			raise Exception(errorMsg)
 		
 		brokerPort = jsonObj['broker_port']
 		senseiPort = jsonObj['sensei_port']
@@ -108,6 +108,13 @@ class SinClient:
 		
 		print "%s added" %name
 		return sindex
+		
+	def deleteStore(self,name):
+		baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
+		url = '%s/%s/%s' % (baseurl,'delete-store',name)
+		if not jsonObj['ok']:
+			errorMsg = "error: %s" % jsonObj.get('msg','unknown error')
+			raise Exception(errorMsg)
 
 if __name__ == '__main__':
 	client = SinClient()

@@ -7,10 +7,13 @@
 		function doAddStore(){
 			document.getElementById('addStore').disable=true;
 			var storeName = document.getElementById('newStoreName').value;
+			storeName = jQuery.trim(storeName);
+			if (storeName.length==0) return;
 
 			$.getJSON("../store/new-store/"+storeName,function(resp){
 					if (resp["ok"]){
 						document.getElementById('errormsg').innerHTML='store created successfully!';
+						document.getElementById('newStoreName').value = "";
 					}
 					else{
 						document.getElementById('errormsg').innerHTML='error: '+resp['error'];
