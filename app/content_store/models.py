@@ -235,5 +235,5 @@ class ContentStore(models.Model):
   status = models.SmallIntegerField(choices=to_choices(enum.STORE_STATUS),
     default=enum.STORE_STATUS['init'])
 
-  group = models.ForeignKey(Group, related_name="stores")
+  group = models.ForeignKey(Group, related_name="stores", default=1)
 
