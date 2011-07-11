@@ -6,6 +6,8 @@ from utils import enum
 from utils.enum import to_choices
 from utils import json
 
+from cluster.models import Group
+
 default_schema = {
     "facets": [
         {
@@ -224,9 +226,14 @@ class ContentStore(models.Model):
   sensei_port = models.IntegerField(unique=True)
   broker_port = models.IntegerField(unique=True)
 
+  partitions = models.IntegerField(default=10)
+
   config = models.TextField(default=json.json_encode(default_schema))
 
   created = models.DateTimeField(auto_now_add=True)
 
-  status = models.SmallIntegerField(choices=to_choices(enum.STORE_STATUS), default=enum.STORE_STATUS['init'])
+  status = models.SmallIntegerField(choices=to_choices(enum.STORE_STATUS),
+    default=enum.STORE_STATUS['init'])
+
+  group = models.ForeignKey(Group, related_name="stores")
 
