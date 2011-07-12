@@ -427,12 +427,22 @@ $(function() {
         }
       };
       this.model.get('columns').each(function(obj) {
-        schema.table.columns.push(obj.toJSON());
+        var col = obj.toJSON();
+        col.parentModel = {};
+        schema.table.columns.push(col);
       });
       this.model.get('facets').each(function(obj) {
         var facet = obj.toJSON();
-        if (facet.params)
-          facet.params = facet.params.toJSON();
+        facet.parentModel = {};
+        if (facet.params) {
+          var tmpParams = facet.params;
+          facet.params = [];
+          tmpParams.each(function(param) {
+            var pObj = param.toJSON();
+            pObj.parentModel = {};
+            facet.params.push(pObj);
+          });
+        }
         schema.facets.push(facet);
       });
       this.model.set({config: JSON.stringify(schema)});
