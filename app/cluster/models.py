@@ -6,11 +6,11 @@ from utils import enum
 from utils.enum import to_choices
 
 class Group(models.Model):
-  name = models.CharField(max_length=20)
+	name = models.CharField(max_length=20)
 
 class Node(models.Model):
-  host = models.CharField(max_length=40, unique=True)
-  agent_port = models.IntegerField()
+	host = models.CharField(max_length=40, unique=True)
+	agent_port = models.IntegerField()
 
-  group = models.ForeignKey(Group, related_name="nodes", null=True)
+	group = models.ForeignKey(Group, related_name="nodes", null=True)
 
