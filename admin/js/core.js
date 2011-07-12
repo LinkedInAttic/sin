@@ -191,7 +191,6 @@ $(function() {
     },
 
     removeMe: function() {
-      console.log(this.model.get('parentModel').get('params'));
       this.model.get('parentModel').get('params').remove(this.model);
       $(this.el).detach();
     },
