@@ -14,17 +14,5 @@ urlpatterns = patterns('',
 
     # Uncomment the next line to enable the admin:
     # url(r'^admin/', include(admin.site.urls)),
-	(r'^store/new-store/(?P<store_name>[^/]+)/?$','content_store.views.newStore'),
-	(r'^store/delete-store/(?P<store_name>[^/]+)/?$','content_store.views.deleteStore'),
-	(r'^store/exists/(?P<store_name>[^/]+)/?$','content_store.views.storeExists'),
-	(r'^store/update-config/(?P<store_name>[^/]+)/?$','content_store.views.updateConfig'),
-	(r'^store/addDoc/(?P<store_name>[^/]+)/?$','content_store.views.addDoc'),
-	(r'^store/addDocs/(?P<store_name>[^/]+)/?$','content_store.views.addDocs'),
-	(r'^store/start-store/(?P<store_name>[^/]+)/?$','content_store.views.startStore'),
-	(r'^store/stop-store/(?P<store_name>[^/]+)/?$','content_store.views.stopStore'),
-	(r'^store/restart-store/(?P<store_name>[^/]+)/?$','content_store.views.restartStore'),
-	(r'^store/get-size/(?P<store_name>[^/]+)/?$','content_store.views.getSize'),
-	(r'^store/get-doc/(?P<id>\d+)/(?P<store_name>[^/]+)/?$','content_store.views.getDoc'),
-	(r'^store/available/(?P<store_name>[^/]+)/?$','content_store.views.available'),
-	(r'^store/stores/?$','content_store.views.stores'),
+    url(r'^store/', include('content_store.urls')),
 )
