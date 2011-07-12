@@ -7,6 +7,7 @@ from django.http import Http404
 from content_store.models import ContentStore
 
 from utils import json
+import shutil
 
 running = {
 }
@@ -46,6 +47,7 @@ def deleteStore(request,store_name):
 			'msg' : 'store: %s does not exist.' % store_name
 		}
 		return HttpResponse(json.json_encode(resp))
+	killStore(store_name)
 	ContentStore.objects.filter(name=store_name).delete()
 	resp = {
 		'ok' : True,
@@ -67,14 +69,22 @@ def updateConfig(request, store_name):
 
   return HttpResponse(json.json_encode(resp))
 
+def killStore(store_name):
+	global running
+
+	pid = running.get(store_name)
+	if pid:
+		os.system('kill %s' % pid)
+		del running[store_name]
+		
+	store_home = os.path.join(settings.STORE_HOME, store_name)
+	try:
+		shutil.rmtree(store_home)
+	except:
+		pass
+	
 def stopStore(request, store_name):
-  global running
-
-  pid = running.get(store_name)
-  if pid:
-    os.system('kill %s' % pid)
-    del running[store_name]
-
+  killStore(store_name)
   return HttpResponse(json.json_encode({'ok': True}))
 
 def startStore(request, store_name):
@@ -157,7 +167,6 @@ def startStore(request, store_name):
 def restartStore(request, store_name):
   stopStore(request, store_name)
   return startStore(request, store_name)
-
 
 def getSize(request,store_name):
   resp = {'store':store_name,"size":0}
