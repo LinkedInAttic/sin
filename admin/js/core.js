@@ -565,6 +565,7 @@ $(function() {
           alert('Unable to get stores from the server.');
         }
       });
+    },
 
     manage: function(id) {
     }
