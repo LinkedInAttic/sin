@@ -4,14 +4,22 @@ from django.http import HttpResponse
 from django.template import loader
 from django.http import Http404
 
+import kafka
+
 from content_store.models import ContentStore
 
 from utils import json
+
+from django.utils import simplejson
 import shutil
 
 running = {
 }
 
+kafkaHost = settings.KAFKA_HOST
+kafkaPort = int(settings.KAFKA_PORT)
+
+kafkaProducer = kafka.KafkaProducer(kafkaHost, kafkaPort)
 
 def storeExists(request,store_name):
 	resp = {
@@ -79,19 +87,39 @@ def updateConfig(request, store_name):
 
 def addDoc(request,store_name):
 	doc = request.POST.get('doc');
-	print doc
-	resp = {
-	    'ok': True,
-	}
+	
+	if not doc:
+		resp = {'ok':False,'error':'no doc posted'}
+	else:
+		try:
+			jsonDoc = simplejson.loads(doc.encode('utf-8'))
+			kafkaProducer.send([json.json_encode(jsonDoc)], store_name.encode('utf-8'))
+			resp = {'ok': True,'numPosted':1}
+		except ValueError:
+			resp = {'ok':False,'error':'invalid json: %s' % doc}
+		except Exception as e:
+			resp = {'ok':False,'error':e}
+	
 	return HttpResponse(json.json_encode(resp))
 	
 
 def addDocs(request,store_name):
-	docs = request.POST.get('docs');
-	print docs
-	resp = {
-	    'ok': True,
-	}
+	docs = request.POST.get('docs');	
+	if not docs:
+		resp = {'ok':False,'error':'no docs posted'}
+	else:
+		try:
+			jsonArray = simplejson.loads(docs.encode('utf-8'))
+			messages = []
+			for obj in jsonArray:
+				str = json.json_encode(obj).encode('utf-8')
+				messages.append(str)
+			kafkaProducer.send(messages, store_name.encode('utf-8'))
+			resp = {'ok':True,'numPosted':len(messages)}
+		except ValueError:
+			resp = {'ok':False,'error':'invalid json: %s' % docs}
+		except Exception as e:
+			resp = {'ok':False,'error':e}
 	return HttpResponse(json.json_encode(resp))
 
 def killStore(store_name):

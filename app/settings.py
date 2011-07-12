@@ -24,6 +24,10 @@ SENSEI_HOME = '/tmp/sensei/'
 
 STORE_HOME = '/tmp/store/'
 
+KAFKA_HOST = 'localhost'
+
+KAFKA_PORT = '9092'
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.

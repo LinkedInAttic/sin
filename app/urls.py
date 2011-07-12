@@ -25,7 +25,6 @@ urlpatterns = patterns('',
 	(r'^store/restart-store/(?P<store_name>[^/]+)/?$','content_store.views.restartStore'),
 	(r'^store/get-size/(?P<store_name>[^/]+)/?$','content_store.views.getSize'),
 	(r'^store/get-doc/(?P<id>\d+)/(?P<store_name>[^/]+)/?$','content_store.views.getDoc'),
-	(r'^store/add-doc/(?P<id>\d+)/(?P<store_name>[^/]+)/?$','content_store.views.addDoc'),
 	(r'^store/available/(?P<store_name>[^/]+)/?$','content_store.views.available'),
 	(r'^store/stores/?$','content_store.views.stores'),
 )
