@@ -10,10 +10,8 @@ from utils import json
 import shutil
 import urllib, urllib2
 
-running = {}
-
 SIN_AGENT_HOST = "http://localhost"
-SIN_AGENT_PORT = 6666
+SIN_AGENT_PORT = 6664
 
 def storeExists(request,store_name):
 	resp = {
@@ -50,7 +48,7 @@ def deleteStore(request,store_name):
 			'msg' : 'store: %s does not exist.' % store_name
 		}
 		return HttpResponse(json.json_encode(resp))
-	killStore(store_name)
+	stopStore(request, store_name)
 	
 	store_data_dir = os.path.join(settings.STORE_HOME, store_name)
 	try:
@@ -78,21 +76,6 @@ def updateConfig(request, store_name):
 
   return HttpResponse(json.json_encode(resp))
 
-def killStore(store_name):
-	global running
-
-	pid = running.get(store_name)
-	if pid:
-		os.system('kill %s' % pid)
-		del running[store_name]
-
-def stopStore(request, store_name):
-  params = {}
-  params["name"] = store_name
-  output = urllib2.urlopen("%s:%d/%s" % (SIN_AGENT_HOST, SIN_AGENT_PORT, "stop-store"),
-                           urllib.urlencode(params))
-  return HttpResponse(json.json_encode({"response":"ok"}))
-	
 def startStore(request, store_name):
   store = ContentStore.objects.get(name=store_name)
   webapp = os.path.join(settings.SENSEI_HOME,'src/main/webapp')
@@ -125,7 +108,14 @@ def startStore(request, store_name):
   # XXX To use group and node info...
   output = urllib2.urlopen("%s:%d/%s" % (SIN_AGENT_HOST, SIN_AGENT_PORT, "start-store"),
                            urllib.urlencode(params))
-  return HttpResponse(json.json_encode({"response":output.read()}))
+  return HttpResponse(json.json_encode({"ok":True}))
+
+def stopStore(request, store_name):
+  params = {}
+  params["name"] = store_name
+  output = urllib2.urlopen("%s:%d/%s" % (SIN_AGENT_HOST, SIN_AGENT_PORT, "stop-store"),
+                           urllib.urlencode(params))
+  return HttpResponse(json.json_encode({"ok":True}))
 
 def restartStore(request, store_name):
   stopStore(request, store_name)

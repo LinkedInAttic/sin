@@ -10,7 +10,7 @@ from datetime import datetime
 SENSEI_HOME = '/tmp/sensei/'
 STORE_HOME = '/tmp/store/'
 
-SIN_AGENT_PORT = 6666
+SIN_AGENT_PORT = 6664
 
 #
 # The dict for all running Sensei processes
@@ -76,9 +76,8 @@ def doStartStore(name, sensei_port, broker_port,
                  sensei_properties, sensei_custom_facets,
                  sensei_plugins, schema):
   """
-  Do the real work...
+  Do the real work to get a Sensei server started for a store.
   """
-
   classpath1 = os.path.join(SENSEI_HOME, 'target/*')
   classpath2 = os.path.join(SENSEI_HOME, 'target/lib/*')
   log4jclasspath = os.path.join(SENSEI_HOME,'resources')
@@ -167,10 +166,10 @@ VIEWS = {
 if __name__ == '__main__':
   root = Root()
   for viewName, className in VIEWS.items():
-    #add the view to the web service
+    # Add the view to the web service
     root.putChild(viewName, className)
   log.startLogging(sys.stdout)
-  log.msg('Starting server: %s' %str(datetime.now()))
+  log.msg("Starting server: %s" % str(datetime.now()))
   server = server.Site(root)
   reactor.listenTCP(SIN_AGENT_PORT, server)
   reactor.run()
