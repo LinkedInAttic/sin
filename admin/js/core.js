@@ -276,7 +276,10 @@ $(function() {
         this.model.set({'params': new ContentFacetParamCollection});
       this.model.get('params').add(model);
 
-      this.render();
+      var container = this.$('.facet-params');
+      container.append(view.render().el);
+
+      this.$('.add-new-param').html(this.$('.add-new-param').html());
     },
 
     showEditor: function() {
@@ -375,7 +378,10 @@ $(function() {
       var view = new ContentColumnView({model: model});
       this.model.get('columns').add(model);
 
-      this.render();
+      var columns = this.$('.columns');
+      columns.append(view.render().el);
+
+      this.$('.add-new-column').html(this.$('.add-new-column').html());
     },
 
     addFacet: function() {
@@ -403,7 +409,10 @@ $(function() {
       var view = new ContentFacetView({model: model});
       this.model.get('facets').add(model);
 
-      this.render();
+      var facets = this.$('.facets');
+      facets.append(view.render().el);
+
+      this.$('.add-new-facet').html(this.$('.add-new-facet').html());
     },
 
     saveStore: function() {
