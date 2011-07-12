@@ -27,10 +27,12 @@
     </script-->
     <script id="content-column-tmpl" type="text/x-mustache-tmpl">
       <div>
+        {{^add}}
         <div>
         Name: {{ name }}; Type: {{ type }}; From: {{ from }}; Index: {{ index }}; Multi: {{ multi }}; Store: {{ store }};
         Term Vector: {{ termvector }};
-        <input class="edit" type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+        <input class="edit" type="button" value="Edit" /> <input class="remove" type="button" value="Remove" /></div>
+        {{/add}}
       </div>
       <div class="editor" style="{{^add}}display: none;{{/add}}">
         Name: <input class="name" type="text" value="{{ name }}" />
@@ -73,7 +75,7 @@
     </script>
     <script id="content-facet-param-tmpl" type="text/x-mustache-tmpl">
       <div>
-        <div>Name: {{ name }} Value: {{ value }} <input class="param-edit" type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+        <div>Name: {{ name }} Value: {{ value }} <input class="param-edit" type="button" value="Edit" /> <input class="remove-param" type="button" value="Remove" /></div>
       </div>
       <div class="param-editor" style="display: none;">
         Name: <input class="param-name" type="text" value="{{ name }}" />
@@ -83,7 +85,9 @@
     </script>
     <script id="content-facet-tmpl" type="text/x-mustache-tmpl">
       <div>
-        <div>Name: {{ name }} Type: {{ type }} <input class="edit" type="button" value="Edit" /> <input type="button" value="Remove" /></div>
+        {{^add}}
+        <div>Name: {{ name }} Type: {{ type }} <input class="edit" type="button" value="Edit" /> <input class="remove" type="button" value="Remove" /></div>
+        {{/add}}
       </div>
       <div class="editor" style="{{^add}}display: none;{{/add}}">
         Name: <input class="name" type="text" value="{{ name }}" />

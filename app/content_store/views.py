@@ -4,30 +4,41 @@ from django.http import HttpResponse
 from django.template import loader
 from django.http import Http404
 
+import kafka
+
 from content_store.models import ContentStore
 
 from utils import json
+
+from django.utils import simplejson
 import shutil
 import urllib, urllib2
 
 SIN_AGENT_HOST = "http://localhost"
 SIN_AGENT_PORT = 6664
 
+kafkaHost = settings.KAFKA_HOST
+kafkaPort = int(settings.KAFKA_PORT)
+kafkaProducer = kafka.KafkaProducer(kafkaHost, kafkaPort)
+
 def storeExists(request,store_name):
-	resp = {
-		'exists' : ContentStore.objects.filter(name=store_name).exists()
-	}
-	return HttpResponse(json.json_encode(resp))
+  resp = {
+    'exists' : ContentStore.objects.filter(name=store_name).exists()
+  }
+  return HttpResponse(json.json_encode(resp))
 
 def newStore(request,store_name):
   if ContentStore.objects.filter(name=store_name).exists():
-	resp = {
-		'ok' : False,
-		'error' : 'store: %s already exists.' % store_name
-	}
-	return HttpResponse(json.json_encode(resp))
+    resp = {
+      'ok' : False,
+      'error' : 'store: %s already exists.' % store_name
+    }
+    return HttpResponse(json.json_encode(resp))
   desc = "test store"
-  store = ContentStore(name=store_name, description = desc,sensei_port=random.randint(10000, 15000), broker_port=random.randint(15000, 20000))
+  store = ContentStore(name=store_name,
+    description=desc,
+    sensei_port=random.randint(10000, 15000),
+    broker_port=random.randint(15000, 20000))
   store.save()
   resp = {
     'ok' : True,
@@ -42,26 +53,26 @@ def newStore(request,store_name):
   return HttpResponse(json.json_encode(resp))
 
 def deleteStore(request,store_name):
-	if not ContentStore.objects.filter(name=store_name).exists():
-		resp = {
-			'ok' : False,
-			'msg' : 'store: %s does not exist.' % store_name
-		}
-		return HttpResponse(json.json_encode(resp))
-	stopStore(request, store_name)
-	
-	store_data_dir = os.path.join(settings.STORE_HOME, store_name)
-	try:
-		shutil.rmtree(store_data_dir)
-	except:
-		pass
-	ContentStore.objects.filter(name=store_name).delete()
-	resp = {
-		'ok' : True,
-		'msg' : 'store: %s successfully deleted.' % store_name
-	}
-	return HttpResponse(json.json_encode(resp))
-	
+  if not ContentStore.objects.filter(name=store_name).exists():
+    resp = {
+      'ok' : False,
+      'msg' : 'store: %s does not exist.' % store_name
+    }
+    return HttpResponse(json.json_encode(resp))
+  stopStore(request, store_name)
+
+  store_data_dir = os.path.join(settings.STORE_HOME, store_name)
+  try:
+    shutil.rmtree(store_data_dir)
+  except:
+    pass
+  ContentStore.objects.filter(name=store_name).delete()
+  resp = {
+    'ok' : True,
+    'msg' : 'store: %s successfully deleted.' % store_name
+  }
+  return HttpResponse(json.json_encode(resp))
+
 def updateConfig(request, store_name):
   config = request.POST.get('config');
   resp = {
@@ -75,6 +86,43 @@ def updateConfig(request, store_name):
     resp['error'] = 'No config provided.'
 
   return HttpResponse(json.json_encode(resp))
+
+def addDoc(request,store_name):
+	doc = request.POST.get('doc');
+	
+	if not doc:
+		resp = {'ok':False,'error':'no doc posted'}
+	else:
+		try:
+			jsonDoc = simplejson.loads(doc.encode('utf-8'))
+			kafkaProducer.send([json.json_encode(jsonDoc)], store_name.encode('utf-8'))
+			resp = {'ok': True,'numPosted':1}
+		except ValueError:
+			resp = {'ok':False,'error':'invalid json: %s' % doc}
+		except Exception as e:
+			resp = {'ok':False,'error':e}
+	
+	return HttpResponse(json.json_encode(resp))
+	
+
+def addDocs(request,store_name):
+	docs = request.POST.get('docs');	
+	if not docs:
+		resp = {'ok':False,'error':'no docs posted'}
+	else:
+		try:
+			jsonArray = simplejson.loads(docs.encode('utf-8'))
+			messages = []
+			for obj in jsonArray:
+				str = json.json_encode(obj).encode('utf-8')
+				messages.append(str)
+			kafkaProducer.send(messages, store_name.encode('utf-8'))
+			resp = {'ok':True,'numPosted':len(messages)}
+		except ValueError:
+			resp = {'ok':False,'error':'invalid json: %s' % docs}
+		except Exception as e:
+			resp = {'ok':False,'error':e}
+	return HttpResponse(json.json_encode(resp))
 
 def startStore(request, store_name):
   store = ContentStore.objects.get(name=store_name)
@@ -131,17 +179,11 @@ def getDoc(request,store_name,id):
   resp = {'store':store_name,'doc':doc}
   return HttpResponse(json.json_encode(resp))
 
-def addDoc(request,store_name,id):
-  uid = long(id)
-  doc = {'id':uid}
-  resp = {'store':store_name,'doc':doc}
-  return HttpResponse(json.json_encode(resp))
-
 def available(request,store_name):
   if ContentStore.objects.filter(name=store_name).exists():
-  	resp = {'ok':True,'store':store_name,"available":True}
+    resp = {'ok':True,'store':store_name,"available":True}
   else:
-	resp = {'ok':False,'error':'store: %s does not exist.' % store_name}
+    resp = {'ok':False,'error':'store: %s does not exist.' % store_name}
   return HttpResponse(json.json_encode(resp))
 
 def stores(request):
