@@ -82,7 +82,11 @@ def startStore(request, store_name):
 
   store = ContentStore.objects.get(name=store_name)
 
-  classpath = os.path.join(settings.SENSEI_HOME, '*')
+  root = "%starget" % settings.SENSEI_HOME
+  classpath1 = os.path.join(root, '*')
+  classpath2 = os.path.join(root, 'lib/*')
+
+  classpath = "%s:%s" % (classpath1,classpath2)
 
   store_home = os.path.join(settings.STORE_HOME, store_name)
   index = os.path.join(store_home, 'index')
