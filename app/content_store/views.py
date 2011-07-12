@@ -10,9 +10,9 @@ from utils import json
 import shutil
 import urllib, urllib2
 
-running = {
-}
+running = {}
 
+SIN_AGENT_HOST = "http://localhost"
 SIN_AGENT_PORT = 6666
 
 def storeExists(request,store_name):
@@ -32,7 +32,7 @@ def newStore(request,store_name):
   store = ContentStore(name=store_name, description = desc,sensei_port=random.randint(10000, 15000), broker_port=random.randint(15000, 20000))
   store.save()
   resp = {
-	'ok' : True,
+    'ok' : True,
     'id': store.id,
     'name': store.name,
     'sensei_port': store.sensei_port,
@@ -51,7 +51,6 @@ def deleteStore(request,store_name):
 		}
 		return HttpResponse(json.json_encode(resp))
 	killStore(store_name)
-	
 	
 	store_data_dir = os.path.join(settings.STORE_HOME, store_name)
 	try:
@@ -86,39 +85,19 @@ def killStore(store_name):
 	if pid:
 		os.system('kill %s' % pid)
 		del running[store_name]
-	
+
 def stopStore(request, store_name):
-  killStore(store_name)
-  return HttpResponse(json.json_encode({'ok': True}))
-
+  params = {}
+  params["name"] = store_name
+  output = urllib2.urlopen("%s:%d/%s" % (SIN_AGENT_HOST, SIN_AGENT_PORT, "stop-store"),
+                           urllib.urlencode(params))
+  return HttpResponse(json.json_encode({"response":"ok"}))
+	
 def startStore(request, store_name):
-  global running
-
   store = ContentStore.objects.get(name=store_name)
-
-  classpath1 = os.path.join(settings.SENSEI_HOME, 'target/*')
-  classpath2 = os.path.join(settings.SENSEI_HOME, 'target/lib/*')
-  log4jclasspath = os.path.join(settings.SENSEI_HOME,'resources')
   webapp = os.path.join(settings.SENSEI_HOME,'src/main/webapp')
-
-  classpath = "%s:%s:%s" % (classpath1,classpath2,log4jclasspath)
-
   store_home = os.path.join(settings.STORE_HOME, store_name)
   index = os.path.join(store_home, 'index')
-  try:
-    os.makedirs(index)
-  except:
-    pass
-  conf = os.path.join(store_home, 'conf')
-  try:
-    os.makedirs(conf)
-  except:
-    pass
-  logs = os.path.join(store_home, 'logs')
-  try:
-    os.makedirs(logs)
-  except:
-    pass
 
   sensei_properties = loader.render_to_string(
     'sensei-conf/sensei.properties', {
@@ -143,7 +122,8 @@ def startStore(request, store_name):
   params["sensei_plugins"] = sensei_plugins
   params["schema"] = store.config
   
-  output = urllib2.urlopen("http://localhost:%d/%s" % (SIN_AGENT_PORT, "start-store"),
+  # XXX To use group and node info...
+  output = urllib2.urlopen("%s:%d/%s" % (SIN_AGENT_HOST, SIN_AGENT_PORT, "start-store"),
                            urllib.urlencode(params))
   return HttpResponse(json.json_encode({"response":output.read()}))
 

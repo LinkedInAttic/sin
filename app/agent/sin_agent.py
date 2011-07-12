@@ -2,6 +2,7 @@ import sys, json
 import random, os, subprocess
 from twisted.internet import reactor
 from twisted.web import server, resource
+from twisted.web.resource import Resource
 from twisted.web.static import File
 from twisted.python import log
 from datetime import datetime
@@ -19,7 +20,7 @@ running = {}
 #
 # Main server resource
 #
-class Root(resource.Resource):
+class Root(Resource):
 
   def render_GET(self, request):
     """
@@ -37,16 +38,16 @@ class Root(resource.Resource):
       return self
     else:
       if name in VIEWS.keys():
-        return resource.Resource.getChild(self, name, request)
+        return Resource.getChild(self, name, request)
       else:
         return PageNotFoundError()
 
-class PageNotFoundError(resource.Resource):
+class PageNotFoundError(Resource):
 
   def render_GET(self, request):
     return 'Page Not Found!'
 
-class StartStore(resource.Resource):
+class StartStore(Resource):
 
   def render_GET(self, request):
     """
@@ -137,10 +138,30 @@ def doStartStore(name, sensei_port, broker_port,
   running[name] = p.pid
   return "Ok"
 
-#to make the process of adding new views less static
+class StopStore(Resource):
+  def render_GET(self, request):
+    """
+    Stop a Sensei store.
+    """
+    log.msg("in StopStore...")
+    global running
+    try:
+      name = request.args["name"][0]
+      pid = running.get(name)
+      if pid:
+        os.system("kill %s" % pid)
+        del running[name]
+      return "Stopped %s" % pid
+    except:
+      log.err()
+      return "Error"
+
+  def render_POST(self, request):
+    return self.render_GET(request)
+
 VIEWS = {
   "start-store": StartStore(),
-  
+  "stop-store": StopStore()
 }
 
 if __name__ == '__main__':
