@@ -64,10 +64,8 @@ class Sindex:
 		print jsonObj
 		return jsonObj.get('size',0)
 	
-	def search(self,req=None):
-		if not req:
-			req = SenseiRequest()
-		self.senseiClient.doQuery(req)
+	def getSenseiClient(self):
+		return self.senseiClient
 
 class SinClient:
 	host = None
@@ -85,7 +83,6 @@ class SinClient:
 	def newStore(self,name):
 		baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
 		url = '%s/%s/%s' % (baseurl,'new-store',name)
-		print url
 		urlReq = urllib2.Request(url)
 		res = self.opener.open(urlReq)
 		jsonObj = dict(json.loads(res.read()))
@@ -108,20 +105,35 @@ class SinClient:
 		
 		print "%s added" %name
 		return sindex
+	
+	def storeExists(self,name):
+		baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
+		url = '%s/%s/%s' % (baseurl,'exists',name)
+		urlReq = urllib2.Request(url)
+		res = self.opener.open(urlReq)
+		jsonObj = dict(json.loads(res.read()))
+		return jsonObj['exists']
 		
 	def deleteStore(self,name):
 		baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
 		url = '%s/%s/%s' % (baseurl,'delete-store',name)
+		urlReq = urllib2.Request(url)
+		res = self.opener.open(urlReq)
+		jsonObj = dict(json.loads(res.read()))
 		if not jsonObj['ok']:
 			errorMsg = "error: %s" % jsonObj.get('msg','unknown error')
 			raise Exception(errorMsg)
 
 if __name__ == '__main__':
+	storeName = 'test'
 	client = SinClient()
-	idx = client.newStore('test')
-	print idx.available()
-	print idx.getSize()
-	print idx.getDoc(123)
-	print idx.addDoc(123,None)
-	idx.search()
+	if client.storeExists(storeName):
+		client.deleteStore(storeName)
+	store = client.newStore(storeName)
+	print store.available()
+	print store.getSize()
+	print store.getDoc(123)
+	print store.addDoc(123,None)
+	senseiClient = store.getSenseiClient()
+	result = senseiClient.doQuery()
 	
