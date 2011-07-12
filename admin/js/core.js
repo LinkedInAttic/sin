@@ -27,6 +27,7 @@ $(function() {
     },
 
     initialize: function() {
+      var me = this;
       _.bindAll(this, 'read', 'create', 'update');
       ContentStoreModel.__super__.initialize.call(this);
       // console.log(this.get('config'));
@@ -35,6 +36,7 @@ $(function() {
       var table = config['table'];
       if (table) {
         _.each(table.columns, function(col) {
+          col['parentModel'] = me;
           var column = new ContentColumnModel(col);
           var view = new ContentColumnView({model: column});
           columns.add(column);
@@ -42,14 +44,16 @@ $(function() {
       }
 
       this.set({
-        newColumn: new ContentColumnView({model: new ContentColumnModel({add: true})}).model
+        newColumn: new ContentColumnView({model: new ContentColumnModel({add: true, parentModel: me})}).model
       });
 
       var facets = new ContentFacetCollection;
       _.each(config.facets, function(obj) {
+        obj['parentModel'] = me;
         var facet = new ContentFacetModel(obj);
         var params = new ContentFacetParamCollection;
         _.each(obj.params, function(param) {
+          param['parentModel'] = facet;
           var p = new ContentFacetParamModel(param);
           var pv = new ContentFacetParamView({model: p});
           params.add(p);
@@ -62,7 +66,7 @@ $(function() {
       });
 
       this.set({
-        newFacet: new ContentFacetView({model: new ContentFacetModel({add: true})}).model
+        newFacet: new ContentFacetView({model: new ContentFacetModel({add: true, parentModel: me})}).model
       });
 
 
@@ -117,13 +121,19 @@ $(function() {
 
     events: {
       'click .edit': 'showEditor',
+      'click .remove': 'removeMe',
       'click .save-column': 'saveColumn'
     },
 
     initialize: function() {
-      _.bindAll(this, 'showEditor', 'saveColumn', 'render');
+      _.bindAll(this, 'showEditor', 'removeMe', 'saveColumn', 'render');
       this.model.bind('change', this.render);
       this.model.view = this;
+    },
+
+    removeMe: function() {
+      this.model.get('parentModel').get('columns').remove(this.model);
+      $(this.el).detach();
     },
 
     saveColumn: function() {
@@ -170,13 +180,20 @@ $(function() {
     className: 'content-facet-param-item',
 
     events: {
+      'click .remove-param': 'removeMe',
       'click .param-edit': 'showEditor',
     },
 
     initialize: function() {
-      _.bindAll(this, 'showEditor', 'render');
+      _.bindAll(this, 'showEditor', 'removeMe', 'render');
       this.model.bind('change', this.render);
       this.model.view = this;
+    },
+
+    removeMe: function() {
+      console.log(this.model.get('parentModel').get('params'));
+      this.model.get('parentModel').get('params').remove(this.model);
+      $(this.el).detach();
     },
 
     showEditor: function() {
@@ -207,14 +224,20 @@ $(function() {
 
     events: {
       'click .edit': 'showEditor',
+      'click .remove': 'removeMe',
       'click .add-param': 'addParam',
       'click .save-facet': 'saveFacet'
     },
 
     initialize: function() {
-      _.bindAll(this, 'showEditor', 'saveFacet', 'render', 'addParam');
+      _.bindAll(this, 'showEditor', 'removeMe', 'saveFacet', 'render', 'addParam');
       this.model.bind('change', this.render);
       this.model.view = this;
+    },
+
+    removeMe: function() {
+      this.model.get('parentModel').get('facets').remove(this.model);
+      $(this.el).detach();
     },
 
     saveFacet: function() {
@@ -247,6 +270,7 @@ $(function() {
         return;
       }
 
+      obj['parentModel'] = this.model;
       var model = new ContentFacetParamModel(obj);
       var view = new ContentFacetParamView({model: model});
       if (!this.model.get('params'))
@@ -336,6 +360,7 @@ $(function() {
         alert(res.msg);
         return;
       }
+      obj['parentModel'] = this.model;
       var model = new ContentColumnModel(obj);
       var view = new ContentColumnView({model: model});
       this.model.get('columns').add(model);
@@ -357,6 +382,7 @@ $(function() {
         alert(res.msg);
         return;
       }
+      obj['parentModel'] = this.model;
       var model = new ContentFacetModel(obj);
 
       if (this.model.get('newFacet').get('params')) {
