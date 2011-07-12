@@ -136,4 +136,4 @@ if __name__ == '__main__':
 	print store.addDoc(123,None)
 	senseiClient = store.getSenseiClient()
 	result = senseiClient.doQuery()
-	
+
