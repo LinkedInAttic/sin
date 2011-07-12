@@ -26,7 +26,8 @@ def newStore(request,store_name):
 		'error' : 'store: %s already exists.' % store_name
 	}
 	return HttpResponse(json.json_encode(resp))
-  store = ContentStore(name=store_name, sensei_port=random.randint(10000, 15000), broker_port=random.randint(15000, 20000))
+  desc = "test store"
+  store = ContentStore(name=store_name, description = desc,sensei_port=random.randint(10000, 15000), broker_port=random.randint(15000, 20000))
   store.save()
   resp = {
 	'ok' : True,
@@ -200,6 +201,7 @@ def stores(request):
       'broker_port': store.broker_port,
       'config': store.config,
       'created': store.created,
+      'description' : store.description,
       'status': store.status,
     }
     for store in objs]
