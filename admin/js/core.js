@@ -544,9 +544,6 @@ $(function() {
 
     initialize: function() {
       _.bindAll(this, 'dashboard', 'manage');
-      /*var info = new SenseiSystemInfo();*/
-      /*window.senseiSysInfo = new SenseiSystemInfoView({model: info});*/
-      /*info.fetch();*/
     },
 
     index: function() {
@@ -560,40 +557,16 @@ $(function() {
       window.sinView = new SinView({
         collection: stores
       });
-      stores.fetch();
-      // console.log(stores);
-      _.delay(function() {
-        $('#main-area').empty().append(sinView.render().el);
-      }, 500);
-
-                 /*$('#nav-node').text("");*/
-                 /*$('#main-container').children().hide();*/
-
-                 /*if (_.isUndefined(this.overviewRendered)) {*/
-                 /*senseiSysInfo.model.nodesView.render();*/
-                 /*this.overviewRendered = true;*/
-                 /*}*/
-
-                 /*$(senseiSysInfo.model.nodesView.el).show();*/
-    },
+      stores.fetch({
+        success: function (col, res) {
+          $('#main-area').empty().append(sinView.render().el);
+        },
+        error: function (col, res) {
+          alert('Unable to get stores from the server.');
+        }
+      });
 
     manage: function(id) {
-              /*$('#nav-node').text(" > Node " + id);*/
-              /*//console.log('>>> node '+id+' jmx called');*/
-              /*$('#main-container').children().hide();*/
-              /*if (_.isUndefined(senseiSysInfo.model.nodes.get(id))) {*/
-              /*_.delay(this.jmx, 1000, id);*/
-              /*return;*/
-              /*}*/
-              /*var jmxView = senseiSysInfo.model.nodes.get(id).jmxModel.view;*/
-
-              /*var ukey = 'jmx' + id;*/
-              /*if (_.isUndefined(this[ukey])) {*/
-              /*jmxView.render();*/
-              /*this[ukey] = true;*/
-              /*}*/
-
-              /*$(jmxView.el).show();*/
     }
   });
 
