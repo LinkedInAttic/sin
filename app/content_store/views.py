@@ -96,6 +96,7 @@ def startStore(request, store_name):
   classpath1 = os.path.join(settings.SENSEI_HOME, 'target/*')
   classpath2 = os.path.join(settings.SENSEI_HOME, 'target/lib/*')
   log4jclasspath = os.path.join(settings.SENSEI_HOME,'resources')
+  webapp = os.path.join(settings.SENSEI_HOME,'src/main/webapp')
 
   classpath = "%s:%s:%s" % (classpath1,classpath2,log4jclasspath)
 
@@ -120,6 +121,7 @@ def startStore(request, store_name):
     'sensei-conf/sensei.properties', {
       'store': store,
       'index': index,
+      'webapp': webapp,
     })
   sensei_custom_facets = loader.render_to_string(
     'sensei-conf/custom-facets.xml', {
