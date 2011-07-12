@@ -121,13 +121,13 @@ default_schema = {
             ],
             "type": "range"
         },
-        {
-            "depends": "",
-            "dynamic": "",
-            "name": "tags",
-            "params": [],
-            "type": "multi"
-        }
+        #{
+            #"depends": "",
+            #"dynamic": "",
+            #"name": "tags",
+            #"params": [],
+            #"type": "multi"
+        #}
     ],
     "table": {
         "columns": [

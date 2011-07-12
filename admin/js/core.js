@@ -41,6 +41,10 @@ $(function() {
         });
       }
 
+      this.set({
+        newColumn: new ContentColumnView({model: new ContentColumnModel({add: true})}).model
+      });
+
       var facets = new ContentFacetCollection;
       _.each(config.facets, function(obj) {
         var facet = new ContentFacetModel(obj);
@@ -56,6 +60,11 @@ $(function() {
         var view = new ContentFacetView({model: facet});
         facets.add(facet);
       });
+
+      this.set({
+        newFacet: new ContentFacetView({model: new ContentFacetModel({add: true})}).model
+      });
+
 
       this.set({
         columns: columns,
@@ -78,25 +87,78 @@ $(function() {
     url: '/store/stores/'
   });
 
+  var validateColumn = function(col) {
+    var res = {ok: true, msg: 'good'};
+
+    if (!col.name) {
+      res.ok = false;
+      res.msg = 'Name is required.';
+    }
+
+    return res;
+  };
+
+  var validateFacet = function(obj) {
+    var res = {ok: true, msg: 'good'};
+
+    if (!obj.name) {
+      res.ok = false;
+      res.msg = 'Name is required.';
+    }
+
+    return res;
+  };
+
+
   window.ContentColumnView = Backbone.View.extend({
     template: $('#content-column-tmpl').html(),
 
     className: 'content-column-item',
 
+    events: {
+      'click .edit': 'showEditor',
+      'click .save-column': 'saveColumn'
+    },
+
     initialize: function() {
-      _.bindAll(this, 'showEditor', 'render');
+      _.bindAll(this, 'showEditor', 'saveColumn', 'render');
       this.model.bind('change', this.render);
       this.model.view = this;
     },
 
+    saveColumn: function() {
+      var el = $(this.el);
+      var obj = {
+        name: el.find('.name').val(),
+        type: el.find('.type').val(),
+        from: el.find('.from').val(),
+        delimiter: el.find('.delimiter').val(),
+        index: el.find('.index').val(),
+        multi: el.find('.multi').val(),
+        store: el.find('.store').val(),
+        termvector: el.find('.termvector').val()
+      };
+
+      var res = validateColumn(obj);
+      if (!res.ok) {
+        alert(res.msg);
+        return;
+      }
+      this.model.set(obj);
+      this.render();
+    },
+
     showEditor: function() {
+      this.$('.editor').toggle();
     },
 
     render: function() {
       $(this.el).html($.mustache(this.template, this.model.toJSON()));
-      this.$('select').val(this.model.get('type'));
-
-      this.$('.edit').bind('click', this.showEditor);
+      this.$('.type').val(this.model.get('type'));
+      this.$('.index').val(this.model.get('index'));
+      this.$('.multi').val(this.model.get('multi'));
+      this.$('.store').val(this.model.get('store'));
+      this.$('.termvector').val(this.model.get('termvector'));
 
       return this;
     }
@@ -107,6 +169,10 @@ $(function() {
 
     className: 'content-facet-param-item',
 
+    events: {
+      'click .param-edit': 'showEditor',
+    },
+
     initialize: function() {
       _.bindAll(this, 'showEditor', 'render');
       this.model.bind('change', this.render);
@@ -114,27 +180,84 @@ $(function() {
     },
 
     showEditor: function() {
+      this.$('.param-editor').toggle();
     },
 
     render: function() {
       $(this.el).html($.mustache(this.template, this.model.toJSON()));
-      this.$('.edit').bind('click', this.showEditor);
       return this;
     }
   });
+
+  var validateParam = function(param) {
+    var res = {ok: true, msg: 'good'};
+
+    if (!param.name) {
+      res.ok = false;
+      res.msg = 'Name is required.';
+    }
+
+    return res;
+  };
 
   window.ContentFacetView = Backbone.View.extend({
     template: $('#content-facet-tmpl').html(),
 
     className: 'content-facet-item',
 
+    events: {
+      'click .edit': 'showEditor',
+      'click .add-param': 'addParam',
+      'click .save-facet': 'saveFacet'
+    },
+
     initialize: function() {
-      _.bindAll(this, 'showEditor', 'render');
+      _.bindAll(this, 'showEditor', 'saveFacet', 'render', 'addParam');
       this.model.bind('change', this.render);
       this.model.view = this;
     },
 
+    saveFacet: function() {
+      var el = $(this.el);
+      var obj = {
+        name: el.find('.name').val(),
+        type: el.find('.type').val(),
+        depends: el.find('.depends').val(),
+        dynamic: el.find('.dynamic').val(),
+      };
+
+      var res = validateFacet(obj);
+      if (!res.ok) {
+        alert(res.msg);
+        return;
+      }
+      this.model.set(obj);
+      this.render();
+    },
+
+    addParam: function() {
+      var obj = {
+        name: this.$('.add-new-param .param-name').val(),
+        value: this.$('.add-new-param .param-value').val()
+      };
+
+      var res = validateParam(obj);
+      if (!res.ok) {
+        alert(res.msg);
+        return;
+      }
+
+      var model = new ContentFacetParamModel(obj);
+      var view = new ContentFacetParamView({model: model});
+      if (!this.model.get('params'))
+        this.model.set({'params': new ContentFacetParamCollection});
+      this.model.get('params').add(model);
+
+      this.render();
+    },
+
     showEditor: function() {
+      this.$('.editor').toggle();
     },
 
     render: function() {
@@ -142,11 +265,11 @@ $(function() {
       this.$('select').val(this.model.get('type'));
 
       var container = this.$('.facet-params');
-      this.model.get('params').each(function(obj) {
-        container.append(obj.view.render().el);
-      });
-
-      this.$('.edit').bind('click', this.showEditor);
+      if (this.model.get('params')) {
+        this.model.get('params').each(function(obj) {
+          container.append(obj.view.render().el);
+        });
+      }
 
       return this;
     }
@@ -159,7 +282,12 @@ $(function() {
 
 	
 	events:{
-		'click .deleteStore': 'deleteStore'
+		'click .deleteStore': 'deleteStore',
+    'click .add-column': 'addColumn',
+    'click .add-facet': 'addFacet',
+    'click .manage': 'showManage',
+    'click .restart': 'restart',
+    'click .save-store': 'saveStore'
 	},
 	
 	deleteStore: function(){
@@ -176,12 +304,105 @@ $(function() {
 	},
 
     initialize: function() {
-      _.bindAll(this, 'showManage', 'render','deleteStore');
+      _.bindAll(this, 'showManage', 'restart', 'render', 'saveStore', 'deleteStore', 'addColumn', 'addFacet');
       this.model.bind('change', this.render);
       this.model.view = this;
     },
 
+    restart: function() {
+      $.getJSON('/store/restart-store/'+this.model.get('name') + '/', function(res) {
+        if (!res.ok)
+          alert(res.error);
+        else
+          alert('done');
+      });
+    },
+
+    addColumn: function() {
+      var addNew = this.$('.add-new-column');
+      var obj = {
+        name: addNew.find('.name').val(),
+        type: addNew.find('.type').val(),
+        from: addNew.find('.from').val(),
+        delimiter: addNew.find('.delimiter').val(),
+        index: addNew.find('.index').val(),
+        multi: addNew.find('.multi').val(),
+        store: addNew.find('.store').val(),
+        termvector: addNew.find('.termvector').val()
+      };
+
+      var res = validateColumn(obj);
+      if (!res.ok) {
+        alert(res.msg);
+        return;
+      }
+      var model = new ContentColumnModel(obj);
+      var view = new ContentColumnView({model: model});
+      this.model.get('columns').add(model);
+
+      this.render();
+    },
+
+    addFacet: function() {
+      var addNew = this.$('.add-new-facet');
+      var obj = {
+        name: addNew.find('.name').val(),
+        type: addNew.find('.type').val(),
+        depends: addNew.find('.depends').val(),
+        dynamic: addNew.find('.dynamic').val(),
+      };
+
+      var res = validateFacet(obj);
+      if (!res.ok) {
+        alert(res.msg);
+        return;
+      }
+      var model = new ContentFacetModel(obj);
+
+      if (this.model.get('newFacet').get('params')) {
+        model.set({params: this.model.get('newFacet').get('params')});
+        this.model.get('newFacet').set({params: new ContentFacetParamCollection()});
+      }
+
+      var view = new ContentFacetView({model: model});
+      this.model.get('facets').add(model);
+
+      this.render();
+    },
+
+    saveStore: function() {
+      var schema = {
+        "facets": [],
+        "table": {
+          "columns": [],
+          "compress-src-data": true,
+          "delete-field": "",
+          "src-data-store": "src_data",
+          "uid": "id"
+        }
+      };
+      this.model.get('columns').each(function(obj) {
+        schema.table.columns.push(obj.toJSON());
+      });
+      this.model.get('facets').each(function(obj) {
+        var facet = obj.toJSON();
+        if (facet.params)
+          facet.params = facet.params.toJSON();
+        schema.facets.push(facet);
+      });
+      this.model.set({config: JSON.stringify(schema)});
+      var me = this;
+      $.post('/store/update-config/'+this.model.get('name')+'/', {config: this.model.get('config')}, function(res) {
+        if (!res.ok)
+          alert(res.error);
+        else {
+          me.$('.manage-tab').hide();
+        }
+      }, 'json');
+    },
+
     showManage: function() {
+      this.$('.manage-tab').toggle();
     },
 
     render: function() {
@@ -192,12 +413,15 @@ $(function() {
         columns.append(obj.view.render().el);
       });
 
+      this.$('.add-new-column').empty().append(this.model.get('newColumn').view.render().el);
+
       var facets = this.$('.facets');
       this.model.get('facets').each(function(obj) {
         facets.append(obj.view.render().el);
       });
 
-      this.$('.manage').bind('click', this.showManage);
+      this.$('.add-new-facet').empty().append(this.model.get('newFacet').view.render().el);
+
       return this;
     }
   });

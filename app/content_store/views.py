@@ -32,7 +32,6 @@ def newStore(request,store_name):
   }
   return HttpResponse(json.json_encode(resp))
 
-
 def deleteStore(request,store_name):
 	if not ContentStore.objects.filter(name=store_name).exists():
 		resp = {
@@ -47,6 +46,20 @@ def deleteStore(request,store_name):
 	}
 	return HttpResponse(json.json_encode(resp))
 	
+def updateConfig(request, store_name):
+  config = request.POST.get('config');
+  resp = {
+    'ok': False,
+  }
+  if config:
+    # TODO: valid configuration.
+    ContentStore.objects.filter(name=store_name).update(config=config);
+    resp['ok'] = True
+  else:
+    resp['error'] = 'No config provided.'
+
+  return HttpResponse(json.json_encode(resp))
+
 def stopStore(request, store_name):
   global running
 
@@ -55,7 +68,7 @@ def stopStore(request, store_name):
     os.system('kill %s' % pid)
     del running[store_name]
 
-  return HttpResponse(json.json_encode({}))
+  return HttpResponse(json.json_encode({'ok': True}))
 
 def startStore(request, store_name):
   global running
@@ -81,7 +94,6 @@ def startStore(request, store_name):
   except:
     pass
 
-  # TODO:wonlay: generate conf
   sensei_properties = loader.render_to_string(
     'sensei-conf/sensei.properties', {
       'store': store,
@@ -129,7 +141,7 @@ def startStore(request, store_name):
   p = subprocess.Popen(cmd, cwd=settings.SENSEI_HOME)
   running[store_name] = p.pid
 
-  return HttpResponse(json.json_encode({}))
+  return HttpResponse(json.json_encode({'ok': True}))
 
 def restartStore(request, store_name):
   stopStore(request, store_name)
