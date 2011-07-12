@@ -77,6 +77,23 @@ def updateConfig(request, store_name):
 
   return HttpResponse(json.json_encode(resp))
 
+def addDoc(request,store_name):
+	doc = request.POST.get('doc');
+	print doc
+	resp = {
+	    'ok': True,
+	}
+	return HttpResponse(json.json_encode(resp))
+	
+
+def addDocs(request,store_name):
+	docs = request.POST.get('docs');
+	print docs
+	resp = {
+	    'ok': True,
+	}
+	return HttpResponse(json.json_encode(resp))
+
 def killStore(store_name):
 	global running
 
@@ -177,12 +194,6 @@ def getSize(request,store_name):
   return HttpResponse(json.json_encode(resp))
   
 def getDoc(request,store_name,id):
-  uid = long(id)
-  doc = {'id':uid}
-  resp = {'store':store_name,'doc':doc}
-  return HttpResponse(json.json_encode(resp))
-
-def addDoc(request,store_name,id):
   uid = long(id)
   doc = {'id':uid}
   resp = {'store':store_name,'doc':doc}
