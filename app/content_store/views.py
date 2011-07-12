@@ -8,10 +8,12 @@ from content_store.models import ContentStore
 
 from utils import json
 import shutil
+import urllib, urllib2
 
 running = {
 }
 
+SIN_AGENT_PORT = 6666
 
 def storeExists(request,store_name):
 	resp = {
@@ -131,42 +133,19 @@ def startStore(request, store_name):
     'sensei-conf/plugins.xml', {
     })
 
-  out_file = open(os.path.join(conf, 'sensei.properties'), 'w+')
-  try:
-    out_file.write(sensei_properties)
-    out_file.flush()
-  finally:
-    out_file.close()
-
-  out_file = open(os.path.join(conf, 'custom-facets.xml'), 'w+')
-  try:
-    out_file.write(sensei_custom_facets)
-    out_file.flush()
-  finally:
-    out_file.close()
-
-  out_file = open(os.path.join(conf, 'schema.json'), 'w+')
-  try:
-    out_file.write(store.config)
-    out_file.flush()
-  finally:
-    out_file.close()
-
-  out_file = open(os.path.join(conf, 'plugins.xml'), 'w+')
-  try:
-    out_file.write(sensei_plugins)
-    out_file.flush()
-  finally:
-    out_file.close()
-
-  cmd = ["java", "-server", "-d64", "-Xmx1g", "-Xms1g", "-XX:NewSize=256m", "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf]
-
-  print ' '.join(cmd)
-
-  p = subprocess.Popen(cmd, cwd=settings.SENSEI_HOME)
-  running[store_name] = p.pid
-
-  return HttpResponse(json.json_encode({'ok': True}))
+  # Get all the parameters
+  params = {}
+  params["name"] = store_name
+  params["sensei_port"] = store.sensei_port
+  params["broker_port"] = store.broker_port
+  params["sensei_properties"] = sensei_properties
+  params["sensei_custom_facets"] = sensei_custom_facets
+  params["sensei_plugins"] = sensei_plugins
+  params["schema"] = store.config
+  
+  output = urllib2.urlopen("http://localhost:%d/%s" % (SIN_AGENT_PORT, "start-store"),
+                           urllib.urlencode(params))
+  return HttpResponse(json.json_encode({"response":output.read()}))
 
 def restartStore(request, store_name):
   stopStore(request, store_name)

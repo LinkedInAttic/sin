@@ -1,0 +1,155 @@
+import sys, json
+import random, os, subprocess
+from twisted.internet import reactor
+from twisted.web import server, resource
+from twisted.web.static import File
+from twisted.python import log
+from datetime import datetime
+
+SENSEI_HOME = '/tmp/sensei/'
+STORE_HOME = '/tmp/store/'
+
+SIN_AGENT_PORT = 6666
+
+#
+# The dict for all running Sensei processes
+#
+running = {}
+
+#
+# Main server resource
+#
+class Root(resource.Resource):
+
+  def render_GET(self, request):
+    """
+    get response method for the root resource
+    localhost:8000/
+    """
+    return 'Welcome to the REST API'
+
+  def getChild(self, name, request):
+    """
+    We overrite the get child function so that we can handle invalid
+    requests
+    """
+    if name == '':
+      return self
+    else:
+      if name in VIEWS.keys():
+        return resource.Resource.getChild(self, name, request)
+      else:
+        return PageNotFoundError()
+
+class PageNotFoundError(resource.Resource):
+
+  def render_GET(self, request):
+    return 'Page Not Found!'
+
+class StartStore(resource.Resource):
+
+  def render_GET(self, request):
+    """
+    Start a Sensei store.
+    """
+    try:
+      name = request.args["name"][0]
+      sensei_port = request.args["sensei_port"][0]
+      broker_port = request.args["broker_port"][0]
+      sensei_properties = request.args["sensei_properties"][0]
+      sensei_custom_facets = request.args["sensei_custom_facets"][0]
+      sensei_plugins = request.args["sensei_plugins"][0]
+      schema = request.args["schema"][0]
+      log.msg("started store for " + name)
+      return doStartStore(name, sensei_port, broker_port,
+                          sensei_properties, sensei_custom_facets,
+                          sensei_plugins, schema)
+    except:
+      log.err()
+      return "Error"
+
+  def render_POST(self, request):
+    return self.render_GET(request)
+
+def doStartStore(name, sensei_port, broker_port,
+                 sensei_properties, sensei_custom_facets,
+                 sensei_plugins, schema):
+  """
+  Do the real work...
+  """
+
+  classpath1 = os.path.join(SENSEI_HOME, 'target/*')
+  classpath2 = os.path.join(SENSEI_HOME, 'target/lib/*')
+  log4jclasspath = os.path.join(SENSEI_HOME,'resources')
+
+  classpath = "%s:%s:%s" % (classpath1,classpath2,log4jclasspath)
+
+  store_home = os.path.join(STORE_HOME, name)
+  index = os.path.join(store_home, 'index')
+  try:
+    os.makedirs(index)
+  except:
+    pass
+
+  conf = os.path.join(store_home, 'conf')
+  try:
+    os.makedirs(conf)
+  except:
+    pass
+
+  logs = os.path.join(store_home, 'logs')
+  try:
+    os.makedirs(logs)
+  except:
+    pass
+
+  out_file = open(os.path.join(conf, 'sensei.properties'), 'w+')
+  try:
+    out_file.write(sensei_properties)
+    out_file.flush()
+  finally:
+    out_file.close()
+
+  out_file = open(os.path.join(conf, 'custom-facets.xml'), 'w+')
+  try:
+    out_file.write(sensei_custom_facets)
+    out_file.flush()
+  finally:
+    out_file.close()
+
+  out_file = open(os.path.join(conf, 'plugins.xml'), 'w+')
+  try:
+    out_file.write(sensei_plugins)
+    out_file.flush()
+  finally:
+    out_file.close()
+
+  out_file = open(os.path.join(conf, 'schema.json'), 'w+')
+  try:
+    out_file.write(schema)
+    out_file.flush()
+  finally:
+    out_file.close()
+
+  cmd = ["java", "-server", "-d64", "-Xmx1g", "-Xms1g", "-XX:NewSize=256m", "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf]
+  print ' '.join(cmd)
+  p = subprocess.Popen(cmd, cwd=SENSEI_HOME)
+  running[name] = p.pid
+  return "Ok"
+
+#to make the process of adding new views less static
+VIEWS = {
+  "start-store": StartStore(),
+  
+}
+
+if __name__ == '__main__':
+  root = Root()
+  for viewName, className in VIEWS.items():
+    #add the view to the web service
+    root.putChild(viewName, className)
+  log.startLogging(sys.stdout)
+  log.msg('Starting server: %s' %str(datetime.now()))
+  server = server.Site(root)
+  reactor.listenTCP(SIN_AGENT_PORT, server)
+  reactor.run()
