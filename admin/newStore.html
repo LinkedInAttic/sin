@@ -9,7 +9,27 @@
 			var storeName = document.getElementById('newStoreName').value;
 			storeName = jQuery.trim(storeName);
 			if (storeName.length==0) return;
-
+			$.ajax({
+			  url: "../store/new-store/"+storeName,
+			  dataType: 'json',
+			  data: "",
+			  success: function(resp){
+					alert('created');
+					if (resp["ok"]){
+						document.getElementById('errormsg').innerHTML='store created successfully!';
+						document.getElementById('newStoreName').value = "";
+					}
+					else{
+						document.getElementById('errormsg').innerHTML='error: '+resp['error'];
+					}
+					document.getElementById('addStore').disable=false;
+			},
+			error: function( objAJAXRequest, strError ){
+				alert('error: '+strError)
+			},
+			  timeout: 5000 //5 second timeout
+			});
+			/*
 			$.getJSON("../store/new-store/"+storeName,function(resp){
 					if (resp["ok"]){
 						document.getElementById('errormsg').innerHTML='store created successfully!';
@@ -19,7 +39,8 @@
 						document.getElementById('errormsg').innerHTML='error: '+resp['error'];
 					}
 			});
-			document.getElementById('addStore').disable=false;
+			*/
+			
 		}
 	</script>
   </head>

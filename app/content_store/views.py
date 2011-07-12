@@ -26,8 +26,12 @@ def newStore(request,store_name):
 		'error' : 'store: %s already exists.' % store_name
 	}
 	return HttpResponse(json.json_encode(resp))
+
   store = ContentStore(name=store_name, sensei_port=random.randint(10000, 15000), broker_port=random.randint(15000, 20000))
   store.save()
+
+  pid = startNewStore(store_name)
+
   resp = {
 	'ok' : True,
     'id': store.id,
@@ -37,7 +41,9 @@ def newStore(request,store_name):
     'config': store.config,
     'created': store.created,
     'status': store.status,
+	'pid' : pid,
   }
+  print "req completed"
   return HttpResponse(json.json_encode(resp))
 
 def deleteStore(request,store_name):
@@ -87,8 +93,18 @@ def stopStore(request, store_name):
   killStore(store_name)
   return HttpResponse(json.json_encode({'ok': True}))
 
+
 def startStore(request, store_name):
+	pid = startNewStore(store_name)
+	return HttpResponse(json.json_encode({'ok': True,'pid':pid}))
+	
+def startNewStore(store_name):
   global running
+
+  pid = running.get(store_name)
+  if pid:
+	print("%s is already started." % store_name)
+	return pid
 
   store = ContentStore.objects.get(name=store_name)
 
@@ -161,8 +177,9 @@ def startStore(request, store_name):
 
   p = subprocess.Popen(cmd, cwd=settings.SENSEI_HOME)
   running[store_name] = p.pid
+  return p.pid
 
-  return HttpResponse(json.json_encode({'ok': True}))
+  
 
 def restartStore(request, store_name):
   stopStore(request, store_name)
