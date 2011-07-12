@@ -12,5 +12,5 @@ class Node(models.Model):
   host = models.CharField(max_length=40, unique=True)
   agent_port = models.IntegerField()
 
-  group = models.ForeignKey(Group, related_name="nodes")
+  group = models.ForeignKey(Group, related_name="nodes", null=True)
 

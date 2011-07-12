@@ -1,1 +1,1 @@
-[{"pk": 1, "model": "cluster.group", "fields": {"name": "Universe"}}]
+[{"pk": 1, "model": "cluster.group", "fields": {"name": "Universe"}}, {"pk": 1, "model": "cluster.node", "fields": {"host": "localhost", "group": 1, "agent_port": 6664}}]
