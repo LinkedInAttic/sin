@@ -223,6 +223,7 @@ default_schema = {
 
 class ContentStore(models.Model):
   name = models.CharField(max_length=20, unique=True)
+  description = models.CharField(max_length=1024,unique=False)
   sensei_port = models.IntegerField(unique=True)
   broker_port = models.IntegerField(unique=True)
 

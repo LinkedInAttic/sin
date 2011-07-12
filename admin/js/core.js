@@ -307,11 +307,22 @@ $(function() {
 	
 	events:{
 		'click .deleteStore': 'deleteStore',
+		'click .stopStore': 'stopStore',
     'click .add-column': 'addColumn',
     'click .add-facet': 'addFacet',
     'click .manage': 'showManage',
     'click .restart': 'restart',
     'click .save-store': 'saveStore'
+	},
+	
+	stopStore: function(){
+		alert('stopStore')
+		var model = this.model;
+		$.getJSON('/store/stop-store/'+model.get('name'),function(resp){
+			if (!resp["ok"]){
+				alert(resp["msg"]);
+			}
+		});
 	},
 	
 	deleteStore: function(){
@@ -328,7 +339,7 @@ $(function() {
 	},
 
     initialize: function() {
-      _.bindAll(this, 'showManage', 'restart', 'render', 'saveStore', 'deleteStore', 'addColumn', 'addFacet');
+      _.bindAll(this, 'showManage', 'restart', 'render', 'saveStore', 'stopStore', 'deleteStore', 'addColumn', 'addFacet');
       this.model.bind('change', this.render);
       this.model.view = this;
     },

@@ -26,7 +26,8 @@ def newStore(request,store_name):
 		'error' : 'store: %s already exists.' % store_name
 	}
 	return HttpResponse(json.json_encode(resp))
-  store = ContentStore(name=store_name, sensei_port=random.randint(10000, 15000), broker_port=random.randint(15000, 20000))
+  desc = "test store"
+  store = ContentStore(name=store_name, description = desc,sensei_port=random.randint(10000, 15000), broker_port=random.randint(15000, 20000))
   store.save()
   resp = {
 	'ok' : True,
@@ -48,6 +49,13 @@ def deleteStore(request,store_name):
 		}
 		return HttpResponse(json.json_encode(resp))
 	killStore(store_name)
+	
+	
+	store_data_dir = os.path.join(settings.STORE_HOME, store_name)
+	try:
+		shutil.rmtree(store_data_dir)
+	except:
+		pass
 	ContentStore.objects.filter(name=store_name).delete()
 	resp = {
 		'ok' : True,
@@ -69,6 +77,23 @@ def updateConfig(request, store_name):
 
   return HttpResponse(json.json_encode(resp))
 
+def addDoc(request,store_name):
+	doc = request.POST.get('doc');
+	print doc
+	resp = {
+	    'ok': True,
+	}
+	return HttpResponse(json.json_encode(resp))
+	
+
+def addDocs(request,store_name):
+	docs = request.POST.get('docs');
+	print docs
+	resp = {
+	    'ok': True,
+	}
+	return HttpResponse(json.json_encode(resp))
+
 def killStore(store_name):
 	global running
 
@@ -76,12 +101,6 @@ def killStore(store_name):
 	if pid:
 		os.system('kill %s' % pid)
 		del running[store_name]
-		
-	store_home = os.path.join(settings.STORE_HOME, store_name)
-	try:
-		shutil.rmtree(store_home)
-	except:
-		pass
 	
 def stopStore(request, store_name):
   killStore(store_name)
@@ -180,12 +199,6 @@ def getDoc(request,store_name,id):
   resp = {'store':store_name,'doc':doc}
   return HttpResponse(json.json_encode(resp))
 
-def addDoc(request,store_name,id):
-  uid = long(id)
-  doc = {'id':uid}
-  resp = {'store':store_name,'doc':doc}
-  return HttpResponse(json.json_encode(resp))
-
 def available(request,store_name):
   if ContentStore.objects.filter(name=store_name).exists():
   	resp = {'ok':True,'store':store_name,"available":True}
@@ -202,6 +215,7 @@ def stores(request):
       'broker_port': store.broker_port,
       'config': store.config,
       'created': store.created,
+      'description' : store.description,
       'status': store.status,
     }
     for store in objs]

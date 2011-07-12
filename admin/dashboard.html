@@ -117,10 +117,11 @@
     </script>
     <script id="content-store-tmpl" type="text/x-mustache-tmpl">
       <div>
-        <div><a href="javascript:_void();">Search</a> | <a class="manage" href="javascript:_void();">Manage</a> | <a href="javascript:_void();" class="deleteStore">Delete</a> | <a class="restart" href="javascript:_void();">Restart</a>| <span>{{ status }}</span></div>
+        <div><a href="javascript:_void();">Search</a> | <a class="manage" href="javascript:_void();">Manage</a> | <a href="javascript:_void();" class="deleteStore">Delete</a> | <a class="restart" href="javascript:_void();">Restart</a>| <a class="stopStore" href="javascript:_void();">Stop</a>|<span>{{ status }}</span></div>
         <h2>{{ name }}</h2>
         <div>
           <p>Current Size: {{ numDocs }} documents</p>
+		  <p>Description: {{description}} </p>
         </div>
         <div class="manage-tab" style="display: none;">
           <div>
