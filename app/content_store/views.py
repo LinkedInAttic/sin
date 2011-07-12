@@ -11,6 +11,13 @@ from utils import json
 running = {
 }
 
+
+def storeExists(request,store_name):
+	resp = {
+		'exists' : ContentStore.objects.filter(name=store_name).exists()
+	}
+	return HttpResponse(json.json_encode(resp))
+
 def newStore(request,store_name):
   if ContentStore.objects.filter(name=store_name).exists():
 	resp = {
