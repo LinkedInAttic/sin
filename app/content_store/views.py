@@ -49,6 +49,13 @@ def deleteStore(request,store_name):
 		}
 		return HttpResponse(json.json_encode(resp))
 	killStore(store_name)
+	
+	
+	store_data_dir = os.path.join(settings.STORE_HOME, store_name)
+	try:
+		shutil.rmtree(store_data_dir)
+	except:
+		pass
 	ContentStore.objects.filter(name=store_name).delete()
 	resp = {
 		'ok' : True,
@@ -77,12 +84,6 @@ def killStore(store_name):
 	if pid:
 		os.system('kill %s' % pid)
 		del running[store_name]
-		
-	store_home = os.path.join(settings.STORE_HOME, store_name)
-	try:
-		shutil.rmtree(store_home)
-	except:
-		pass
 	
 def stopStore(request, store_name):
   killStore(store_name)
