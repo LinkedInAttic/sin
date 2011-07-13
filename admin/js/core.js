@@ -26,10 +26,8 @@ $(function() {
     defaults: {
     },
 
-    initialize: function() {
+    updateWithNewConfig: function() {
       var me = this;
-      _.bindAll(this, 'read', 'create', 'update');
-      ContentStoreModel.__super__.initialize.call(this);
       // console.log(this.get('config'));
       var columns = new ContentColumnCollection;
       var config = eval('('+this.get('config')+')');
@@ -74,6 +72,12 @@ $(function() {
         columns: columns,
         facets: facets
       });
+    },
+
+    initialize: function() {
+      _.bindAll(this, 'read', 'create', 'update', 'updateWithNewConfig');
+      ContentStoreModel.__super__.initialize.call(this);
+      this.updateWithNewConfig();
     },
 
     read: function() {
@@ -186,7 +190,6 @@ $(function() {
 
     initialize: function() {
       _.bindAll(this, 'showEditor', 'removeMe', 'render');
-      this.model.bind('change', this.render);
       this.model.view = this;
     },
 
@@ -230,7 +233,6 @@ $(function() {
 
     initialize: function() {
       _.bindAll(this, 'showEditor', 'removeMe', 'saveFacet', 'render', 'addParam');
-      this.model.bind('change', this.render);
       this.model.view = this;
     },
 
@@ -254,6 +256,7 @@ $(function() {
         return;
       }
       this.model.set(obj);
+      this.model.get('parentModel').view.updateConfig();
       this.render();
     },
 
@@ -306,44 +309,48 @@ $(function() {
 
     className: 'content-store-item',
 
-  
-  events:{
-    'click .deleteStore': 'deleteStore',
-    'click .stopStore': 'stopStore',
-    'click .add-column': 'addColumn',
-    'click .add-facet': 'addFacet',
-    'click .manage': 'showManage',
-    'click .restart': 'restart',
-    'click .save-store': 'saveStore'
-  },
-  
-  stopStore: function(){
-    alert('stopStore')
-    var model = this.model;
-    $.getJSON('/store/stop-store/'+model.get('name'),function(resp){
-      if (!resp["ok"]){
-        alert(resp["msg"]);
-      }
-    });
-  },
-  
-  deleteStore: function(){
-    var model = this.model;
-    $.getJSON('/store/delete-store/'+model.get('name'),function(resp){
-      if (resp["ok"]){
-        sinView.collection.remove(model);
-        $('#main-area').empty().append(sinView.render().el);
-      }
-      else{
-        alert(resp["msg"]);
-      }  
-    });
-  },
+    events:{
+      'click .deleteStore': 'deleteStore',
+      'click .stopStore': 'stopStore',
+      'click .add-column': 'addColumn',
+      'click .add-facet': 'addFacet',
+      'click .manage': 'showManage',
+      'click .restart': 'restart',
+      'click .show-raw': 'showRaw',
+      'click .save-store-raw': 'saveStoreRaw',
+      'click .save-store': 'saveStore'
+    },
+
+    stopStore: function(){
+      alert('stopStore')
+      var model = this.model;
+      $.getJSON('/store/stop-store/'+model.get('name'),function(resp){
+        if (!resp["ok"]){
+          alert(resp["msg"]);
+        }
+      });
+    },
+    
+    deleteStore: function(){
+      var model = this.model;
+      $.getJSON('/store/delete-store/'+model.get('name'),function(resp){
+        if (resp["ok"]){
+          sinView.collection.remove(model);
+          $('#main-area').empty().append(sinView.render().el);
+        }
+        else{
+          alert(resp["msg"]);
+        }  
+      });
+    },
 
     initialize: function() {
-      _.bindAll(this, 'showManage', 'restart', 'render', 'saveStore', 'stopStore', 'deleteStore', 'addColumn', 'addFacet');
-      this.model.bind('change', this.render);
+      _.bindAll(this, 'showManage', 'showRaw', 'restart', 'render', 'updateConfig', 'saveStoreRaw', 'saveStore', 'stopStore', 'deleteStore', 'addColumn', 'addFacet');
       this.model.view = this;
+    },
+
+    showRaw: function() {
+      this.$('.raw-container').toggle();
     },
 
     restart: function() {
@@ -380,6 +387,7 @@ $(function() {
 
       var columns = this.$('.columns');
       columns.append(view.render().el);
+      this.updateConfig();
 
       this.$('.add-new-column').html(this.$('.add-new-column').html());
     },
@@ -411,11 +419,12 @@ $(function() {
 
       var facets = this.$('.facets');
       facets.append(view.render().el);
+      this.updateConfig();
 
       this.$('.add-new-facet').html(this.$('.add-new-facet').html());
     },
 
-    saveStore: function() {
+    updateConfig: function() {
       var schema = {
         "facets": [],
         "table": {
@@ -446,6 +455,28 @@ $(function() {
         schema.facets.push(facet);
       });
       this.model.set({config: JSON.stringify(schema)});
+      this.$('.raw').val(this.model.get('config'));
+    },
+
+    saveStoreRaw: function() {
+      this.model.set({config: this.$('.raw').val()});
+
+      this.model.updateWithNewConfig();
+
+      this.render();
+
+      var me = this;
+      $.post('/store/update-config/'+this.model.get('name')+'/', {config: this.model.get('config')}, function(res) {
+        if (!res.ok)
+          alert(res.error);
+        else {
+          me.$('.manage-tab').hide();
+        }
+      }, 'json');
+    },
+
+    saveStore: function() {
+      updateConfig();
       var me = this;
       $.post('/store/update-config/'+this.model.get('name')+'/', {config: this.model.get('config')}, function(res) {
         if (!res.ok)
@@ -474,6 +505,8 @@ $(function() {
       this.model.get('facets').each(function(obj) {
         facets.append(obj.view.render().el);
       });
+
+      this.$('.raw').val(this.model.get('config'));
 
       this.$('.add-new-facet').empty().append(this.model.get('newFacet').view.render().el);
 
