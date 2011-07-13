@@ -8,9 +8,10 @@ from senseiClient import SenseiRequest
 
 import urllib
 import urllib2
-import json
 import time
 import kafka
+
+import json
 
 class Sindex:
 	opener = None
@@ -19,8 +20,9 @@ class Sindex:
 	baseurl = None
 	config = None
 	created = None
+	kafkaProducer = None
 	
-	def __init__(self,id,name,created,url,config,senseiClient):
+	def __init__(self,id,name,created,url,config,senseiClient,kafkaHost,kafkaPort):
 		self.id = id
 		self.name = name
 		self.created = created
@@ -30,6 +32,7 @@ class Sindex:
 		self.opener.addheaders = [('User-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_7) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.91 Safari/534.30')]
 		self.baseurl = url
 		self.config = config
+		self.kafkaProducer = kafka.KafkaProducer(kafkaHost, kafkaPort)
 	
 	def available(self):
 		url = '%s/%s/%s' % (self.baseurl,'available',self.name)
@@ -41,12 +44,35 @@ class Sindex:
 			return False
 		return jsonObj.get('available',False)
 	
-	def addDoc(self,uid,doc):
-		url = '%s/%s/%d/%s' % (self.baseurl,'add-doc',uid,self.name)
-		urlReq = urllib2.Request(url)
-		res = self.opener.open(urlReq)
-		jsonObj = dict(json.loads(res.read()))
-		return jsonObj.get('doc')
+	def addDoc(self,doc):
+		if not doc:
+			return None
+		uid = long(doc['id'])
+		jsonObj = json.JSONEncoder().encode(doc)
+		print jsonObj
+		jsonString = json.dumps(jsonObj)
+		print jsonString
+		self.kafkaProducer.send([jsonString],self.name.encode('utf-8'))
+		return doc
+		
+	def addDocs(self,docs):
+		if not docs:
+			return 0
+		messages = []
+		for doc in docs:
+			uid = long(doc['id'])
+			jsonObj = json.JSONEncoder().encode(doc)
+			jsonString = json.dumps(jsonObj)
+			messages.append(jsonString)
+		self.kafkaProducer.send(messages, self.name.encode('utf-8'))
+		return len(messages)
+		
+	def importFile(self,dataFile):
+		fd = open(dataFile,'r+')
+		for line in fd:
+			print line
+			self.kafkaProducer.send([line], self.name.encode('utf-8'))
+		fd.close()
 		
 	def getDoc(self,uid):
 		url = '%s/%s/%d/%s' % (self.baseurl,'get-doc',uid,self.name)
@@ -97,9 +123,11 @@ class SinClient:
 		storeConfig = jsonObj.get('config')
 		storeCreated = jsonObj['created']
 		storeStatus = jsonObj['status']
+		kafkaHost = jsonObj['kafkaHost']
+		kafkaPort = jsonObj['kafkaPort']
 		
-		senseiClient = SenseiClient(self.host,brokerPort,'sensei')
-		sindex = Sindex(storeId,name,storeCreated,baseurl,storeConfig,senseiClient)
+		senseiClient = SenseiClient(self.host,brokerPort,name)
+		sindex = Sindex(storeId,name,storeCreated,baseurl,storeConfig,senseiClient,kafkaHost,kafkaPort)
 		while not sindex.available():
 			time.sleep(0.5)
 		
@@ -133,7 +161,10 @@ if __name__ == '__main__':
 	print store.available()
 	print store.getSize()
 	print store.getDoc(123)
-	print store.addDoc(123,None)
-	senseiClient = store.getSenseiClient()
-	result = senseiClient.doQuery()
+	obj = {'id':1,'color':'red'}
+	print store.addDoc(obj)
+	print store.addDocs([obj,obj])
+	store.importFile("test.json")
+	"""senseiClient = store.getSenseiClient()
+	result = senseiClient.doQuery()"""
 
