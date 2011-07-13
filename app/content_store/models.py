@@ -44,7 +44,7 @@ class ContentStore(models.Model):
   created = models.DateTimeField(auto_now_add=True)
 
   status = models.SmallIntegerField(choices=to_choices(enum.STORE_STATUS),
-    default=enum.STORE_STATUS['init'])
+    default=enum.STORE_STATUS['new'])
 
   group = models.ForeignKey(Group, related_name="stores", default=1)
 

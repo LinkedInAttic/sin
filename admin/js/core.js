@@ -322,12 +322,17 @@ $(function() {
     },
 
     stopStore: function(){
-      alert('stopStore')
+      var me = this;
       var model = this.model;
       $.getJSON('/store/stop-store/'+model.get('name'),function(resp){
+        if (resp.status_display)
+          me.$('.status').text(resp.status_display);
+
         if (!resp["ok"]){
           alert(resp["msg"]);
         }
+        else
+          alert('done');
       });
     },
     
@@ -354,7 +359,10 @@ $(function() {
     },
 
     restart: function() {
+      var me = this;
       $.getJSON('/store/restart-store/'+this.model.get('name') + '/', function(res) {
+        if (res.status_display)
+          me.$('.status').text(res.status_display);
         if (!res.ok)
           alert(res.error);
         else

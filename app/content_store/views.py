@@ -8,7 +8,7 @@ import kafka
 
 from content_store.models import ContentStore
 
-from utils import json
+from utils import enum, json
 
 from django.utils import simplejson
 import shutil
@@ -180,7 +180,13 @@ def startStore(request, store_name):
     for node in nodes:
       output = urllib2.urlopen("http://%s:%d/%s" % (node.host, node.agent_port, "start-store"),
                                urllib.urlencode(params))
-    return HttpResponse(json.json_encode({"ok":True}))
+    store.status = enum.STORE_STATUS['running']
+    store.save()
+    return HttpResponse(json.json_encode({
+      "ok":True,
+      "status": store.status,
+      "status_display": unicode(enum.STORE_STATUS_DISPLAY[store.status]),
+    }))
   except Exception as e:
     return HttpResponse(json.json_encode({'ok':False,'error':e}))
 
@@ -195,7 +201,13 @@ def stopStore(request, store_name):
     for node in nodes:
       output = urllib2.urlopen("http://%s:%d/%s" % (node.host, node.agent_port, "stop-store"),
                                urllib.urlencode(params))
-    return HttpResponse(json.json_encode({"ok":True}))
+    store.status = enum.STORE_STATUS['stopped']
+    store.save()
+    return HttpResponse(json.json_encode({
+      "ok":True,
+      "status": store.status,
+      "status_display": unicode(enum.STORE_STATUS_DISPLAY[store.status]),
+    }))
   except Exception as e:
     return HttpResponse(json.json_encode({'ok':False,'error':e}))
   
@@ -232,6 +244,7 @@ def stores(request):
       'created': store.created,
       'description' : store.description,
       'status': store.status,
+      'status_display': unicode(enum.STORE_STATUS_DISPLAY[store.status]),
     }
     for store in objs]
   return HttpResponse(json.json_encode(resp))
