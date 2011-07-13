@@ -131,9 +131,12 @@ def doStartStore(name, sensei_port, broker_port,
   finally:
     out_file.close()
 
-  cmd = ["java", "-server", "-d64", "-Xmx1g", "-Xms1g", "-XX:NewSize=256m", "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf]
+  outFile = open(os.path.join(logs, "std-output"), "w+")
+  errFile = open(os.path.join(logs, "std-error"), "w+")
+
+  cmd = ["nohup", "java", "-server", "-d64", "-Xmx1g", "-Xms1g", "-XX:NewSize=256m", "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf, "&"]
   print ' '.join(cmd)
-  p = subprocess.Popen(cmd, cwd=SENSEI_HOME)
+  p = subprocess.Popen(cmd, cwd=SENSEI_HOME, stdout=outFile, stderr=errFile)
   running[name] = p.pid
   return "Ok"
 
