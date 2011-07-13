@@ -14,9 +14,6 @@ from django.utils import simplejson
 import shutil
 import urllib, urllib2
 
-SIN_AGENT_HOST = "http://localhost"
-SIN_AGENT_PORT = 6664
-
 kafkaHost = settings.KAFKA_HOST
 kafkaPort = int(settings.KAFKA_PORT)
 kafkaProducer = kafka.KafkaProducer(kafkaHost, kafkaPort)
@@ -187,11 +184,20 @@ def startStore(request, store_name):
     return HttpResponse(json.json_encode({'ok':False,'error':e}))
 
 def stopStore(request, store_name):
-  params = {}
-  params["name"] = store_name
-  output = urllib2.urlopen("%s:%d/%s" % (SIN_AGENT_HOST, SIN_AGENT_PORT, "stop-store"),
-         urllib.urlencode(params))
-  return HttpResponse(json.json_encode({"ok":True}))
+  try:
+    store = ContentStore.objects.get(name=store_name)
+
+    params = {}
+    params["name"] = store_name
+
+    nodes = store.group.nodes.all()
+    for node in nodes:
+      output = urllib2.urlopen("http://%s:%d/%s" % (node.host, node.agent_port, "stop-store"),
+                               urllib.urlencode(params))
+    return HttpResponse(json.json_encode({"ok":True}))
+  except Exception as e:
+    return HttpResponse(json.json_encode({'ok':False,'error':e}))
+  
 
 def restartStore(request, store_name):
   stopStore(request, store_name)
