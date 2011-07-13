@@ -49,6 +49,8 @@ def newStore(request,store_name):
 		'config': store.config,
 		'created': store.created,
 		'status': store.status,
+		'kafkaHost' : kafkaHost,
+		'kafkaPort' : kafkaPort,
 	}
 	return HttpResponse(json.json_encode(resp))
 
