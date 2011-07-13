@@ -60,9 +60,7 @@ def newStore(request,store_name):
     return HttpResponse(json.json_encode(resp))
   desc = "test store"
   store = ContentStore(name=store_name,
-    description=desc,
-    sensei_port=random.randint(10000, 15000),
-    broker_port=random.randint(15000, 20000))
+    description=desc)
   store.save()
   resp = {
     'ok' : True,
