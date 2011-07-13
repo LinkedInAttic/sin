@@ -125,38 +125,41 @@ def addDocs(request,store_name):
 	return HttpResponse(json.json_encode(resp))
 
 def startStore(request, store_name):
-	store = ContentStore.objects.get(name=store_name)
-	webapp = os.path.join(settings.SENSEI_HOME,'src/main/webapp')
-	store_home = os.path.join(settings.STORE_HOME, store_name)
-	index = os.path.join(store_home, 'index')
+	try:
+		store = ContentStore.objects.get(name=store_name)
+		webapp = os.path.join(settings.SENSEI_HOME,'src/main/webapp')
+		store_home = os.path.join(settings.STORE_HOME, store_name)
+		index = os.path.join(store_home, 'index')
 
-	sensei_properties = loader.render_to_string(
-		'sensei-conf/sensei.properties', {
-			'store': store,
-			'index': index,
-			'webapp': webapp,
-			})
-	sensei_custom_facets = loader.render_to_string(
-		'sensei-conf/custom-facets.xml', {
-			})
-	sensei_plugins = loader.render_to_string(
-		'sensei-conf/plugins.xml', {
-			})
+		sensei_properties = loader.render_to_string(
+			'sensei-conf/sensei.properties', {
+				'store': store,
+				'index': index,
+				'webapp': webapp,
+				})
+		sensei_custom_facets = loader.render_to_string(
+			'sensei-conf/custom-facets.xml', {
+				})
+		sensei_plugins = loader.render_to_string(
+			'sensei-conf/plugins.xml', {
+				})
 
-	# Get all the parameters
-	params = {}
-	params["name"] = store_name
-	params["sensei_port"] = store.sensei_port
-	params["broker_port"] = store.broker_port
-	params["sensei_properties"] = sensei_properties
-	params["sensei_custom_facets"] = sensei_custom_facets
-	params["sensei_plugins"] = sensei_plugins
-	params["schema"] = store.config
+		params = {}
+		params["name"] = store_name
+		params["sensei_port"] = store.sensei_port
+		params["broker_port"] = store.broker_port
+		params["sensei_properties"] = sensei_properties
+		params["sensei_custom_facets"] = sensei_custom_facets
+		params["sensei_plugins"] = sensei_plugins
+		params["schema"] = store.config
 	
-	# XXX To use group and node info...
-	output = urllib2.urlopen("%s:%d/%s" % (SIN_AGENT_HOST, SIN_AGENT_PORT, "start-store"),
-				 urllib.urlencode(params))
-	return HttpResponse(json.json_encode({"ok":True}))
+		nodes = store.group.nodes.all()
+		for node in nodes:
+			output = urllib2.urlopen("http://%s:%d/%s" % (node.host, node.agent_port, "start-store"),
+															 urllib.urlencode(params))
+		return HttpResponse(json.json_encode({"ok":True}))
+	except Exception as e:
+		return HttpResponse(json.json_encode({'ok':False,'error':e}))
 
 def stopStore(request, store_name):
 	params = {}
