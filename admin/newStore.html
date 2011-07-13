@@ -1,40 +1,40 @@
 <html>
   <head><title>Sin - New Store</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-	<script src="http://code.jquery.com/jquery-1.4.4.js"></script>
-	
-	<script type="text/javascript">
-		function doAddStore(){
-			document.getElementById('addStore').disable=true;
-			var storeName = document.getElementById('newStoreName').value;
-			storeName = jQuery.trim(storeName);
-			if (storeName.length==0) return;
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+  <script src="http://code.jquery.com/jquery-1.4.4.js"></script>
+  
+  <script type="text/javascript">
+    function doAddStore(){
+      document.getElementById('addStore').disable=true;
+      var storeName = document.getElementById('newStoreName').value;
+      storeName = jQuery.trim(storeName);
+      if (storeName.length==0) return;
 
-			$.getJSON("../store/new-store/"+storeName,function(resp){
-					if (resp["ok"]){
-						document.getElementById('errormsg').innerHTML='store created successfully!';
-						document.getElementById('newStoreName').value = "";
-					}
-					else{
-						document.getElementById('errormsg').innerHTML='error: '+resp['error'];
-					}
-			});
-			document.getElementById('addStore').disable=false;
-		}
-	</script>
+      $.getJSON("../store/new-store/"+storeName,function(resp){
+          if (resp["ok"]){
+            document.getElementById('errormsg').innerHTML='store created successfully!';
+            document.getElementById('newStoreName').value = "";
+          }
+          else{
+            document.getElementById('errormsg').innerHTML='error: '+resp['error'];
+          }
+      });
+      document.getElementById('addStore').disable=false;
+    }
+  </script>
   </head>
   <body>
-	<p align="center">
-	   <img src="images/sin-small.png" />
-	</p>
-	<h1 align="center">Create a new store</h1>
-	<h3 align="right"><a href="dashboard.html">Back to Dashboard</a></h3>
-	<p align="center">
-		<div id="errormsg"></div>
-		Store Name: <input id="newStoreName" type="text" size="50" />
-		<br/>
-		Description: <input id="desc" type="textbox" />
-		<input id="addStore" type="button" value="Add Store" onclick="doAddStore()"/>
-	</p>
+  <p align="center">
+     <img src="images/sin-small.png" />
+  </p>
+  <h1 align="center">Create a new store</h1>
+  <h3 align="right"><a href="dashboard.html">Back to Dashboard</a></h3>
+  <p align="center">
+    <div id="errormsg"></div>
+    Store Name: <input id="newStoreName" type="text" size="50" />
+    <br/>
+    Description: <input id="desc" type="textbox" />
+    <input id="addStore" type="button" value="Add Store" onclick="doAddStore()"/>
+  </p>
   </body>
 </html>
