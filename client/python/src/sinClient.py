@@ -85,11 +85,9 @@ class Sindex:
     
   def getSize(self):
     url = '%s/%s/%s' % (self.baseurl,'get-size',self.name)
-    print url
     urlReq = urllib2.Request(url)
     res = self.opener.open(urlReq)
     jsonObj = dict(json.loads(res.read()))
-    print jsonObj
     return jsonObj.get('size',0)
   
   def getSenseiClient(self):
@@ -129,7 +127,7 @@ class SinClient:
     kafkaPort = jsonObj['kafkaPort']
     description = jsonObj.get('description',None)
     
-    senseiClient = SenseiClient(self.host,brokerPort,name)
+    senseiClient = SenseiClient(self.host,brokerPort)
     sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,kafkaHost,kafkaPort)
     while not sindex.available():
       time.sleep(0.5)
@@ -182,7 +180,7 @@ class SinClient:
     if not jsonObj['ok']:
       errorMsg = "error: %s" % jsonObj.get('msg','unknown error')
       raise Exception(errorMsg)
-
+"""
 if __name__ == '__main__':
   storeName = 'test'
   client = SinClient()
@@ -198,6 +196,6 @@ if __name__ == '__main__':
   print store.addDocs([obj,obj])
   store.importFile("test.json")
   
-  """senseiClient = store.getSenseiClient()
+  senseiClient = store.getSenseiClient()
   result = senseiClient.doQuery()"""
 

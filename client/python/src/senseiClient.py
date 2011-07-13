@@ -253,15 +253,15 @@ class SenseiResult:
         facetMap[k]=facetObj
   
 class SenseiClient:
-  host = None
+  host = "localhost"
   port = None
   opener = None
-  path = None
+  path = "sensei"
   url = None
-  def __init__(self,host='localhost',port=8080,path='sensei'):
+  def __init__(self,host,port):
     self.host = host
     self.port = port
-    self.path = path
+    self.path = "sensei"
     self.url = 'http://%s:%d/%s' % (self.host,self.port,self.path)
     self.opener = urllib2.build_opener()
     self.opener.addheaders = [('User-agent', 'Python-urllib/2.5')]
