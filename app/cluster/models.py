@@ -9,7 +9,7 @@ class Group(models.Model):
   name = models.CharField(max_length=20)
 
 class Node(models.Model):
-  host = models.CharField(max_length=40, unique=True)
+  host = models.CharField(max_length=40)
   agent_port = models.IntegerField()
 
   group = models.ForeignKey(Group, related_name="nodes", null=True)

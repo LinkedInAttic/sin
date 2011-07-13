@@ -522,16 +522,61 @@ $(function() {
     }
   });
 
+  var validNewStore = function(obj) {
+    var res = {ok: true};
+    if (obj && obj.name && obj.name.length > 0) {
+    }
+    else {
+      res['ok'] = false;
+      res['error'] = "Name is required.";
+    }
+    return res;
+  };
+
   window.SinView = Backbone.View.extend({
+    template: $('#sin-tmpl').html(),
+
+    events: {
+      'click .show-create-new': 'showCreateNew',
+      'click .new-store-add': 'addNewStore'
+    },
+
     initialize: function() {
-      _.bindAll(this, "render");
+      _.bindAll(this, "render", 'showCreateNew', 'addNewStore');
 //    this.collection.bind('add', function(){alert('change event')});
     },
 
+    showCreateNew: function() {
+      this.$('.new-store').toggle();
+    },
+
+    addNewStore: function() {
+      var me = this;
+      var obj = {
+        name: $.trim($('.new-store-name').val()),
+        desc: $('.new-store-desc').val()
+      };
+      var res = validNewStore(obj);
+      if (!res.ok) {
+        alert(res.error);
+        return;
+      }
+      $.post('/store/new-store/'+obj.name+'/', obj, function(res) {
+        if (res.ok) {
+          var store = new ContentStoreModel(res);
+          me.collection.add(store);
+          me.render();
+        }
+        else {
+          alert(res.error);
+        }
+      }, 'json');
+    },
+
     render: function() {
-      var el = $(this.el).empty();
-      // console.log(this.collection);
-      window.t = this.collection;
+      $(this.el).html($.mustache(this.template, {}));
+
+      var storesContainer = this.$('.stores-container');
 
       this.collection.each(function(store) {
         if (!store.view) {
@@ -539,7 +584,7 @@ $(function() {
             model: store
           });
         }
-        el.append(store.view.render().el);
+        storesContainer.append(store.view.render().el);
       });
 
       return this;
