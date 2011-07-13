@@ -12,13 +12,13 @@ from utils import json
 
 from django.utils import simplejson
 import shutil
+import urllib, urllib2
 
-running = {
-}
+SIN_AGENT_HOST = "http://localhost"
+SIN_AGENT_PORT = 6664
 
 kafkaHost = settings.KAFKA_HOST
 kafkaPort = int(settings.KAFKA_PORT)
-
 kafkaProducer = kafka.KafkaProducer(kafkaHost, kafkaPort)
 
 def storeExists(request,store_name):
@@ -86,7 +86,7 @@ def deleteStore(request,store_name):
 			'msg' : 'store: %s does not exist.' % store_name
 		}
 		return HttpResponse(json.json_encode(resp))
-	killStore(store_name)
+	stopStore(request, store_name)
 
 	store_data_dir = os.path.join(settings.STORE_HOME, store_name)
 	try:
@@ -151,96 +151,49 @@ def addDocs(request,store_name):
 			resp = {'ok':False,'error':e}
 	return HttpResponse(json.json_encode(resp))
 
-def killStore(store_name):
-	global running
-
-	pid = running.get(store_name)
-	if pid:
-		os.system('kill %s' % pid)
-		del running[store_name]
-	
-def stopStore(request, store_name):
-	killStore(store_name)
-	return HttpResponse(json.json_encode({'ok': True}))
-
 def startStore(request, store_name):
-	global running
-
-	store = ContentStore.objects.get(name=store_name)
-
-	classpath1 = os.path.join(settings.SENSEI_HOME, 'target/*')
-	classpath2 = os.path.join(settings.SENSEI_HOME, 'target/lib/*')
-	log4jclasspath = os.path.join(settings.SENSEI_HOME,'resources')
-	webapp = os.path.join(settings.SENSEI_HOME,'src/main/webapp')
-
-	classpath = "%s:%s:%s" % (classpath1,classpath2,log4jclasspath)
-
-	store_home = os.path.join(settings.STORE_HOME, store_name)
-	index = os.path.join(store_home, 'index')
 	try:
-		os.makedirs(index)
-	except:
-		pass
-	conf = os.path.join(store_home, 'conf')
-	try:
-		os.makedirs(conf)
-	except:
-		pass
-	logs = os.path.join(store_home, 'logs')
-	try:
-		os.makedirs(logs)
-	except:
-		pass
+		store = ContentStore.objects.get(name=store_name)
+		webapp = os.path.join(settings.SENSEI_HOME,'src/main/webapp')
+		store_home = os.path.join(settings.STORE_HOME, store_name)
+		index = os.path.join(store_home, 'index')
 
-	sensei_properties = loader.render_to_string(
-		'sensei-conf/sensei.properties', {
-			'store': store,
-			'index': index,
-			'webapp': webapp,
-		})
-	sensei_custom_facets = loader.render_to_string(
-		'sensei-conf/custom-facets.xml', {
-		})
-	sensei_plugins = loader.render_to_string(
-		'sensei-conf/plugins.xml', {
-		})
+		sensei_properties = loader.render_to_string(
+			'sensei-conf/sensei.properties', {
+				'store': store,
+				'index': index,
+				'webapp': webapp,
+				})
+		sensei_custom_facets = loader.render_to_string(
+			'sensei-conf/custom-facets.xml', {
+				})
+		sensei_plugins = loader.render_to_string(
+			'sensei-conf/plugins.xml', {
+				})
 
-	out_file = open(os.path.join(conf, 'sensei.properties'), 'w+')
-	try:
-		out_file.write(sensei_properties)
-		out_file.flush()
-	finally:
-		out_file.close()
+		params = {}
+		params["name"] = store_name
+		params["sensei_port"] = store.sensei_port
+		params["broker_port"] = store.broker_port
+		params["sensei_properties"] = sensei_properties
+		params["sensei_custom_facets"] = sensei_custom_facets
+		params["sensei_plugins"] = sensei_plugins
+		params["schema"] = store.config
+	
+		nodes = store.group.nodes.all()
+		for node in nodes:
+			output = urllib2.urlopen("http://%s:%d/%s" % (node.host, node.agent_port, "start-store"),
+															 urllib.urlencode(params))
+		return HttpResponse(json.json_encode({"ok":True}))
+	except Exception as e:
+		return HttpResponse(json.json_encode({'ok':False,'error':e}))
 
-	out_file = open(os.path.join(conf, 'custom-facets.xml'), 'w+')
-	try:
-		out_file.write(sensei_custom_facets)
-		out_file.flush()
-	finally:
-		out_file.close()
-
-	out_file = open(os.path.join(conf, 'schema.json'), 'w+')
-	try:
-		out_file.write(store.config)
-		out_file.flush()
-	finally:
-		out_file.close()
-
-	out_file = open(os.path.join(conf, 'plugins.xml'), 'w+')
-	try:
-		out_file.write(sensei_plugins)
-		out_file.flush()
-	finally:
-		out_file.close()
-
-	cmd = ["java", "-server", "-d64", "-Xmx1g", "-Xms1g", "-XX:NewSize=256m", "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf]
-
-	print ' '.join(cmd)
-
-	p = subprocess.Popen(cmd, cwd=settings.SENSEI_HOME)
-	running[store_name] = p.pid
-
-	return HttpResponse(json.json_encode({'ok': True}))
+def stopStore(request, store_name):
+	params = {}
+	params["name"] = store_name
+	output = urllib2.urlopen("%s:%d/%s" % (SIN_AGENT_HOST, SIN_AGENT_PORT, "stop-store"),
+				 urllib.urlencode(params))
+	return HttpResponse(json.json_encode({"ok":True}))
 
 def restartStore(request, store_name):
 	stopStore(request, store_name)

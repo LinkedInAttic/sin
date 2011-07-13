@@ -1,0 +1,8 @@
+eclipse-build
+.metabuilder.properties
+build
+dist
+*~
+TAGS
+cscope.*
+*.pyc
