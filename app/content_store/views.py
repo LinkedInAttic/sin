@@ -55,7 +55,8 @@ def newStore(request,store_name):
       'error' : 'store: %s already exists.' % store_name
     }
     return HttpResponse(json.json_encode(resp))
-  desc = "test store"
+
+  desc = request.POST.get('desc');
   store = ContentStore(name=store_name,
     description=desc)
   store.save()

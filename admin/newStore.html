@@ -10,6 +10,19 @@
       storeName = jQuery.trim(storeName);
       if (storeName.length==0) return;
 
+	  var description = document.getElementById('desc').value
+      $.post('/store/new-store/'+storeName+'/', {desc: description}, function(resp) {
+		if (resp["ok"]){
+            document.getElementById('errormsg').innerHTML='store created successfully!';
+            document.getElementById('newStoreName').value = "";
+            document.getElementById('desc').value = "";
+          }
+          else{
+            document.getElementById('errormsg').innerHTML='error: '+resp['error'];
+          }
+	  },'json');
+	
+	/*
       $.getJSON("../store/new-store/"+storeName,function(resp){
           if (resp["ok"]){
             document.getElementById('errormsg').innerHTML='store created successfully!';
@@ -18,7 +31,7 @@
           else{
             document.getElementById('errormsg').innerHTML='error: '+resp['error'];
           }
-      });
+      });*/
       document.getElementById('addStore').disable=false;
     }
   </script>
@@ -32,9 +45,9 @@
   <p align="center">
     <div id="errormsg"></div>
     Store Name: <input id="newStoreName" type="text" size="50" />
+    <input id="addStore" type="button" value="Add Store" onclick="doAddStore()"/>
     <br/>
     Description: <input id="desc" type="textbox" />
-    <input id="addStore" type="button" value="Add Store" onclick="doAddStore()"/>
   </p>
   </body>
 </html>
