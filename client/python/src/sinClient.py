@@ -67,6 +67,13 @@ class Sindex:
 		self.kafkaProducer.send(messages, self.name.encode('utf-8'))
 		return len(messages)
 		
+	def importFile(self,dataFile):
+		fd = open(dataFile,'r+')
+		for line in fd:
+			print line
+			self.kafkaProducer.send([line], self.name.encode('utf-8'))
+		fd.close()
+		
 	def getDoc(self,uid):
 		url = '%s/%s/%d/%s' % (self.baseurl,'get-doc',uid,self.name)
 		urlReq = urllib2.Request(url)
@@ -157,6 +164,7 @@ if __name__ == '__main__':
 	obj = {'id':1,'color':'red'}
 	print store.addDoc(obj)
 	print store.addDocs([obj,obj])
+	store.importFile("test.json")
 	"""senseiClient = store.getSenseiClient()
 	result = senseiClient.doQuery()"""
 
