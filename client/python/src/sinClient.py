@@ -21,11 +21,13 @@ class Sindex:
 	config = None
 	created = None
 	kafkaProducer = None
+	description = None
 	
-	def __init__(self,id,name,created,url,config,senseiClient,kafkaHost,kafkaPort):
+	def __init__(self,id,name,description,created,url,config,senseiClient,kafkaHost,kafkaPort):
 		self.id = id
 		self.name = name
 		self.created = created
+		self.description = description
 		self.senseiClient = senseiClient
 		self.opener = urllib2.build_opener()
 		self.opener.addheaders = [('User-agent', 'Python-urllib/2.5')]
@@ -106,6 +108,34 @@ class SinClient:
 		self.opener.addheaders = [('User-agent', 'Python-urllib/2.5')]
 		self.opener.addheaders = [('User-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_7) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.91 Safari/534.30')]
 	
+	def openStore(self,name):
+		baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
+		url = '%s/%s/%s' % (baseurl,'open-store',name)
+		urlReq = urllib2.Request(url)
+		res = self.opener.open(urlReq)
+		jsonObj = dict(json.loads(res.read()))
+		
+		if not jsonObj['ok']:
+			errorMsg = "error: %s" % jsonObj.get('error','unknown error')
+			raise Exception(errorMsg)
+		
+		brokerPort = jsonObj['broker_port']
+		senseiPort = jsonObj['sensei_port']
+		storeId = jsonObj['id']
+		storeConfig = jsonObj.get('config')
+		storeCreated = jsonObj['created']
+		storeStatus = jsonObj['status']
+		kafkaHost = jsonObj['kafkaHost']
+		kafkaPort = jsonObj['kafkaPort']
+		description = jsonObj.get('description',None)
+		
+		senseiClient = SenseiClient(self.host,brokerPort,name)
+		sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,kafkaHost,kafkaPort)
+		while not sindex.available():
+			time.sleep(0.5)
+		
+		return sindex
+
 	def newStore(self,name):
 		baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
 		url = '%s/%s/%s' % (baseurl,'new-store',name)
@@ -125,9 +155,10 @@ class SinClient:
 		storeStatus = jsonObj['status']
 		kafkaHost = jsonObj['kafkaHost']
 		kafkaPort = jsonObj['kafkaPort']
+		description = jsonObj.get('description',None)
 		
 		senseiClient = SenseiClient(self.host,brokerPort,name)
-		sindex = Sindex(storeId,name,storeCreated,baseurl,storeConfig,senseiClient,kafkaHost,kafkaPort)
+		sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,kafkaHost,kafkaPort)
 		while not sindex.available():
 			time.sleep(0.5)
 		
@@ -156,8 +187,9 @@ if __name__ == '__main__':
 	storeName = 'test'
 	client = SinClient()
 	if client.storeExists(storeName):
-		client.deleteStore(storeName)
-	store = client.newStore(storeName)
+		store = client.openStore(storeName)
+	else:
+		store = client.newStore(storeName)
 	print store.available()
 	print store.getSize()
 	print store.getDoc(123)
@@ -165,6 +197,7 @@ if __name__ == '__main__':
 	print store.addDoc(obj)
 	print store.addDocs([obj,obj])
 	store.importFile("test.json")
+	
 	"""senseiClient = store.getSenseiClient()
 	result = senseiClient.doQuery()"""
 

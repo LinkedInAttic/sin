@@ -27,6 +27,30 @@ def storeExists(request,store_name):
 	}
 	return HttpResponse(json.json_encode(resp))
 
+def openStore(request,store_name):
+	store = ContentStore.objects.get(name=store_name)
+	if not store:
+		resp = {
+			'ok' : False,
+			'error' : 'store: %s does not exist.' % store_name
+		}
+		return HttpResponse(json.json_encode(resp))
+
+	resp = {
+		'ok' : True,
+		'id': store.id,
+		'name': store.name,
+		'sensei_port': store.sensei_port,
+		'broker_port': store.broker_port,
+		'config': store.config,
+		'created': store.created,
+		'status': store.status,
+		'kafkaHost' : kafkaHost,
+		'kafkaPort' : kafkaPort,
+		'description' : store.description,
+	}
+	return HttpResponse(json.json_encode(resp))
+
 def newStore(request,store_name):
 	if ContentStore.objects.filter(name=store_name).exists():
 		resp = {
@@ -51,6 +75,7 @@ def newStore(request,store_name):
 		'status': store.status,
 		'kafkaHost' : kafkaHost,
 		'kafkaPort' : kafkaPort,
+		'description' : store.description,
 	}
 	return HttpResponse(json.json_encode(resp))
 
