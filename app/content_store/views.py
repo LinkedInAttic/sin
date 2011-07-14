@@ -69,7 +69,7 @@ def newStore(request,store_name):
 
   # Check for nodes:
   if Node.objects.count() == 0:
-    n = Node.objects.create(host=socket.gethostbyaddr(socket.gethostname())[0], group=Group(pk=1))
+    n = Node.objects.create(host=socket.gethostname(), group=Group(pk=1))
 
   store = ContentStore(
     name=store_name,
