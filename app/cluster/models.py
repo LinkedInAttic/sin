@@ -9,6 +9,9 @@ class Group(models.Model):
   name = models.CharField(max_length=20)
 
 class Node(models.Model):
+  class Meta:
+    unique_together = ("host", "agent_port")
+
   host = models.CharField(max_length=40)
   agent_port = models.IntegerField(default=6664)
 

@@ -63,14 +63,20 @@ def newStore(request,store_name):
     }
     return HttpResponse(json.json_encode(resp))
 
+  replica = int(request.POST.get('replica'))
+  partitions = int(request.POST.get('partitions'))
   desc = request.POST.get('desc')
 
   # Check for nodes:
   if Node.objects.count() == 0:
     n = Node.objects.create(host=socket.gethostbyaddr(socket.gethostname())[0], group=Group(pk=1))
 
-  store = ContentStore(name=store_name,
-    description=desc)
+  store = ContentStore(
+    name=store_name,
+    replica=replica,
+    partitions=partitions,
+    description=desc
+  )
   store.save()
   resp = {
     'ok' : True,

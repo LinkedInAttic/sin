@@ -90,22 +90,23 @@
         {{/add}}
       </div>
       <div class="editor" style="{{^add}}display: none;{{/add}}">
-        Name: <input class="name" type="text" value="{{ name }}" />
-        Type:
-        <select class="type">
-          <option value="simple">simple</option>
-          <option value="path">path</option>
-          <option value="range">range</option>
-          <option value="multi">multi</option>
-          <option value="compact-multi">compact-multi</option>
-        </select>
-        Depends: <input class="depends" type="text" value="{{ depends }}" />
-        Dynamic:
-        <select class="dynamic">
-          <option value="false">false</option>
-          <option value="true">true</option>
-        </select>
-        <br />
+        <div class="normal">
+          Name: <input class="name" type="text" value="{{ name }}" />
+          Type:
+          <select class="type">
+            <option value="simple">simple</option>
+            <option value="path">path</option>
+            <option value="range">range</option>
+            <option value="multi">multi</option>
+            <option value="compact-multi">compact-multi</option>
+          </select>
+          Depends: <input class="depends" type="text" value="{{ depends }}" />
+          Dynamic:
+          <select class="dynamic">
+            <option value="false">false</option>
+            <option value="true">true</option>
+          </select>
+        </div>
         Params:
         <div>
           <div class="facet-params">
@@ -164,6 +165,8 @@
       <h3><a class="show-create-new" href="javascript:_void()">Create New Store</a></h3>
       <div class="new-store" style="display:none;">
         New Store Name: <input class="new-store-name" type="text" /> <br />
+        Replica: <input class="new-store-replica" type="text" /> <br />
+        Partitions: <input class="new-store-partitions" type="text" value="10" /> <br />
         Description: <textarea class="new-store-desc"></textarea> <br />
         <input class="new-store-add" type="button" value="Add New Store" />
       </div>

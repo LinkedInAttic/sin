@@ -429,7 +429,7 @@ $(function() {
       facets.append(view.render().el);
       this.updateConfig();
 
-      this.$('.add-new-facet').html(this.$('.add-new-facet').html());
+      this.$('.add-new-facet .normal').html(this.$('.add-new-facet .normal').html());
     },
 
     updateConfig: function() {
@@ -522,9 +522,16 @@ $(function() {
     }
   });
 
-  var validNewStore = function(obj) {
+  var validNewStore = function(obj, nodes) {
     var res = {ok: true};
     if (obj && obj.name && obj.name.length > 0) {
+      if (nodes < 1) {
+        nodes = 1;
+      }
+      if (obj.replica > nodes) {
+        res['ok'] = false;
+        res['error'] = "You have only "+nodes+" nodes, cannot serve "+obj.replica+" replicas.";
+      }
     }
     else {
       res['ok'] = false;
@@ -554,9 +561,11 @@ $(function() {
       var me = this;
       var obj = {
         name: $.trim($('.new-store-name').val()),
+        replica: parseInt($.trim($('.new-store-replica').val())),
+        partitions: parseInt($.trim($('.new-store-partitions').val())),
         desc: $('.new-store-desc').val()
       };
-      var res = validNewStore(obj);
+      var res = validNewStore(obj, this.options.nodes_count);
       if (!res.ok) {
         alert(res.error);
         return;
@@ -575,6 +584,12 @@ $(function() {
 
     render: function() {
       $(this.el).html($.mustache(this.template, {}));
+      
+      var replica = 2;
+      if (this.options.nodes_count <= 1) {
+        replica = 1;
+      }
+      this.$('.new-store-replica').val(replica);
 
       var storesContainer = this.$('.stores-container');
 
@@ -649,17 +664,20 @@ $(function() {
     },
 
     dashboard: function() {
-      window.stores = new ContentStoreCollection;
-      window.sinView = new SinView({
-        collection: stores
-      });
-      stores.fetch({
-        success: function (col, res) {
-          $('#main-area').empty().append(sinView.render().el);
-        },
-        error: function (col, res) {
-          alert('Unable to get stores from the server.');
-        }
+      $.getJSON('/cluster/1/nodes/count/', function(res) {
+        window.stores = new ContentStoreCollection;
+        window.sinView = new SinView({
+          collection: stores,
+          nodes_count: res.count
+        });
+        stores.fetch({
+          success: function (col, res) {
+            $('#main-area').empty().append(sinView.render().el);
+          },
+          error: function (col, res) {
+            alert('Unable to get stores from the server.');
+          }
+        });
       });
     },
 
