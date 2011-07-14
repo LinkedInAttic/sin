@@ -25,7 +25,8 @@ default_schema = {
     ],
     "compress-src-data": True,
     "delete-field": "",
-    "src-data-store": "src_data",
+    "src-data-store": "lucene",
+    "src-data-field": "src_data",
     "uid": "id"
   }
 }
