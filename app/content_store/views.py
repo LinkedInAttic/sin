@@ -38,10 +38,12 @@ def openStore(request,store_name):
     'id': store.id,
     'name': store.name,
     'sensei_port': store.sensei_port,
+    'broker_host': store.broker_host,
     'broker_port': store.broker_port,
     'config': store.config,
     'created': store.created,
     'status': store.status,
+    'status_display': unicode(enum.STORE_STATUS_DISPLAY[store.status]),
     'kafkaHost' : kafkaHost,
     'kafkaPort' : kafkaPort,
     'description' : store.description,
@@ -65,10 +67,12 @@ def newStore(request,store_name):
     'id': store.id,
     'name': store.name,
     'sensei_port': store.sensei_port,
+    'broker_host': store.broker_host,
     'broker_port': store.broker_port,
     'config': store.config,
     'created': store.created,
     'status': store.status,
+    'status_display': unicode(enum.STORE_STATUS_DISPLAY[store.status]),
     'kafkaHost' : kafkaHost,
     'kafkaPort' : kafkaPort,
     'description' : store.description,
@@ -170,6 +174,7 @@ def startStore(request, store_name):
     params = {}
     params["name"] = store_name
     params["sensei_port"] = store.sensei_port
+    params["broker_host"] = store.broker_host
     params["broker_port"] = store.broker_port
     params["sensei_properties"] = sensei_properties
     params["sensei_custom_facets"] = sensei_custom_facets
@@ -239,6 +244,7 @@ def stores(request):
       'id': store.id,
       'name': store.name,
       'sensei_port': store.sensei_port,
+      'broker_host': store.broker_host,
       'broker_port': store.broker_port,
       'config': store.config,
       'created': store.created,

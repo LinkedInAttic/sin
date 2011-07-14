@@ -58,3 +58,8 @@ class ContentStore(models.Model):
 
   broker_port = property(get_broker_port)
 
+  def get_broker_host(self):
+    return self.group.nodes.order_by('?')[0].host
+
+  broker_host = property(get_broker_host)
+
