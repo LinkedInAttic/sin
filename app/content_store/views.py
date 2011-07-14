@@ -174,12 +174,6 @@ def startStore(request, store_name):
     store_home = os.path.join(settings.STORE_HOME, store_name)
     index = os.path.join(store_home, 'index')
 
-    sensei_properties = loader.render_to_string(
-      'sensei-conf/sensei.properties', {
-        'store': store,
-        'index': index,
-        'webapp': webapp,
-        })
     sensei_custom_facets = loader.render_to_string(
       'sensei-conf/custom-facets.xml', {
         })
@@ -192,15 +186,28 @@ def startStore(request, store_name):
     params["sensei_port"] = store.sensei_port
     params["broker_host"] = store.broker_host
     params["broker_port"] = store.broker_port
-    params["sensei_properties"] = sensei_properties
     params["sensei_custom_facets"] = sensei_custom_facets
     params["sensei_plugins"] = sensei_plugins
     params["schema"] = store.config
   
     nodes = store.group.nodes.all()
-    for node in nodes:
+    nodeInfos = allocateResource(store)
+    for i in range(len(nodeInfos)):
+      nodeInfo = nodeInfos[i]
+      node = nodes[i]
+      sensei_properties = loader.render_to_string(
+        'sensei-conf/sensei.properties',
+        {'node_id': nodeInfo["id"],
+         'node_partitions': ','.join(str(x) for x in nodeInfo["parts"]),
+         'max_partition_id': store.partitions - 1,
+         'store': store,
+         'index': index,
+         'webapp': webapp,
+         })
+      params["sensei_properties"] = sensei_properties
       output = urllib2.urlopen("http://%s:%d/%s" % (node.host, node.agent_port, "start-store"),
                                urllib.urlencode(params))
+
     store.status = enum.STORE_STATUS['running']
     store.save()
     return HttpResponse(json.json_encode({
@@ -298,3 +305,28 @@ def stores(request):
     for store in objs]
   return HttpResponse(json.json_encode(resp))
 
+def allocateResource(store):
+  """
+  Given a store and its replica and partition requirement, figure out
+  the cluster layout.  Return a list of nodes with partition information.
+  """
+  nodes = store.group.nodes.all()
+  totalNodes = len(nodes)
+  numNodesPerReplica = totalNodes / store.replica
+  actualTotalNodes = numNodesPerReplica * store.replica
+  numPartsPerNode = store.partitions / numNodesPerReplica
+
+  nodeInfos = []
+  for i in range(store.replica):
+    for j in range(numNodesPerReplica):
+      nodeDict = {}
+      nodeId = i * numNodesPerReplica + j + 1
+      nodeDict["id"] = nodeId
+      nodeDict["name"] = nodes[nodeId - 1].host
+      parts = []
+      for k in range(numPartsPerNode):
+        parts.append(j * numPartsPerNode + k)
+      nodeDict["parts"] = parts
+      nodeInfos.append(nodeDict)
+
+  return nodeInfos
