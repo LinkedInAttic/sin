@@ -574,6 +574,7 @@ $(function() {
         if (res.ok) {
           var store = new ContentStoreModel(res);
           me.collection.add(store, {at: 0});
+          me.$('.new-store').hide();
           me.render();
         }
         else {
