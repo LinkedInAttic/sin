@@ -76,6 +76,7 @@
           <option value="NO">NO</option>
         </select></span>
         <input class="{{#add}}add{{/add}}{{^add}}save{{/add}}-column" type="button" value="{{#add}}Add Column{{/add}}{{^add}}OK{{/add}}" />
+        {{^add}}<input class="cancel-edit-column" type="button" value="Cancel" />{{/add}}
       </div>
     </script>
     <script id="content-facet-param-tmpl" type="text/x-mustache-tmpl">
@@ -125,6 +126,7 @@
           </div>
         </div>
         <input class="{{#add}}add{{/add}}{{^add}}save{{/add}}-facet" type="button" value="{{#add}}Add Facet{{/add}}{{^add}}OK{{/add}}" />
+        {{^add}}<input class="cancel-edit-facet" type="button" value="Cancel" />{{/add}}
       </div>
     </script>
     <script id="content-store-tmpl" type="text/x-mustache-tmpl">
@@ -154,6 +156,7 @@
           </div>
           <div>
             <input class="save-store" type="button" value="Save" />
+            <input class="cancel-edit-store" type="button" value="Cancel" />
           </div>
           <div>
             <a class="show-raw" href="javascript:_void()">Raw</a><br />
@@ -163,6 +166,7 @@
           </div>
           <div>
             <input class="save-store-raw" type="button" value="Save Raw" />
+            <input class="cancel-edit-store" type="button" value="Cancel" />
           </div>
         </div>
       </div>

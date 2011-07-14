@@ -127,6 +127,7 @@ $(function() {
       'change .multi': 'multiChanged',
       'change .type': 'typeChanged',
       'click .edit': 'showEditor',
+      'click .cancel-edit-column': 'showEditor',
       'click .remove': 'removeMe',
       'click .save-column': 'saveColumn'
     },
@@ -266,6 +267,7 @@ $(function() {
     events: {
       'change .type': 'typeChanged',
       'click .edit': 'showEditor',
+      'click .cancel-edit-facet': 'showEditor',
       'click .remove': 'removeMe',
       'click .add-param': 'addParam',
       'click .save-facet': 'saveFacet'
@@ -367,6 +369,7 @@ $(function() {
       'click .add-column': 'addColumn',
       'click .add-facet': 'addFacet',
       'click .manage': 'showManage',
+      'click .cancel-edit-store': 'showManage',
       'click .restart': 'restart',
       'click .show-raw': 'showRaw',
       'click .save-store-raw': 'saveStoreRaw',
