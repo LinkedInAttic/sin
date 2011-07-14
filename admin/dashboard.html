@@ -29,14 +29,19 @@
       <div>
         {{^add}}
         <div>
-        Name: {{ name }}; Type: {{ type }}; From: {{ from }}; Index: {{ index }}; Multi: {{ multi }}; Store: {{ store }};
-        Term Vector: {{ termvector }};
+        Name: {{ name }}; Type: {{ type }};
+        {{#from}} From: {{ from }}; {{/from}}
+        {{#index}} Index: {{ index }}; {{/index}}
+        {{#multi}}Multi: {{ multi }}; {{/multi}}
+        {{#delimiter}}Delimiter: {{ delimiter }}; {{/delimiter}}
+        {{#store}}Store: {{ store }}; {{/store}}
+        {{#termvector}}Term Vector: {{ termvector }}; {{/termvector}}
         <input class="edit" type="button" value="Edit" /> <input class="remove" type="button" value="Remove" /></div>
         {{/add}}
       </div>
       <div class="editor" style="{{^add}}display: none;{{/add}}">
-        Name: <input class="name" type="text" value="{{ name }}" />
-        Type:
+        <span>Name: <input class="name" type="text" value="{{ name }}" /></span>
+        <span>Type:
         <select class="type">
           <option value="int">int</option>
           <option value="short">short</option>
@@ -47,29 +52,29 @@
           <option value="string">string</option>
           <option value="date">date</option>
           <option value="text">text</option>
-        </select>
-        From: <input class="from" type="text" value="{{ from }}" />
-        Delimiter: <input class="delimiter" type="text" value="{{ delimiter }}" />
-        Index:
-        <select class="index">
-          <option value=""></option>
-          <option value="ANALYZED">ANALYZED</option>
-        </select>
-        Multi:
+        </select></span>
+        <span>Multi:
         <select class="multi">
           <option value="false">false</option>
           <option value="true">true</option>
-        </select>
-        Store:
+        </select></span>
+        <span class="delimiter-container" style="display: none;">Delimiter: <input class="delimiter" type="text" value="{{ delimiter }}" /></span>
+        <span style="display: none;">From: <input class="from" type="text" value="{{ from }}" /></span>
+        <span style="display: none;">Index:
+        <select class="index">
+          <option value=""></option>
+          <option value="ANALYZED">ANALYZED</option>
+        </select></span>
+        <span style="display: none;">Store:
         <select class="store">
           <option value=""></option>
           <option value="NO">NO</option>
-        </select>
-        Term Vector:
+        </select></span>
+        <span style="display: none;">Term Vector:
         <select class="termvector">
           <option value=""></option>
           <option value="NO">NO</option>
-        </select>
+        </select></span>
         <input class="{{#add}}add{{/add}}{{^add}}save{{/add}}-column" type="button" value="{{#add}}Add Column{{/add}}{{^add}}OK{{/add}}" />
       </div>
     </script>

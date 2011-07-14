@@ -124,15 +124,28 @@ $(function() {
     className: 'content-column-item',
 
     events: {
+      'change .multi': 'multiChanged',
       'click .edit': 'showEditor',
       'click .remove': 'removeMe',
       'click .save-column': 'saveColumn'
     },
 
     initialize: function() {
-      _.bindAll(this, 'showEditor', 'removeMe', 'saveColumn', 'render');
+      _.bindAll(this, 'showEditor', 'multiChanged', 'removeMe', 'saveColumn', 'render');
       this.model.bind('change', this.render);
       this.model.view = this;
+    },
+
+    multiChanged: function() {
+      if (this.$('.multi').val() == 'true') {
+        if ($.trim(this.$('.delimiter').val()) == '') {
+          this.$('.delimiter').val(',');
+        }
+        this.$('.delimiter-container').show();
+      }
+      else {
+        this.$('.delimiter-container').hide();
+      }
     },
 
     removeMe: function() {
@@ -383,6 +396,19 @@ $(function() {
         termvector: addNew.find('.termvector').val()
       };
 
+      switch(obj.type) {
+        case 'text':
+          obj.index = 'ANALYZED';
+          obj.multi = 'false';
+          obj.store = 'NO';
+          obj.termvector = 'NO';
+          break;
+      }
+
+      if (obj.multi != 'true') {
+        obj.delimiter = '';
+      }
+
       var res = validateColumn(obj);
       if (!res.ok) {
         alert(res.msg);
@@ -397,7 +423,7 @@ $(function() {
       columns.append(view.render().el);
       this.updateConfig();
 
-      this.$('.add-new-column').html(this.$('.add-new-column').html());
+      this.model.get('newColumn').view.render();
     },
 
     addFacet: function() {
@@ -429,7 +455,7 @@ $(function() {
       facets.append(view.render().el);
       this.updateConfig();
 
-      this.$('.add-new-facet .normal').html(this.$('.add-new-facet .normal').html());
+      this.model.get('newFacet').view.render();
     },
 
     updateConfig: function() {
