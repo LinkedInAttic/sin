@@ -573,7 +573,7 @@ $(function() {
       $.post('/store/new-store/'+obj.name+'/', obj, function(res) {
         if (res.ok) {
           var store = new ContentStoreModel(res);
-          me.collection.add(store);
+          me.collection.add(store, {at: 0});
           me.render();
         }
         else {
