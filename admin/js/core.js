@@ -583,7 +583,10 @@ $(function() {
     },
 
     render: function() {
-      $(this.el).html($.mustache(this.template, {}));
+      if (!this.options.rendered) {
+        $(this.el).html($.mustache(this.template, {}));
+        this.options.rendered = true;
+      }
       
       var replica = 2;
       if (this.options.nodes_count <= 1) {
