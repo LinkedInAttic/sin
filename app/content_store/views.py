@@ -239,7 +239,7 @@ def available(request,store_name):
   return HttpResponse(json.json_encode(resp))
 
 def stores(request):
-  objs = ContentStore.objects.all()
+  objs = ContentStore.objects.order_by('-created')
   resp = [{
       'id': store.id,
       'name': store.name,
