@@ -1,4 +1,4 @@
-import random, os, subprocess
+import random, os, subprocess, socket
 from django.conf import settings
 from django.http import HttpResponse
 from django.template import loader
@@ -7,6 +7,7 @@ from django.http import Http404
 import kafka
 
 from content_store.models import ContentStore
+from cluster.models import Group, Node
 
 from utils import enum, json
 
@@ -58,7 +59,12 @@ def newStore(request,store_name):
     }
     return HttpResponse(json.json_encode(resp))
 
-  desc = request.POST.get('desc');
+  desc = request.POST.get('desc')
+
+  # Check for nodes:
+  if Node.objects.count() == 0:
+    n = Node.objects.create(host=socket.gethostbyaddr(socket.gethostname())[0], group=Group(pk=1))
+
   store = ContentStore(name=store_name,
     description=desc)
   store.save()
