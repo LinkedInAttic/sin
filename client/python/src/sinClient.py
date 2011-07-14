@@ -141,11 +141,12 @@ class SinClient:
     
     return sindex
 
-  def newStore(self,name):
+  def newStore(self,name,rep=2,parts=10,description=""):
     baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
     url = '%s/%s/%s' % (baseurl,'new-store',name)
+    params = urllib.urlencode(dict(replica=rep,partitions=parts,desc=description))
     urlReq = urllib2.Request(url)
-    res = self.opener.open(urlReq)
+    res = self.opener.open(urlReq,params)
     jsonObj = dict(json.loads(res.read()))
     
     if not jsonObj['ok']:
@@ -162,7 +163,7 @@ class SinClient:
     kafkaPort = jsonObj['kafkaPort']
     description = jsonObj.get('description',None)
     
-    senseiClient = SenseiClient(self.host,brokerPort,name)
+    senseiClient = SenseiClient(self.host,brokerPort)
     sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,kafkaHost,kafkaPort)
     while not sindex.available():
       time.sleep(0.5)

@@ -63,9 +63,9 @@ def newStore(request,store_name):
     }
     return HttpResponse(json.json_encode(resp))
 
-  replica = int(request.POST.get('replica'))
-  partitions = int(request.POST.get('partitions'))
-  desc = request.POST.get('desc')
+  replica = int(request.POST.get('replica','2'))
+  partitions = int(request.POST.get('partitions','10'))
+  desc = request.POST.get('desc',"")
 
   # Check for nodes:
   if Node.objects.count() == 0:

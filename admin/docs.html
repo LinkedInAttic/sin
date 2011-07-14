@@ -6,5 +6,120 @@
   </p>
   <h1 align="center">Documentation</h1>
   <h3 align="right"><a href="index.html">Home</a></h3>
+
+   <h1>Contents:</h1>
+	<ul>
+		<li><a href="#overview">Overview</li>
+		<li><a href="#createStore">Create a new store</li>
+		<li><a href="#openStore">Open an existing store</li>
+		<li><a href="#editSchema">Edit schema</li>
+		<li><a href="#addDocs">Add docs</li>
+		<li><a href="#search">Search and retrieval</li>
+	</ul>
+
+   <a name="overview" />
+  <h2>Overview:</h2>
+   <p>
+	 Get started and running is simple. Just follow these simple steps.
+   </p>
+
+   <a name="createStore" />
+   <h2>Create a New Store:</h2>
+   <p>
+   Ways of creating a store:
+   <ul>
+	  <li>Use the <a href="/static/dashboard.html">Dashboard</a></li>
+	  <li>Post to the Rest end-point: <b>http://sin-host:sin-port/store/new-store/&lt;store-name&gt;</b> with the following parameters:
+		<ul>
+			<li>replica - # of replications, default = 2 </li>
+			<li>partitions - # of partitions, default = 10 </li>
+			<li>desc - description, default = empty string</li>
+		</ul>
+		<p>
+			example JSON response:
+			<pre><code>
+{ 				
+    sensei_port: 10002
+    status: 0
+    ok: true
+    description: ""
+    kafkaHost: "localhost"
+    config: "{"table": {"src-data-store": "src_data", "compress-src-data": true, "columns": [{"index": "ANALYZED", "multi": false, "from": "", "name": "contents", "termvector": "NO", "type": "text", "store": "NO"}], "delete-field": "", "uid": "id"}, "facets": []}"
+    kafkaPort: 9092
+    created: "2011-07-14 16:25:50"
+    broker_host: "jwang-md.local"
+    status_display: "New"
+    broker_port: 15002
+    id: 2
+    name: "john2"
+}
+			</code></pre>
+			example JSON error:
+			<pre><code>
+{
+    ok: false
+    error: "store: john2 already exists."
+}
+			</code></pre>
+		</p>
+	  </li>
+	  <li>Use the Python script:
+		<pre><code>
+client = SinClient(sinHost,sinPort)
+
+""" default """
+store = client.newStore('myStore')
+
+""" or
+create a store with 3 replications, 5 partitions and with a description
+store = client.newStore('myStore',3,5,'my new store')
+"""
+		</code></pre>
+	  </li>
+   </ul>
+   </p>
+ 
+   <a name="openStore" />
+   <h2>Open an existing store:</h2>
+   <p>
+     All the created stores are listed on the <a href="/static/dashboard.html">Dashboard</a>
+   </p>
+   <p>
+	 Ways of opening a store:
+	 <ul>
+		<li>Do a GET from the Rest end-point: <b>http://sin-host:sin-port/store/get-store/&lt;store-name&gt;</b>
+			<p>the response is the same as the new-store call.</p>
+		</li>
+		<li>Use the Python script:
+		<pre><code>
+client = SinClient(sinHost,sinPort)
+store = client.openStore('john3')
+		</code></pre>
+		</li>
+	 </ul>   
+   </p>
+
+
+   <a name="editSchema" />
+   <h2>Edit schema:</h2>
+   <p>
+	Schema defines the structure of a Sin store. Creating a schema is analogous to the <b>CREATE TABLE</b> SQL command.
+   </p>
+   <p>
+	The best of creating a schema is via the <a href="/static/dashboard.html">Dashboard</a>
+
+
+   <a name="addDocs" />
+   <h2>Add docs to your store:</h2>
+   <p>
+
+   </p>
+
+
+   <a name="search" />
+   <h2>Search and retrieve from your index:</h2>
+   <p>
+
+   </p>
   </body>
 </html>
