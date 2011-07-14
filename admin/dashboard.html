@@ -53,7 +53,7 @@
           <option value="date">date</option>
           <option value="text">text</option>
         </select></span>
-        <span>Multi:
+        <span class="multi-container">Multi:
         <select class="multi">
           <option value="false">false</option>
           <option value="true">true</option>
@@ -96,30 +96,32 @@
       </div>
       <div class="editor" style="{{^add}}display: none;{{/add}}">
         <div class="normal">
-          Name: <input class="name" type="text" value="{{ name }}" />
-          Type:
+          <span class="name-container">Name: <input class="name" type="text" value="{{ name }}" /></span>
+          <span class="name-container">Type:
           <select class="type">
             <option value="simple">simple</option>
             <option value="path">path</option>
             <option value="range">range</option>
             <option value="multi">multi</option>
             <option value="compact-multi">compact-multi</option>
-          </select>
-          Depends: <input class="depends" type="text" value="{{ depends }}" />
-          Dynamic:
+          </select></span>
+          <span class="name-container" style="display: none;">Depends: <input class="depends" type="text" value="{{ depends }}" /></span>
+          <span class="name-container" style="display: none;">Dynamic:
           <select class="dynamic">
             <option value="false">false</option>
             <option value="true">true</option>
-          </select>
+          </select></span>
         </div>
-        Params:
-        <div>
-          <div class="facet-params">
-          </div>
-          <div class="add-new-param">
-            Name: <input class="param-name" type="text" />
-            Value: <input class="param-value" type="text" />
-            <input class="add-param" type="button" value="Add Param" />
+        <div class="params-container" style="display: none;">
+          Params:
+          <div>
+            <div class="facet-params">
+            </div>
+            <div class="add-new-param">
+              Name: <input class="param-name" type="text" />
+              Value: <input class="param-value" type="text" />
+              <input class="add-param" type="button" value="Add Param" />
+            </div>
           </div>
         </div>
         <input class="{{#add}}add{{/add}}{{^add}}save{{/add}}-facet" type="button" value="{{#add}}Add Facet{{/add}}{{^add}}OK{{/add}}" />

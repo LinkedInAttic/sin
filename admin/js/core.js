@@ -125,13 +125,14 @@ $(function() {
 
     events: {
       'change .multi': 'multiChanged',
+      'change .type': 'typeChanged',
       'click .edit': 'showEditor',
       'click .remove': 'removeMe',
       'click .save-column': 'saveColumn'
     },
 
     initialize: function() {
-      _.bindAll(this, 'showEditor', 'multiChanged', 'removeMe', 'saveColumn', 'render');
+      _.bindAll(this, 'showEditor', 'typeChanged', 'multiChanged', 'removeMe', 'saveColumn', 'render');
       this.model.bind('change', this.render);
       this.model.view = this;
     },
@@ -166,6 +167,19 @@ $(function() {
         termvector: el.find('.termvector').val()
       };
 
+      switch(obj.type) {
+        case 'text':
+          obj.index = 'ANALYZED';
+          obj.multi = 'false';
+          obj.store = 'NO';
+          obj.termvector = 'NO';
+          break;
+      }
+
+      if (obj.multi != 'true') {
+        obj.delimiter = '';
+      }
+
       var res = validateColumn(obj);
       if (!res.ok) {
         alert(res.msg);
@@ -179,12 +193,23 @@ $(function() {
       this.$('.editor').toggle();
     },
 
+    typeChanged: function() {
+      switch (this.$('.type').val()) {
+        case 'text':
+          this.$('.multi-container').hide();
+          break;
+        default:
+          this.$('.multi-container').show();
+          break;
+      }
+    },
+
     render: function() {
       $(this.el).html($.mustache(this.template, this.model.toJSON()));
-      this.$('.type').val(this.model.get('type'));
       this.$('.index').val(this.model.get('index'));
       this.$('.delimiter').val(this.model.get('delimiter'));
       this.$('.multi').val(this.model.get('multi')).change();
+      this.$('.type').val(this.model.get('type')).change();
       this.$('.store').val(this.model.get('store'));
       this.$('.termvector').val(this.model.get('termvector'));
 
@@ -239,6 +264,7 @@ $(function() {
     className: 'content-facet-item',
 
     events: {
+      'change .type': 'typeChanged',
       'click .edit': 'showEditor',
       'click .remove': 'removeMe',
       'click .add-param': 'addParam',
@@ -246,7 +272,7 @@ $(function() {
     },
 
     initialize: function() {
-      _.bindAll(this, 'showEditor', 'removeMe', 'saveFacet', 'render', 'addParam');
+      _.bindAll(this, 'showEditor', 'typeChanged', 'removeMe', 'saveFacet', 'render', 'addParam');
       this.model.view = this;
     },
 
@@ -272,6 +298,18 @@ $(function() {
       this.model.set(obj);
       this.model.get('parentModel').view.updateConfig();
       this.render();
+    },
+
+    typeChanged: function() {
+      switch (this.$('.type').val()) {
+        case 'path':
+        case 'range':
+          this.$('.params-container').show();
+          break;
+        default:
+          this.$('.params-container').hide();
+          break;
+      }
     },
 
     addParam: function() {
@@ -305,7 +343,7 @@ $(function() {
 
     render: function() {
       $(this.el).html($.mustache(this.template, this.model.toJSON()));
-      this.$('select').val(this.model.get('type'));
+      this.$('.type').val(this.model.get('type')).change();
 
       var container = this.$('.facet-params');
       if (this.model.get('params')) {
@@ -436,6 +474,21 @@ $(function() {
         dynamic: addNew.find('.dynamic').val(),
       };
 
+      var params = new ContentFacetParamCollection();
+      if (this.model.get('newFacet').get('params')) {
+        params = this.model.get('newFacet').get('params');
+        this.model.get('newFacet').set({params: new ContentFacetParamCollection()});
+      }
+
+      switch(obj.type) {
+        case 'path':
+        case 'range':
+          break;
+        default:
+          params = new ContentFacetParamCollection();
+          break;
+      }
+
       var res = validateFacet(obj);
       if (!res.ok) {
         alert(res.msg);
@@ -443,11 +496,7 @@ $(function() {
       }
       obj['parentModel'] = this.model;
       var model = new ContentFacetModel(obj);
-
-      if (this.model.get('newFacet').get('params')) {
-        model.set({params: this.model.get('newFacet').get('params')});
-        this.model.get('newFacet').set({params: new ContentFacetParamCollection()});
-      }
+      model.set({params: params});
 
       var view = new ContentFacetView({model: model});
       this.model.get('facets').add(model);
