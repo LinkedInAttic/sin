@@ -429,7 +429,7 @@ $(function() {
       facets.append(view.render().el);
       this.updateConfig();
 
-      this.$('.add-new-facet').html(this.$('.add-new-facet').html());
+      this.$('.add-new-facet .normal').html(this.$('.add-new-facet .normal').html());
     },
 
     updateConfig: function() {

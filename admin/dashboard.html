@@ -90,22 +90,23 @@
         {{/add}}
       </div>
       <div class="editor" style="{{^add}}display: none;{{/add}}">
-        Name: <input class="name" type="text" value="{{ name }}" />
-        Type:
-        <select class="type">
-          <option value="simple">simple</option>
-          <option value="path">path</option>
-          <option value="range">range</option>
-          <option value="multi">multi</option>
-          <option value="compact-multi">compact-multi</option>
-        </select>
-        Depends: <input class="depends" type="text" value="{{ depends }}" />
-        Dynamic:
-        <select class="dynamic">
-          <option value="false">false</option>
-          <option value="true">true</option>
-        </select>
-        <br />
+        <div class="normal">
+          Name: <input class="name" type="text" value="{{ name }}" />
+          Type:
+          <select class="type">
+            <option value="simple">simple</option>
+            <option value="path">path</option>
+            <option value="range">range</option>
+            <option value="multi">multi</option>
+            <option value="compact-multi">compact-multi</option>
+          </select>
+          Depends: <input class="depends" type="text" value="{{ depends }}" />
+          Dynamic:
+          <select class="dynamic">
+            <option value="false">false</option>
+            <option value="true">true</option>
+          </select>
+        </div>
         Params:
         <div>
           <div class="facet-params">
