@@ -15,6 +15,10 @@ from django.utils import simplejson
 import shutil
 import urllib, urllib2
 
+from senseiClient import SenseiClient
+from senseiClient import SenseiRequest
+from senseiClient import SenseiSelection
+
 kafkaHost = settings.KAFKA_HOST
 kafkaPort = int(settings.KAFKA_PORT)
 kafkaProducer = kafka.KafkaProducer(kafkaHost, kafkaPort)
@@ -228,13 +232,40 @@ def restartStore(request, store_name):
   return startStore(request, store_name)
 
 def getSize(request,store_name):
-  resp = {'store':store_name,"size":0}
+  store = ContentStore.objects.get(name=store_name)
+  if not store:
+    resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
+    return HttpResponse(json.json_encode(resp))
+  senseiHost = store.broker_host
+  senseiPort = store.broker_port
+  senseiClient = SenseiClient(senseiHost,senseiPort)
+  req = SenseiRequest()
+  req.count = 0
+  res = senseiClient.doQuery(req)
+  resp = {'store':store_name,"size":res.totalDocs}
   return HttpResponse(json.json_encode(resp))
   
 def getDoc(request,store_name,id):
   uid = long(id)
-  doc = {'id':uid}
-  resp = {'store':store_name,'doc':doc}
+  store = ContentStore.objects.get(name=store_name)
+  if not store:
+    resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
+    return HttpResponse(json.json_encode(resp))
+  senseiHost = store.broker_host
+  senseiPort = store.broker_port
+  senseiClient = SenseiClient(senseiHost,senseiPort)
+  req = SenseiRequest()
+  sel = SenseiSelection("uid")
+  sel.addSelection(id)
+  req.count = 1
+  req.selections = [sel]
+  res = senseiClient.doQuery(req)
+  doc = None
+  if res.numHits > 0:
+    if res.hits and len(res.hits) > 0:
+      hit = res.hits[0]
+      doc = hit.srcData
+  resp = {'store':store_name,"uid":uid,"doc":doc}
   return HttpResponse(json.json_encode(resp))
 
 def available(request,store_name):

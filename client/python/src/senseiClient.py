@@ -239,11 +239,11 @@ class SenseiResult:
     self.numHits = json.get(PARAM_RESULT_NUMHITS,0)
     hitList = json.get(PARAM_RESULT_HITS)
     if hitList:
-      hits = []
+      self.hits = []
       for hit in hitList:
         senseiHit = SenseiHit()
         senseiHit.load(hit)
-        hits.append(senseiHit)
+        self.hits.append(senseiHit)
     facetMap = json.get(PARAM_RESULT_FACETS)
     if facetMap:
       facetMap = {}
