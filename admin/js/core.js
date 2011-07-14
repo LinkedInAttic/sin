@@ -183,7 +183,8 @@ $(function() {
       $(this.el).html($.mustache(this.template, this.model.toJSON()));
       this.$('.type').val(this.model.get('type'));
       this.$('.index').val(this.model.get('index'));
-      this.$('.multi').val(this.model.get('multi'));
+      this.$('.delimiter').val(this.model.get('delimiter'));
+      this.$('.multi').val(this.model.get('multi')).change();
       this.$('.store').val(this.model.get('store'));
       this.$('.termvector').val(this.model.get('termvector'));
 
