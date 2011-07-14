@@ -484,7 +484,7 @@ $(function() {
     },
 
     saveStore: function() {
-      updateConfig();
+      this.updateConfig();
       var me = this;
       $.post('/store/update-config/'+this.model.get('name')+'/', {config: this.model.get('config')}, function(res) {
         if (!res.ok)
