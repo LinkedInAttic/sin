@@ -5,6 +5,7 @@
 
 from senseiClient import SenseiClient
 from senseiClient import SenseiRequest
+from senseiClient import SenseiSelection
 
 import urllib
 import urllib2
@@ -77,18 +78,24 @@ class Sindex:
     fd.close()
     
   def getDoc(self,uid):
-    url = '%s/%s/%d/%s' % (self.baseurl,'get-doc',uid,self.name)
-    urlReq = urllib2.Request(url)
-    res = self.opener.open(urlReq)
-    jsonObj = dict(json.loads(res.read()))
-    return jsonObj.get('doc')
+    req = SenseiRequest()
+    sel = SenseiSelection("uid")
+    sel.addSelection(str(uid))
+    req.count = 1
+    req.selections = [sel]
+    res = self.senseiClient.doQuery(req)
+    doc = None
+    if res.numHits > 0:
+      if res.hits and len(res.hits) > 0:
+        hit = res.hits[0]
+        doc = hit.srcData
+    return doc
     
   def getSize(self):
-    url = '%s/%s/%s' % (self.baseurl,'get-size',self.name)
-    urlReq = urllib2.Request(url)
-    res = self.opener.open(urlReq)
-    jsonObj = dict(json.loads(res.read()))
-    return jsonObj.get('size',0)
+    req = SenseiRequest()
+    req.count = 0
+    res = self.senseiClient.doQuery(req)
+    return res.totalDocs
   
   def getSenseiClient(self):
     return self.senseiClient
