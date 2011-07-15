@@ -499,7 +499,7 @@ $(function() {
       $.getJSON('/store/delete-store/'+model.get('name'),function(resp){
         if (resp["ok"]){
           sinView.collection.remove(model);
-          $('#main-area').empty().append(sinView.render().el);
+          $(model.view.el).remove();
         }
         else{
           alert(resp["msg"]);
@@ -841,8 +841,8 @@ $(function() {
           return baseSync(method, model, success, error);
         break;
       case "delete":
-        if (model.delete)
-          resp = model.delete();
+        if (model.del)
+          resp = model.del();
         else
           return baseSync(method, model, success, error);
         break;
