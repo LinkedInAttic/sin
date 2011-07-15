@@ -12,15 +12,39 @@
 		<li><a href="#overview">Overview</li>
 		<li><a href="#createStore">Create a new store</li>
 		<li><a href="#openStore">Open an existing store</li>
-		<li><a href="#editSchema">Edit schema</li>
-		<li><a href="#addDocs">Add docs</li>
-		<li><a href="#search">Search and retrieval</li>
+		<li><a href="#editSchema">Edit schema
+			<ul>
+				<li><a href="#schemaColumns">Columns</a></li>
+				<li><a href="#schemaFacets">Facets</a></li>
+			</ul>
+		</li>
+		<li><a href="#addDocs">Add docs
+			<ul>
+				<li><a href="#addDocPython">Python API</a></li>
+				<li><a href="#addDocRest">Rest end-point</a></li>
+			</ul>
+		</li>
+		<li><a href="#search">Search and retrieval
+			<ul>
+				<li><a href="#queryPython">Python API</a></li>
+				<li><a href="#queryRest">Rest end-point</a></li>
+			</ul>
+		</li>
 	</ul>
 
    <a name="overview" />
   <h2>Overview:</h2>
+   <p>Sin is a service that allows you to create searchable content stores in virtual cloud. Sin leverages <a href="http://www.senseidb.com">Sensei</a> to provide a powerful yet simple way to interact with your store.</p>
    <p>
-	 Get started and running is simple. Just follow these simple steps.
+	 Get started and running is simple. Just follow these simple steps:
+	<ol>
+		<li>Create/Open a store</li>
+		<li>Create/Edit the schema</li>
+		<li>Add/append docs to the store</li>
+		<li>Search your store</li>
+		<li>Expand your store&apos;capacity</li>
+		<li>Create more stores!</li>
+	</ol>
    </p>
 
    <a name="createStore" />
@@ -106,20 +130,233 @@ store = client.openStore('john3')
 	Schema defines the structure of a Sin store. Creating a schema is analogous to the <b>CREATE TABLE</b> SQL command.
    </p>
    <p>
-	The best of creating a schema is via the <a href="/static/dashboard.html">Dashboard</a>
+	The best way to create a schema is via the <a href="/static/dashboard.html">Dashboard</a>
+   </p>
+   <p>A store's schema consists of two parts: <b>Columns</b> and <b>Facets</b></p>
 
-
+<a name="schemaColumns" />
+   <h4>Columns:</h4>
+   <p>
+	This part of the schema defines the indexing rules. Sin's indexing engine uses the column definitions to apply indexing rules
+	on a given piece of data.
+   </p>
+<a name="example" />
+   <p>Consider the following example: </p>
+<pre><code>
+{
+  "id": 7,
+  "color": "red",
+  "price": 8000,
+  "tags": "cool,hybrid,leather",
+  "contents" : "this is an awesome car"
+}
+</code></pre>
+We would create the following column definitions:
+<table border="1" width="50%">
+	<tr>
+		<th>Name</th>
+		<th>Definition</th>
+		<th>Explanation</th>
+	</tr>
+	<tr>
+		<td>id</td>
+		<td>No need to specify, applied by default</td>
+		<td>unique identifier, must exist for each data object, must be a number >= 0</td>
+	</tr>
+	<tr>
+		<td>color</td>
+		<td>type: string, multi: false</td>
+		<td>a meta field with string values, each doc contains at most 1 field value</td>
+	</tr>
+	<tr>
+		<td>price</td>
+		<td>type: int, multi: false</td>
+		<td>a meta field with an integer value, each doc contains at most 1 field value</td>
+	</tr>
+	<tr>
+		<td>tags</td>
+		<td>type: string, multi: true</td>
+		<td>a meta field with string values, each doc contain many field values represented by a comma-delimited string</td>
+	</tr>
+	<tr>
+		<td>contents</td>
+		<td>type: text</td>
+		<td>text field</td>
+	</tr>
+</table>
+<a name="schemaFacets" />
+<h4>Facets:</h4>
+   <p>
+	Similarly, the Facets part of the schema defines search rules. These rules only apply to the meta fields.
+   </p>
+   <p>
+	Let&apos;s take the same <a href="#example">example</a> and build the facet definitions: 
+   </p>
+<table border="1" width="50%">
+	<tr>
+		<th>Name</th>
+		<th>Definition</th>
+		<th>Explanation</th>
+	</tr>
+	<tr>
+		<td>color</td>
+		<td>type: simple</td>
+		<td>Simple facet using the color column</td>
+	</tr>
+	<tr>
+		<td>price</td>
+		<td>type: range</td>
+		<td>Range facet using the price column. Ranges are specified by the parameters, e.g. param name: range, param value: 5000,10000</td>
+	</tr>
+	<tr>
+		<td>tags</td>
+		<td>type: multi</td>
+		<td>Multi-valued facet using the tags column.</td>
+	</tr>
+</table>
+<h4>Raw schema:</h4>
+<p>The output of the schema builder is a json object. You can view the contents of the json object by clicking on the <i>"Raw"</i> link. Advanced users can just edit the json object specify the schema settings.
+</p>
+<p>
+	For more details, please checkout the <a href="http://javasoze.github.com/sensei/docs/src/docbkx/sensei.html#d0e456">Data Model</a> section of the <a href="http://www.senseidb.com">Sensei</a> documentation.
+</p>
    <a name="addDocs" />
    <h2>Add docs to your store:</h2>
    <p>
-
+We offer Rest end-points as well as Python API's for adding docs into our store.
    </p>
+   <p>We will use the <a href="#example">example</a> above to demonstrate how to add docs into our store.</p>
+	<a name="addDocPython">
+	<h4>Python API:</h4>
+<pre><code>
+doc = {'id': 7,
+       'color': 'red',
+       'price': 8000,
+       'tags': 'cool,hybrid,leather',
+       'contents' : 'this is an awesome car'
+}
+store = sinClient.openStore('myStore')
 
+"""
+Add 1 doc to the store
+"""
+store.addDoc(doc)
+
+
+"""
+Add 2 doc to the store in a batch
+store.addDocs([doc,doc])
+"""
+</code></pre>
+<p>We can also import a file into the store:</p>
+<pre><code>
+"""
+Given a new-line delimited file, where each line is a json object representation of our doc,
+we can import the file into the store by:
+"""
+store.importFile('/tmp/mydata.json')
+
+</code></pre>
+
+	<a name="addDocRest">
+	<h4>Rest end-point:</h4>
+	<p>We offer 2 Rest apis for adding docs into our store:</p>
+<p>Add 1 doc into the store:</p>
+	<ul>
+	<li>Method: POST</li>
+	<li>Url: http://sinHost:sinPort/store/addDoc/&lt;store-name&gt;</li>
+	<li>Parameter:
+		<ul>
+			<li>doc - json representation of your doc</li>
+		</ul>
+	</li>
+	<li>Example:
+		<pre><code>
+doc = 
+{
+'id' : 8,
+'color' : 'red'
+}
+		</code></pre>
+	</li>
+	</ul>
+<p>Add multiple docs into the store in a batch:</p>
+		<ul>
+		<li>Method: POST</li>
+		<li>Url: http://sinHost:sinPort/store/addDocs/&lt;store-name&gt;</li>
+		<li>Parameter:
+			<ul>
+				<li>docs - json array of json representation of our data</li>
+			</ul>
+		</li>
+		<li>Example:
+			<pre><code>
+docs = 
+[{
+  'id' : 8,
+  'color' : 'red'
+ },
+ {
+  'id' : 9,
+  'color' : 'green'
+ },]
+			</code></pre>
+		</li>
+		</ul>
 
    <a name="search" />
    <h2>Search and retrieve from your index:</h2>
    <p>
-
+Now that we know how to add docs into our store, we want to search and/or retrieve it.
    </p>
+<p>
+  The query part of Sin leverages the Sensei heavily.
+  Query information on Sensei:
+	<ul>
+	  <li>Python client: see <a href="https://github.com/wonlay/sin/blob/master/client/python/src/senseiClient.py">Sensei Python Client</a> for more details.</li>
+	  <li>Rest: see <a href="http://javasoze.github.com/sensei/docs/src/docbkx/sensei.html#d0e1084">Sensei Rest Documentation</a> for more details</li>
+	</ul>
+</p>
+<a name="queryPython">
+<h4>Python:</h4>
+<pre><code>
+store = sinClient.openStore('myStore')
+
+id = 7
+
+"""
+get the doc from the store
+"""
+doc = store.getDoc(7)
+
+"""
+search the store
+"""
+searcher = store.getSenseiClient()
+
+req = SenseiRequest()
+
+sel = SenseiSelection("color")
+sel.addSelection("red")
+
+req.selections = [sel]
+
+res = searcher.doQuery(req)
+
+print res.numHits
+
+</code></pre>
+
+<a name="queryRest">
+<h4>Rest:</h4>
+<p>Retrieve docs from a store:</p>
+<ul>
+<li>Method: GET</li>
+<li>Url: http://sinHost:sinPort/store/get-doc/&lt;id&gt;/&lt;store-name&gt;</li>
+<li>Output: the original doc&apos;s json representation</li>
+</ul>
+<p>Query the store:</p>
+From the Dashboard, after the store is turned on, you will see a search end-point. You can search using this end-point.
+To learn more about the syntax of this api, checkout: <a href="http://javasoze.github.com/sensei/docs/src/docbkx/sensei.html#d0e1084">Sensei Rest Documentation</a>.
   </body>
 </html>
