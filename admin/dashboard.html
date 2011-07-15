@@ -3,6 +3,7 @@
   <head> 
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
     <title>Sin - Dashboard</title>
+    <link rel="stylesheet" media="screen" type="text/css" href="css/main.css" /> 
     <script type="text/javascript" src="https://www.google.com/jsapi"></script>
     <script type="text/javascript">
     // <![CDATA[
@@ -29,15 +30,15 @@
     <script id="content-column-tmpl" type="text/x-mustache-tmpl">
       <div>
         {{^add}}
-        <div>
-        Name: {{ name }}; Type: {{ type }};
-        {{#from}} From: {{ from }}; {{/from}}
+        <div class="table display-row">
+        <div class="cell">{{ name }}</div> <div class="cell">{{ type }}</div>
+        {{!{{#from}} From: {{ from }}; {{/from}}
         {{#index}} Index: {{ index }}; {{/index}}
         {{#multi}}Multi: {{ multi }}; {{/multi}}
         {{#delimiter}}Delimiter: {{ delimiter }}; {{/delimiter}}
         {{#store}}Store: {{ store }}; {{/store}}
-        {{#termvector}}Term Vector: {{ termvector }}; {{/termvector}}
-        <input class="edit" type="button" value="Edit" /> <input class="remove" type="button" value="Remove" /></div>
+        {{#termvector}}Term Vector: {{ termvector }}; {{/termvector}}}}
+        <div class="cell display-op"><div class="op"><input class="edit" type="button" value="Edit" /> <input class="remove" type="button" value="Remove" /></div></div></div>
         {{/add}}
       </div>
       <div class="editor" style="{{^add}}display: none;{{/add}}">
@@ -93,7 +94,9 @@
     <script id="content-facet-tmpl" type="text/x-mustache-tmpl">
       <div>
         {{^add}}
-        <div>Name: {{ name }} Type: {{ type }} <input class="edit" type="button" value="Edit" /> <input class="remove" type="button" value="Remove" /></div>
+        <div class="table display-row">
+        <div class="cell">{{ name }}</div> <div class="cell">{{ type }}</div>
+        <div class="cell display-op"><div class="op"><input class="edit" type="button" value="Edit" /> <input class="remove" type="button" value="Remove" /></div></div></div>
         {{/add}}
       </div>
       <div class="editor" style="{{^add}}display: none;{{/add}}">
@@ -131,7 +134,7 @@
       </div>
     </script>
     <script id="content-store-tmpl" type="text/x-mustache-tmpl">
-      <div>
+      <div class="store-container">
         <div><a href="http://{{ broker_host }}:{{{broker_port}}}/">Search</a> | <a class="manage" href="javascript:_void();">Manage</a> | <a href="javascript:_void();" class="deleteStore">Delete</a> | <a class="restart" href="javascript:_void();">(Re-)Start</a> | <a class="stopStore" href="javascript:_void();">Stop</a> | <span>Status:</span> <span class="status">{{ status_display }}</span></div>
         <h2>{{ name }}</h2>
         <div>
@@ -144,6 +147,10 @@
         <div class="manage-tab" style="display: none;">
           <div>
             <h3>Columns</h3>
+            <div class="table display-row header">
+              <div class="cell">Name</div> <div class="cell">Type</div>
+              <div class="cell display-op">&nbsp;</div>
+            </div>
             <div class="columns">
             </div>
             <div class="add-new-column">
@@ -151,11 +158,16 @@
           </div>
           <div>
             <h3>Facets</h3>
+            <div class="table display-row header">
+              <div class="cell">Name</div> <div class="cell">Type</div>
+              <div class="cell display-op">&nbsp;</div>
+            </div>
             <div class="facets">
             </div>
             <div class="add-new-facet">
             </div>
           </div>
+          <br />
           <div>
             <input class="save-store" type="button" value="Save" />
             <input class="cancel-edit-store" type="button" value="Cancel" />
@@ -172,6 +184,7 @@
           </div>
         </div>
       </div>
+      <hr />
     </script>
     <script id="sin-tmpl" type="text/x-mustache-tmpl">
       <h3><a href="index.html">Home</a></h3>
@@ -183,7 +196,7 @@
         Description: <textarea class="new-store-desc"></textarea> <br />
         <input class="new-store-add" type="button" value="Add New Store" />
       </div>
-      <br />
+      <hr />
       <div class="stores-container">
       </div>
     </script>

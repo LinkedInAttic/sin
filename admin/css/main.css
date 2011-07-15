@@ -1,0 +1,43 @@
+.store-container,
+.display-row.header,
+.columns,
+.add-new-column,
+.facets,
+.add-new-facet
+{
+  margin-left: 10px;
+}
+
+.table {
+  display: table;
+}
+
+.cell {
+  display: table-cell;
+}
+
+.display-row {
+  width: 450px;
+  height: 22px;
+}
+
+.display-row .cell {
+  width: 150px;
+}
+
+.display-row.header .cell {
+  background: #DDDDDD;
+}
+
+.display-row.header .display-op {
+  background: #FFFFFF; !important;
+}
+
+.display-op {
+  width: 150px !important;
+}
+
+.cell .op {
+  display: none;
+}
+
