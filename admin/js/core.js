@@ -210,13 +210,23 @@ $(function() {
       'click .edit': 'showEditor',
       'click .cancel-edit-column': 'showEditor',
       'click .remove': 'removeMe',
-      'click .save-column': 'saveColumn'
+      'click .save-column': 'saveColumn',
+      'mouseout': 'mouseOut',
+      'mouseover': 'mouseOver'
     },
 
     initialize: function() {
-      _.bindAll(this, 'showEditor', 'typeChanged', 'multiChanged', 'removeMe', 'saveColumn', 'render');
+      _.bindAll(this, 'mouseOut', 'mouseOver', 'showEditor', 'typeChanged', 'multiChanged', 'removeMe', 'saveColumn', 'render');
       this.model.bind('change', this.render);
       this.model.view = this;
+    },
+
+    mouseOut: function() {
+      this.$('.cell .op').hide();
+    },
+
+    mouseOver: function() {
+      this.$('.cell .op').show();
     },
 
     multiChanged: function() {
@@ -351,12 +361,22 @@ $(function() {
       'click .cancel-edit-facet': 'showEditor',
       'click .remove': 'removeMe',
       'click .add-param': 'addParam',
-      'click .save-facet': 'saveFacet'
+      'click .save-facet': 'saveFacet',
+      'mouseout': 'mouseOut',
+      'mouseover': 'mouseOver'
     },
 
     initialize: function() {
-      _.bindAll(this, 'showEditor', 'typeChanged', 'removeMe', 'saveFacet', 'render', 'addParam');
+      _.bindAll(this, 'mouseOut', 'mouseOver', 'showEditor', 'typeChanged', 'removeMe', 'saveFacet', 'render', 'addParam');
       this.model.view = this;
+    },
+
+    mouseOut: function() {
+      this.$('.cell .op').hide();
+    },
+
+    mouseOver: function() {
+      this.$('.cell .op').show();
     },
 
     removeMe: function() {

@@ -34,7 +34,7 @@
 
    <a name="overview" />
   <h2>Overview:</h2>
-   <p>Sin is a service that allows you to create searchable content stores in virtual cloud. Sin leverages <a href="http://www.senseidb.com">Sensei</a> to provide a powerful yet simple way to interact with your store.</p>
+   <p>Sin is a service that allows you to create searchable content stores in virtual cloud. Sin leverages <a href="http://www.senseidb.com">Sensei</a> to provide a powerful yet simple way to interact with your stores.</p>
    <p>
 	 Get started and running is simple. Just follow these simple steps:
 	<ol>
@@ -42,7 +42,7 @@
 		<li>Create/Edit the schema</li>
 		<li>Add/append docs to the store</li>
 		<li>Search your store</li>
-		<li>Expand your store&apos;capacity</li>
+		<li>Expand your store's capacity</li>
 		<li>Create more stores!</li>
 	</ol>
    </p>
@@ -60,7 +60,7 @@
 			<li>desc - description, default = empty string</li>
 		</ul>
 		<p>
-			example JSON response:
+			Example JSON response:
 			<pre><code>
 { 				
     sensei_port: 10002
@@ -78,7 +78,7 @@
     name: "john2"
 }
 			</code></pre>
-			example JSON error:
+			Example JSON error:
 			<pre><code>
 {
     ok: false
@@ -106,13 +106,13 @@ store = client.newStore('myStore',3,5,'my new store')
    <a name="openStore" />
    <h2>Open an existing store:</h2>
    <p>
-     All the created stores are listed on the <a href="/static/dashboard.html">Dashboard</a>
+     All the created stores are listed on the <a href="/static/dashboard.html">Dashboard</a>.
    </p>
    <p>
 	 Ways of opening a store:
 	 <ul>
 		<li>Do a GET from the Rest end-point: <b>http://sin-host:sin-port/store/get-store/&lt;store-name&gt;</b>
-			<p>the response is the same as the new-store call.</p>
+			<p>The response is the same as the new-store call.</p>
 		</li>
 		<li>Use the Python script:
 		<pre><code>
@@ -132,7 +132,7 @@ store = client.openStore('john3')
    <p>
 	The best way to create a schema is via the <a href="/static/dashboard.html">Dashboard</a>
    </p>
-   <p>A store's schema consists of two parts: <b>Columns</b> and <b>Facets</b></p>
+   <p>A store's schema consists of two parts: <b>Columns</b> and <b>Facets</b>:</p>
 
 <a name="schemaColumns" />
    <h4>Columns:</h4>
@@ -260,7 +260,7 @@ store.importFile('/tmp/mydata.json')
 
 	<a name="addDocRest">
 	<h4>Rest end-point:</h4>
-	<p>We offer 2 Rest apis for adding docs into our store:</p>
+	<p>We offer 2 Rest APIs for adding docs into our store:</p>
 <p>Add 1 doc into the store:</p>
 	<ul>
 	<li>Method: POST</li>
@@ -357,6 +357,6 @@ print res.numHits
 </ul>
 <p>Query the store:</p>
 From the Dashboard, after the store is turned on, you will see a search end-point. You can search using this end-point.
-To learn more about the syntax of this api, checkout: <a href="http://javasoze.github.com/sensei/docs/src/docbkx/sensei.html#d0e1084">Sensei Rest Documentation</a>.
+To learn more about the syntax of this API, checkout: <a href="http://javasoze.github.com/sensei/docs/src/docbkx/sensei.html#d0e1084">Sensei Rest Documentation</a>.
   </body>
 </html>
