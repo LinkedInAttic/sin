@@ -13,6 +13,7 @@
     <script type="text/javascript" src="js/mustache.js" ></script>
     <script type="text/javascript" src="http://documentcloud.github.com/underscore/underscore.js" ></script>
     <script type="text/javascript" src="http://documentcloud.github.com/backbone/backbone.js" ></script>
+    <script type="text/javascript" src="js/jquery.timeago.js" ></script>
     <script type="text/javascript" src="js/core.js" ></script>
     <!--script id="content-column-tmpl" type="text/x-mustache-tmpl">
       <label>{{ name }}</label>:
@@ -136,8 +137,8 @@
         <div>
           <p>Current Size: {{ numDocs }} documents</p>
           <p>Description: {{description}} </p>
-          <p>Created time: {{created}}</p>
-          <p>Search endpoint: <a href="http://{{ broker_host }}:{{broker_port}}/sensei">http://{{broker_host}}:{{broker_port}}/sensei</a></p>
+          <p>Created: <span class="created">{{created}}</span></p>
+          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Search endpoint: <a href="http://{{ broker_host }}:{{broker_port}}/sensei">http://{{broker_host}}:{{broker_port}}/sensei</a></p>
         </div>
         <div class="manage-tab" style="display: none;">
           <div>

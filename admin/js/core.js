@@ -382,6 +382,8 @@ $(function() {
       $.getJSON('/store/stop-store/'+model.get('name'),function(resp){
         if (resp.status_display)
           me.$('.status').text(resp.status_display);
+        if (resp.status < 15)
+          me.$('.endpoint').hide();
 
         if (!resp["ok"]){
           alert(resp["msg"]);
@@ -418,6 +420,9 @@ $(function() {
       $.getJSON('/store/restart-store/'+this.model.get('name') + '/', function(res) {
         if (res.status_display)
           me.$('.status').text(res.status_display);
+        if (res.status == 15)
+          me.$('.endpoint').show();
+
         if (!res.ok)
           alert(res.error);
         else
@@ -579,7 +584,10 @@ $(function() {
     },
 
     render: function() {
-      $(this.el).html($.mustache(this.template, this.model.toJSON()));
+      var obj = this.model.toJSON();
+      obj.is_running = obj.status == 15;
+      $(this.el).html($.mustache(this.template, obj));
+      this.$('.created').text($.timeago(this.$('.created').text()));
 
       var columns = this.$('.columns');
       this.model.get('columns').each(function(obj) {
