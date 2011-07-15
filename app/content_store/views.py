@@ -129,7 +129,6 @@ def addDoc(request,store_name):
       resp = {'ok':False,'error':e}
   
   return HttpResponse(json.json_encode(resp))
-  
 
 def addDocs(request,store_name):
   docs = request.POST.get('docs');  
@@ -221,7 +220,6 @@ def stopStore(request, store_name):
     return HttpResponse(json.json_encode(resp))
   except Exception as e:
     return HttpResponse(json.json_encode({'ok':False,'error':e}))
-  
 
 def restartStore(request, store_name):
   stopStore(request, store_name)
@@ -273,6 +271,7 @@ def available(request,store_name):
 
 def stores(request):
   objs = ContentStore.objects.order_by('-created')
+  #TODO: remove multiple calls to get broker_host.
   resp = [store.to_map() for store in objs]
   return HttpResponse(json.json_encode(resp))
 
