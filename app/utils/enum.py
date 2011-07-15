@@ -8,7 +8,7 @@ def to_choices(d):
   return map(lambda x: (x[1], x[0]), d.items())
 
 STORE_STATUS_BASE = (
-  ('new', 0, _(u'New')),
+  ('new', 0, _(u'Stopped')),
   ('disabled', 5, _(u'Disabled')),
   ('stopped', 10, _(u'Stopped')),
   ('running', 15, _(u'Running')),
