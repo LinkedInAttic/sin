@@ -65,3 +65,20 @@ class ContentStore(models.Model):
 
   broker_host = property(get_broker_host)
 
+  def to_map(self):
+    obj = {
+      'id': self.id,
+      'name': self.name,
+      'replica': self.replica,
+      'partitions': self.partitions,
+      'sensei_port': self.sensei_port,
+      'broker_host': self.broker_host,
+      'broker_port': self.broker_port,
+      'config': self.config,
+      'created': self.created,
+      'status': self.status,
+      'status_display': unicode(enum.STORE_STATUS_DISPLAY[self.status]),
+      'description' : self.description,
+    }
+    return obj
+

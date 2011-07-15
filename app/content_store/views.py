@@ -38,21 +38,13 @@ def openStore(request,store_name):
     }
     return HttpResponse(json.json_encode(resp))
 
-  resp = {
+  resp = store.to_map();
+
+  resp.update({
     'ok' : True,
-    'id': store.id,
-    'name': store.name,
-    'sensei_port': store.sensei_port,
-    'broker_host': store.broker_host,
-    'broker_port': store.broker_port,
-    'config': store.config,
-    'created': store.created,
-    'status': store.status,
-    'status_display': unicode(enum.STORE_STATUS_DISPLAY[store.status]),
     'kafkaHost' : kafkaHost,
     'kafkaPort' : kafkaPort,
-    'description' : store.description,
-  }
+  })
   return HttpResponse(json.json_encode(resp))
 
 def newStore(request,store_name):
@@ -78,21 +70,12 @@ def newStore(request,store_name):
     description=desc
   )
   store.save()
-  resp = {
+  resp = store.to_map()
+  resp.update({
     'ok' : True,
-    'id': store.id,
-    'name': store.name,
-    'sensei_port': store.sensei_port,
-    'broker_host': store.broker_host,
-    'broker_port': store.broker_port,
-    'config': store.config,
-    'created': store.created,
-    'status': store.status,
-    'status_display': unicode(enum.STORE_STATUS_DISPLAY[store.status]),
     'kafkaHost' : kafkaHost,
     'kafkaPort' : kafkaPort,
-    'description' : store.description,
-  }
+  })
   return HttpResponse(json.json_encode(resp))
 
 def deleteStore(request,store_name):
@@ -210,11 +193,11 @@ def startStore(request, store_name):
 
     store.status = enum.STORE_STATUS['running']
     store.save()
-    return HttpResponse(json.json_encode({
+    resp = store.to_map()
+    resp.update({
       "ok":True,
-      "status": store.status,
-      "status_display": unicode(enum.STORE_STATUS_DISPLAY[store.status]),
-    }))
+    })
+    return HttpResponse(json.json_encode(resp))
   except Exception as e:
     return HttpResponse(json.json_encode({'ok':False,'error':e}))
 
@@ -231,11 +214,11 @@ def stopStore(request, store_name):
                                urllib.urlencode(params))
     store.status = enum.STORE_STATUS['stopped']
     store.save()
-    return HttpResponse(json.json_encode({
+    resp = store.to_map()
+    resp.update({
       "ok":True,
-      "status": store.status,
-      "status_display": unicode(enum.STORE_STATUS_DISPLAY[store.status]),
-    }))
+    })
+    return HttpResponse(json.json_encode(resp))
   except Exception as e:
     return HttpResponse(json.json_encode({'ok':False,'error':e}))
   
@@ -290,19 +273,7 @@ def available(request,store_name):
 
 def stores(request):
   objs = ContentStore.objects.order_by('-created')
-  resp = [{
-      'id': store.id,
-      'name': store.name,
-      'sensei_port': store.sensei_port,
-      'broker_host': store.broker_host,
-      'broker_port': store.broker_port,
-      'config': store.config,
-      'created': store.created,
-      'description' : store.description,
-      'status': store.status,
-      'status_display': unicode(enum.STORE_STATUS_DISPLAY[store.status]),
-    }
-    for store in objs]
+  resp = [store.to_map() for store in objs]
   return HttpResponse(json.json_encode(resp))
 
 def allocateResource(store):
