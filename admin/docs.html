@@ -107,8 +107,91 @@ store = client.openStore('john3')
    </p>
    <p>
 	The best of creating a schema is via the <a href="/static/dashboard.html">Dashboard</a>
-
-
+   </p>
+   <p>A store's schema consists of two parts: <b>Columns</b> and <b>Facets</b></p>
+   <h4>Columns:</h4>
+   <p>
+	This part of the schema defines the indexing rules. Sin's indexing engine uses the column definitions to apply indexing rules
+	on a given piece of data.
+   </p>
+   <p>Consider the following example: </p>
+<pre><code>
+{
+  "id": 7,
+  "color": "red",
+  "price": 8000,
+  "tags": "cool,hybrid,leather",
+  "contents" : "this is an awesome car"
+}
+</code></pre>
+We would create the following column definitions:
+<table border="1" width="50%">
+	<tr>
+		<th>Name</th>
+		<th>Definition</th>
+		<th>Explanation</th>
+	</tr>
+	<tr>
+		<td>id</td>
+		<td>No need to specify, applied by default</td>
+		<td>unique identifier, must exist for each data object, must be a number >= 0</td>
+	</tr>
+	<tr>
+		<td>color</td>
+		<td>type: string, multi: false</td>
+		<td>a meta field with string values, each doc contains at most 1 field value</td>
+	</tr>
+	<tr>
+		<td>price</td>
+		<td>type: int, multi: false</td>
+		<td>a meta field with an integer value, each doc contains at most 1 field value</td>
+	</tr>
+	<tr>
+		<td>tags</td>
+		<td>type: string, multi: true</td>
+		<td>a meta field with string values, each doc contain many field values represented by a comma-delimited string</td>
+	</tr>
+	<tr>
+		<td>contents</td>
+		<td>type: text</td>
+		<td>text field</td>
+	</tr>
+</table>
+<h4>Facets:</h4>
+   <p>
+	Similarly, the Facets part of the schema defines search rules. These rules only apply to the meta fields.
+   </p>
+   <p>
+	Let&apos;s take the same example and build the facet definitions: 
+   </p>
+<table border="1" width="50%">
+	<tr>
+		<th>Name</th>
+		<th>Definition</th>
+		<th>Explanation</th>
+	</tr>
+	<tr>
+		<td>color</td>
+		<td>type: simple</td>
+		<td>Simple facet using the color column</td>
+	</tr>
+	<tr>
+		<td>price</td>
+		<td>type: range</td>
+		<td>Range facet using the price column. Ranges are specified by the parameters, e.g. param name: range, param value: 5000,10000</td>
+	</tr>
+	<tr>
+		<td>tags</td>
+		<td>type: multi</td>
+		<td>Multi-valued facet using the tags column.</td>
+	</tr>
+</table>
+<h4>Raw schema:</h4>
+<p>The output of the schema builder is a json object. You can view the contents of the json object by clicking on the <i>"Raw"</i> link. Advanced users can just edit the json object specify the schema settings.
+</p>
+<p>
+	For more details, please checkout the <a href="http://javasoze.github.com/sensei/docs/src/docbkx/sensei.html#d0e456">Data Model</a> section of the <a href="http://www.senseidb.com">Sensei</a> documentation.
+</p>
    <a name="addDocs" />
    <h2>Add docs to your store:</h2>
    <p>
