@@ -1,5 +1,6 @@
 import logging, urllib2
 from django.db import models
+from django.db.models import Max
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 
@@ -7,7 +8,7 @@ from utils import enum
 from utils.enum import to_choices
 from utils import json
 
-from cluster.models import Group
+from cluster.models import Group, Node
 
 default_schema = {
   "facets": [
@@ -32,6 +33,19 @@ default_schema = {
   }
 }
 
+class ContentStoreQuerySet(models.query.QuerySet):
+  def to_map_list(self):
+    objs = list(self)
+    nodes = Node.objects.filter(group__in=[o.group_id for o in objs]).values('group_id').annotate(host=Max('host'))
+    node_map = dict([(o['group_id'], o['host']) for o in nodes])
+    for obj in objs:
+      obj._broker_host_cache = node_map[obj.group_id]
+    return [store.to_map() for store in objs]
+
+class ContentStoreManager(models.Manager):
+  def get_query_set(self):
+    return ContentStoreQuerySet(model=self.model, using=self._db)
+
 class ContentStore(models.Model):
   _broker_host_cache = None
 
@@ -52,6 +66,8 @@ class ContentStore(models.Model):
     default=enum.STORE_STATUS['new'])
 
   group = models.ForeignKey(Group, related_name="stores", default=1)
+
+  objects = ContentStoreManager()
 
   def get_sensei_port(self):
     return self.sensei_port_base + self.pk
