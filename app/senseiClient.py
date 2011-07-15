@@ -1,1 +1,1 @@
-../client/python/src/senseiClient.py
+../client/python/src/sinClient/senseiClient.py

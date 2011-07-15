@@ -1,1 +1,1 @@
-../client/python/src/kafka.py
+../client/python/src/sinClient/kafka.py
