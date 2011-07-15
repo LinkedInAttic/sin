@@ -6,12 +6,10 @@ setup(
     name='sin-python-client',
     version='0.1-SNAPSHOT',
     description='This library implements a Sin client',
-    author='LinkedIn.com',
     url='https://github.com/wonlay/sin',
-    package_dir={'': 'src'},
-    py_modules=[
-        'sinClient','kafka','senseiClient'
-    ],
+    packages=['sinClient'],
+    package_dir={'sinClient': 'src/sinClient'},
+    package_data={'sinClient': ['data/test.json']},
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Service",
