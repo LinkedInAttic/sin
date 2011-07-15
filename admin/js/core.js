@@ -686,6 +686,8 @@ $(function() {
 
     render: function() {
       var obj = this.model.toJSON();
+      obj.sin_host = location.hostname;
+      obj.sin_port = location.port;
       obj.is_running = obj.status == 15;
       obj.has_running_info = obj.running_info.numdocs >= 0;
 
