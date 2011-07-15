@@ -1,5 +1,6 @@
-import logging
+import logging, urllib2
 from django.db import models
+from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
 
 from utils import enum
@@ -32,6 +33,8 @@ default_schema = {
 }
 
 class ContentStore(models.Model):
+  _broker_host_cache = None
+
   sensei_port_base = 10000
   broker_port_base = 15000
 
@@ -61,9 +64,29 @@ class ContentStore(models.Model):
   broker_port = property(get_broker_port)
 
   def get_broker_host(self):
-    return self.group.nodes.order_by('?')[0].host
+    if not self._broker_host_cache:
+      self._broker_host_cache = self.group.nodes.order_by('?')[0].host
+
+    return self._broker_host_cache
 
   broker_host = property(get_broker_host)
+
+  def get_running_info(self):
+    if self.status != enum.STORE_STATUS['running']:
+      return {}
+
+    res = {}
+    try:
+      url = 'http://%s:%s/sensei/sysinfo' % (self.broker_host, self.broker_port)
+
+      doc = urllib2.urlopen(url).read()
+      res = simplejson.loads(doc.encode('utf-8'))
+    except Exception as e:
+      logging.exception(e)
+
+    return res
+
+  running_info = property(get_running_info)
 
   def to_map(self):
     obj = {
@@ -76,6 +99,7 @@ class ContentStore(models.Model):
       'broker_port': self.broker_port,
       'config': self.config,
       'created': self.created,
+      'running_info': self.running_info,
       'status': self.status,
       'status_display': unicode(enum.STORE_STATUS_DISPLAY[self.status]),
       'description' : self.description,
