@@ -137,16 +137,16 @@
     </script>
     <script id="content-store-tmpl" type="text/x-mustache-tmpl">
       <div class="store-container">
-        <div><a href="http://{{ broker_host }}:{{ broker_port }}/">Search</a> | <a class="manage" href="javascript:_void();">Schema</a> | <a class="admin" href="http://{{ broker_host }}:{{ broker_port }}/admin.html">Admin</a> | <a href="javascript:_void();" class="deleteStore">Delete</a> | <a class="restart" href="javascript:_void();">(Re-)Start</a> | <a class="stopStore" href="javascript:_void();">Stop</a> | <span>Status:</span> <span class="status">{{ status_display }}</span></div>
+        <div><a target="_blank" href="http://{{ broker_host }}:{{ broker_port }}/">Search</a> | <a class="manage" href="javascript:_void();">Schema</a> | <a class="admin" target="_blank" href="http://{{ broker_host }}:{{ broker_port }}/admin.html">Admin</a> | <a href="javascript:_void();" class="deleteStore">Delete</a> | <a class="restart" href="javascript:_void();">(Re-)Start</a> | <a class="stopStore" href="javascript:_void();">Stop</a> | <span>Status:</span> <span class="status">{{ status_display }}</span></div>
         <h2>{{ name }}</h2>
         <div>
           {{#has_running_info}}<p>Current Size: {{ running_info.numdocs }} documents</p>{{/has_running_info}}
           {{#running_info.lastmodified}}<p>Last Modified: <span class="timeago">{{#dateToString}}{{ running_info.lastmodified }}{{/dateToString}}</span></p>{{/running_info.lastmodified}}
           {{#description}}<p>Description: {{description}}</p>{{/description}}
           <p>Created: <span class="timeago">{{created}}</span></p>
-          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Search endpoint: <a href="http://{{ broker_host }}:{{broker_port}}/sensei">http://{{broker_host}}:{{broker_port}}/sensei</a></p>
-          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Add doc endpoint: <a href="http://{{sin_host}}:{{sin_port}}/store/addDoc/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/addDoc/{{name}}/</a></p>
-          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Add docs endpoint: <a href="http://{{sin_host}}:{{sin_port}}/store/addDocs/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/addDocs/{{name}}/</a></p>
+          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Search endpoint: <a target="_blank" href="http://{{ broker_host }}:{{broker_port}}/sensei">http://{{broker_host}}:{{broker_port}}/sensei</a></p>
+          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Add doc endpoint: <a target="_blank" href="http://{{sin_host}}:{{sin_port}}/store/addDoc/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/addDoc/{{name}}/</a></p>
+          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Add docs endpoint: <a target="_blank" href="http://{{sin_host}}:{{sin_port}}/store/addDocs/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/addDocs/{{name}}/</a></p>
         </div>
         <div class="manage-tab" style="display: none;">
           <div>
