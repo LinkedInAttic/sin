@@ -499,7 +499,7 @@ $(function() {
       $.getJSON('/store/delete-store/'+model.get('name'),function(resp){
         if (resp["ok"]){
           sinView.collection.remove(model);
-          $('#main-area').empty().append(sinView.render().el);
+          $(model.view.el).remove();
         }
         else{
           alert(resp["msg"]);
@@ -686,6 +686,8 @@ $(function() {
 
     render: function() {
       var obj = this.model.toJSON();
+      obj.sin_host = location.hostname;
+      obj.sin_port = location.port;
       obj.is_running = obj.status == 15;
       obj.has_running_info = obj.running_info.numdocs >= 0;
 
@@ -841,8 +843,8 @@ $(function() {
           return baseSync(method, model, success, error);
         break;
       case "delete":
-        if (model.delete)
-          resp = model.delete();
+        if (model.del)
+          resp = model.del();
         else
           return baseSync(method, model, success, error);
         break;

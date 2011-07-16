@@ -1,4 +1,5 @@
 import random, os, subprocess, socket
+from django.db import connection
 from django.conf import settings
 from django.http import HttpResponse
 from django.template import loader
@@ -352,8 +353,7 @@ def available(request,store_name):
 
 def stores(request):
   objs = ContentStore.objects.order_by('-created')
-  #TODO: remove multiple calls to get broker_host.
-  resp = [store.to_map() for store in objs]
+  resp = objs.to_map_list()
   return HttpResponse(json.json_encode(resp))
 
 def allocateResource(store):
