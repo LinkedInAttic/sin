@@ -2,8 +2,11 @@ import random, os, subprocess, socket
 from django.conf import settings
 from django.http import HttpResponse
 from django.template import loader
-from django.http import Http404
-
+from django.http import HttpResponseBadRequest
+from django.http import HttpResponseNotFound
+from django.http import HttpResponseGone
+from django.http import HttpResponseNotAllowed
+from django.http import HttpResponseServerError
 import kafka
 
 from content_store.models import ContentStore
@@ -36,7 +39,7 @@ def openStore(request,store_name):
       'ok' : False,
       'error' : 'store: %s does not exist.' % store_name
     }
-    return HttpResponse(json.json_encode(resp))
+    return HttpResponseNotFound(json.json_encode(resp))
 
   resp = store.to_map();
 
@@ -53,7 +56,7 @@ def newStore(request,store_name):
       'ok' : False,
       'error' : 'store: %s already exists.' % store_name
     }
-    return HttpResponse(json.json_encode(resp))
+    return HttpResponseNotAllowed(json.json_encode(resp))
 
   replica = int(request.POST.get('replica','2'))
   partitions = int(request.POST.get('partitions','10'))
@@ -84,7 +87,7 @@ def deleteStore(request,store_name):
       'ok' : False,
       'msg' : 'store: %s does not exist.' % store_name
     }
-    return HttpResponse(json.json_encode(resp))
+    return HttpResponseNotFound(json.json_encode(resp))
   stopStore(request, store_name)
 
   store_data_dir = os.path.join(settings.STORE_HOME, store_name)
@@ -100,40 +103,65 @@ def deleteStore(request,store_name):
   return HttpResponse(json.json_encode(resp))
 
 def updateConfig(request, store_name):
+  if not ContentStore.objects.filter(name=store_name).exists():
+    resp = {
+      'ok' : False,
+      'msg' : 'store: %s does not exist.' % store_name
+    }
+    return HttpResponseNotFound(json.json_encode(resp))
+
   config = request.POST.get('config');
   resp = {
     'ok': False,
   }
+  
   if config:
     # TODO: valid configuration.
     ContentStore.objects.filter(name=store_name).update(config=config);
     resp['ok'] = True
+    return HttpResponse(json.json_encode(resp))
   else:
     resp['error'] = 'No config provided.'
+    return HttpResponseNotFound(json.json_encode(resp))
 
-  return HttpResponse(json.json_encode(resp))
 
 def addDoc(request,store_name):
+  if not ContentStore.objects.filter(name=store_name).exists():
+    resp = {
+      'ok' : False,
+      'msg' : 'store: %s does not exist.' % store_name
+    }
+    return HttpResponseNotFound(json.json_encode(resp))
+
   doc = request.POST.get('doc');
   
   if not doc:
     resp = {'ok':False,'error':'no doc posted'}
+    return HttpResponseBadRequest(json.json_encode(resp))
   else:
     try:
       jsonDoc = simplejson.loads(doc.encode('utf-8'))
-      kafkaProducer.send([json.json_encode(jsonDoc)], store_name.encode('utf-8'))
+      kafkaProducer.send([json.json_encode(jsonDoc).encode('utf-8')], store_name.encode('utf-8'))
       resp = {'ok': True,'numPosted':1}
+      return HttpResponse(json.json_encode(resp))
     except ValueError:
       resp = {'ok':False,'error':'invalid json: %s' % doc}
+      return HttpResponseBadRequest(json.json_encode(resp))
     except Exception as e:
       resp = {'ok':False,'error':e}
-  
-  return HttpResponse(json.json_encode(resp))
+      return HttpResponseServerError(json.json_encode(resp))
 
 def addDocs(request,store_name):
+  if not ContentStore.objects.filter(name=store_name).exists():
+    resp = {
+      'ok' : False,
+      'msg' : 'store: %s does not exist.' % store_name
+    }
+    return HttpResponseNotFound(json.json_encode(resp))
   docs = request.POST.get('docs');  
   if not docs:
     resp = {'ok':False,'error':'no docs posted'}
+    return HttpResponseBadRequest(json.json_encode(resp))
   else:
     try:
       jsonArray = simplejson.loads(docs.encode('utf-8'))
@@ -143,15 +171,24 @@ def addDocs(request,store_name):
         messages.append(str)
       kafkaProducer.send(messages, store_name.encode('utf-8'))
       resp = {'ok':True,'numPosted':len(messages)}
+      return HttpResponse(json.json_encode(resp))
     except ValueError:
       resp = {'ok':False,'error':'invalid json: %s' % docs}
+      return HttpResponseBadRequest(json.json_encode(resp))
     except Exception as e:
       resp = {'ok':False,'error':e}
-  return HttpResponse(json.json_encode(resp))
+      return HttpResponseServerError(json.json_encode(resp))
 
 def startStore(request, store_name):
   try:
     store = ContentStore.objects.get(name=store_name)
+    if not store:
+      resp = {
+        'ok' : False,
+        'msg' : 'store: %s does not exist.' % store_name
+      }
+      return HttpResponseNotFound(json.json_encode(resp))
+
     webapp = os.path.join(settings.SENSEI_HOME,'src/main/webapp')
     store_home = os.path.join(settings.STORE_HOME, store_name)
     index = os.path.join(store_home, 'index')
@@ -198,12 +235,17 @@ def startStore(request, store_name):
     })
     return HttpResponse(json.json_encode(resp))
   except Exception as e:
-    return HttpResponse(json.json_encode({'ok':False,'error':e}))
+    return HttpResponseServerError(json.json_encode({'ok':False,'error':e}))
 
 def stopStore(request, store_name):
   try:
     store = ContentStore.objects.get(name=store_name)
-
+    if not store:
+      resp = {
+        'ok' : False,
+        'msg' : 'store: %s does not exist.' % store_name
+      }
+      return HttpResponseNotFound(json.json_encode(resp))
     params = {}
     params["name"] = store_name
 
@@ -219,17 +261,16 @@ def stopStore(request, store_name):
     })
     return HttpResponse(json.json_encode(resp))
   except Exception as e:
-    return HttpResponse(json.json_encode({'ok':False,'error':e}))
+    return HttpResponseServerError(json.json_encode({'ok':False,'error':e}))
 
 def restartStore(request, store_name):
   stopStore(request, store_name)
   return startStore(request, store_name)
 
 def getSize(request,store_name):
-  store = ContentStore.objects.get(name=store_name)
-  if not store:
+  if not ContentStore.objects.get(name=store_name).exists():
     resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
-    return HttpResponse(json.json_encode(resp))
+    return HttpResponseNotFound(json.json_encode(resp))
   senseiHost = store.broker_host
   senseiPort = store.broker_port
   senseiClient = SenseiClient(senseiHost,senseiPort)
@@ -241,10 +282,9 @@ def getSize(request,store_name):
   
 def getDoc(request,store_name,id):
   uid = long(id)
-  store = ContentStore.objects.get(name=store_name)
-  if not store:
+  if not ContentStore.objects.filter(name=store_name).exists():
     resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
-    return HttpResponse(json.json_encode(resp))
+    return HttpResponseNotFound(json.json_encode(resp))
   senseiHost = store.broker_host
   senseiPort = store.broker_port
   senseiClient = SenseiClient(senseiHost,senseiPort)
@@ -261,6 +301,47 @@ def getDoc(request,store_name,id):
       doc = hit.srcData
   resp = {'store':store_name,"uid":uid,"doc":doc}
   return HttpResponse(json.json_encode(resp))
+
+def delDoc(request,store_name,id):
+  if not id:
+    resp = {'ok': True,'numDeleted':0}
+    return HttpResponse(json.json_encode(resp))
+  uid = long(id)
+  if not ContentStore.objects.filter(name=store_name).exists():
+    resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
+    return HttpResponseNotFound(json.json_encode(resp))
+  try:
+    doc = {'id':uid,'isDeleted':True}
+    kafkaProducer.send([json.json_encode(doc).encode('utf-8')],store_name.encode('utf-8'))
+    resp = {'ok': True,'numDeleted':1}
+    return HttpResponse(json.json_encode(resp))
+  except Exception as e:
+    resp = {'ok':False,'error':e}
+    return HttpResponseServerError(json.json_encode(resp))
+
+def delDocs(request,store_name):
+  ids = request.POST.get('ids')
+  if not ids:
+    resp = {'ok': True,'numDeleted':0}
+    return HttpResponse(json.json_encode(resp))
+  uidList = ids.split(",")
+  if len(uidList) == 0:
+    resp = {'ok': True,'numDeleted':0}
+    return HttpResponse(json.json_encode(resp))
+  if not ContentStore.objects.filter(name=store_name).exists():
+    resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
+    return HttpResponseNotFound(json.json_encode(resp))
+  try:
+    delObjs = []
+    for uid in uidList:
+      delDoc = {'id':uid,'isDeleted':True}
+      delObjs.append(json.json_encode(delDoc).encode('utf-8'))
+    kafkaProducer.send(delObjs,store_name.encode('utf-8'))
+    resp = {'ok': True,'numDeleted':len(delObjs)}
+    return HttpResponse(json.json_encode(resp))
+  except Exception as e:
+    resp = {'ok':False,'error':e}
+    return HttpResponseServerError(json.json_encode(resp))
 
 def available(request,store_name):
   if ContentStore.objects.filter(name=store_name).exists():

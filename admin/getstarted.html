@@ -8,7 +8,7 @@
   <h3 align="right"><a href="index.html">Home</a></h3>
   <h2 align="center">1. Install client library</h2>
     <ul>
-      <li>Download client library <a href="http://wonlay.github.com/sin/downloads/sin-python-client-0.1-SNAPSHOT.tar.gz">here</a></li>
+      <li>Download client library <a href="/static/downloads.html">here</a></li>
       <li>Install: <pre><code>python setup.py install</code></pre>
       </li>
     </ul>
@@ -16,14 +16,28 @@
   <p>
   <pre><code>
     from sinClient import SinClient
+    from senseiClient import SenseiRequest
     
-    
-    client = SinClient('localhost',8000)
+""" connect to where Sin is running
+    client = SinClient(sinHost,sinPort)
     store = client.newStore('cars')
     
-    print store.available()
-    
+    print store.status
+
+    store.start()
+
+    store.importFile('data/test.json')
+
+    searcher = store.getSenseiClient()
+
+    res = searcher.doQuery()
+
+    print res.numHits
+
+    store.stop()
   </code></pre>
+  </p>
+  <p>
   </p>
   </body>
 </html>

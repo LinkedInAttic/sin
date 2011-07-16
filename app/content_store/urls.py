@@ -13,6 +13,8 @@ urlpatterns = patterns('content_store.views',
   (r'^restart-store/(?P<store_name>[^/]+)/?$','restartStore'),
   (r'^get-size/(?P<store_name>[^/]+)/?$','getSize'),
   (r'^get-doc/(?P<id>\d+)/(?P<store_name>[^/]+)/?$','getDoc'),
+  (r'^delete-doc/(?P<id>\d+)/(?P<store_name>[^/]+)/?$','delDoc'),
+  (r'^delete-docs/(?P<store_name>[^/]+)/?$','delDocs'),
   (r'^available/(?P<store_name>[^/]+)/?$','available'),
   (r'^stores/?$','stores'),
 )

@@ -23,8 +23,9 @@ class Sindex:
   created = None
   kafkaProducer = None
   description = None
+  status = None
   
-  def __init__(self,id,name,description,created,url,config,senseiClient,kafkaHost,kafkaPort):
+  def __init__(self,id,name,description,created,url,config,senseiClient,kafkaHost,kafkaPort,status):
     self.id = id
     self.name = name
     self.created = created
@@ -36,6 +37,7 @@ class Sindex:
     self.baseurl = url
     self.config = config
     self.kafkaProducer = kafka.KafkaProducer(kafkaHost, kafkaPort)
+    self.status = status
   
   def available(self):
     url = '%s/%s/%s' % (self.baseurl,'available',self.name)
@@ -46,16 +48,30 @@ class Sindex:
       print "error: %s" % jsonObj.get('error','unknown error')
       return False
     return jsonObj.get('available',False)
+
+  def start(self):
+    url = '%s/%s/%s' % (self.baseurl,'start-store',self.name)
+    urlReq = urllib2.Request(url)
+    res = self.opener.open(urlReq)
+    jsonObj = dict(json.loads(res.read()))
+    if not jsonObj['ok']:
+      print "error: %s" % jsonObj.get('error','unknown error')
+
+  def start(self):
+    url = '%s/%s/%s' % (self.baseurl,'stop-store',self.name)
+    urlReq = urllib2.Request(url)
+    res = self.opener.open(urlReq)
+    jsonObj = dict(json.loads(res.read()))
+    if not jsonObj['ok']:
+      print "error: %s" % jsonObj.get('error','unknown error')
   
   def addDoc(self,doc):
     if not doc:
       return None
     uid = long(doc['id'])
     jsonObj = json.JSONEncoder().encode(doc)
-    print jsonObj
     jsonString = json.dumps(jsonObj)
-    print jsonString
-    self.kafkaProducer.send([jsonString],self.name.encode('utf-8'))
+    self.kafkaProducer.send([jsonString.encode('utf-8')],self.name.encode('utf-8'))
     return doc
     
   def addDocs(self,docs):
@@ -66,7 +82,7 @@ class Sindex:
       uid = long(doc['id'])
       jsonObj = json.JSONEncoder().encode(doc)
       jsonString = json.dumps(jsonObj)
-      messages.append(jsonString)
+      messages.append(jsonString.encode('utf-8'))
     self.kafkaProducer.send(messages, self.name.encode('utf-8'))
     return len(messages)
     
@@ -90,7 +106,29 @@ class Sindex:
         hit = res.hits[0]
         doc = hit.srcData
     return doc
-    
+
+  def delDoc(self,id):
+    if not id:
+      return 0
+    uid = long(id)
+    doc = {'id':uid,'isDeleted':True}
+    jsonObj = json.JSONEncoder().encode(doc)
+    jsonString = json.dumps(jsonObj)
+    self.kafkaProducer.send([jsonString.encode('utf-8')],self.name.encode('utf-8'))
+    return 1
+
+  def delDocs(self,idList):
+    if not idList or len(idList)==0:
+      return 0
+    delObjs = []
+    for id in idList:
+      delDoc = {'id':id,'isDeleted':True}
+      jsonObj = json.JSONEncoder().encode(delDoc)
+      jsonString = json.dumps(jsonObj)
+      delObjs.append(jsonString.encode('utf-8'))
+    self.kafkaProducer.send(delObjs,self.name.encode('utf-8'))
+    return len(idList)
+
   def getSize(self):
     req = SenseiRequest()
     req.count = 0
@@ -133,9 +171,10 @@ class SinClient:
     kafkaHost = jsonObj['kafkaHost']
     kafkaPort = jsonObj['kafkaPort']
     description = jsonObj.get('description',None)
+    status = jsonObj['status_display']
     
     senseiClient = SenseiClient(self.host,brokerPort)
-    sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,kafkaHost,kafkaPort)
+    sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,kafkaHost,kafkaPort,status)
     while not sindex.available():
       time.sleep(0.5)
     
@@ -162,9 +201,10 @@ class SinClient:
     kafkaHost = jsonObj['kafkaHost']
     kafkaPort = jsonObj['kafkaPort']
     description = jsonObj.get('description',None)
+    status = jsonObj['status_display']
     
     senseiClient = SenseiClient(self.host,brokerPort)
-    sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,kafkaHost,kafkaPort)
+    sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,kafkaHost,kafkaPort,status)
     while not sindex.available():
       time.sleep(0.5)
     
