@@ -91,11 +91,6 @@ def deleteStore(request,store_name):
     return HttpResponseNotFound(json.json_encode(resp))
   stopStore(request, store_name)
 
-  store_data_dir = os.path.join(settings.STORE_HOME, store_name)
-  try:
-    shutil.rmtree(store_data_dir)
-  except:
-    pass
   ContentStore.objects.filter(name=store_name).delete()
   resp = {
     'ok' : True,
