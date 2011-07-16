@@ -25,12 +25,24 @@
   width: 150px;
 }
 
+.display-row.header,
+.display-row.header div,
+.add-new-column,
+.add-new-facet,
+.add-new-column div,
+.add-new-facet div,
+.facets div,
+.columns div
+{
+  padding-bottom: 0px;
+}
+
 .display-row.header .cell {
-  background: #DDDDDD;
+  background: #3B424B;
 }
 
 .display-row.header .display-op {
-  background: #FFFFFF; !important;
+  background: #3B424B; !important;
 }
 
 .display-op {
