@@ -622,10 +622,11 @@ $(function() {
         "facets": [],
         "table": {
           "columns": [],
+          "uid": "id",
+          "src-data-store": "lucene",
+          "src-data-field": "src_data",
           "compress-src-data": true,
-          "delete-field": "",
-          "src-data-store": "src_data",
-          "uid": "id"
+          "delete-field": "isDeleted"
         }
       };
       this.model.get('columns').each(function(obj) {
@@ -654,16 +655,13 @@ $(function() {
     saveStoreRaw: function() {
       this.model.set({config: this.$('.raw').val()});
 
-      this.model.updateWithNewConfig();
-
-      this.render();
-
       var me = this;
       $.post('/store/update-config/'+this.model.get('name')+'/', {config: this.model.get('config')}, function(res) {
         if (!res.ok)
           alert(res.error);
         else {
-          me.$('.manage-tab').hide();
+          me.model.updateWithNewConfig();
+          me.render();
         }
       }, 'json');
     },

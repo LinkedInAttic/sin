@@ -99,27 +99,30 @@ def deleteStore(request,store_name):
   return HttpResponse(json.json_encode(resp))
 
 def updateConfig(request, store_name):
-  if not ContentStore.objects.filter(name=store_name).exists():
-    resp = {
-      'ok' : False,
-      'msg' : 'store: %s does not exist.' % store_name
-    }
-    return HttpResponseNotFound(json.json_encode(resp))
-
   config = request.POST.get('config');
   resp = {
     'ok': False,
   }
   
   if config:
-    # TODO: valid configuration.
-    ContentStore.objects.filter(name=store_name).update(config=config);
-    resp['ok'] = True
-    return HttpResponse(json.json_encode(resp))
+    store = None
+    try:
+      store = ContentStore.objects.get(name=store_name)
+    except ContentStore.DoesNotExist:
+      resp['error'] = "store %s does not exist." % store_name
+      return HttpResponse(json.json_encode(resp))
+
+    store.config = config
+    valid, error = store.validate_config()
+    if valid:
+      store.save()
+      resp['ok'] = True
+    else:
+      resp['error'] = error
   else:
     resp['error'] = 'No config provided.'
-    return HttpResponseNotFound(json.json_encode(resp))
 
+  return HttpResponse(json.json_encode(resp))
 
 def addDoc(request,store_name):
   if not ContentStore.objects.filter(name=store_name).exists():
