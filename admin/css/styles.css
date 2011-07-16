@@ -1,0 +1,20 @@
+html, body {
+  background-color: #1E2128;
+  color: #fff;
+  font-weight: lighter;
+  text-align: center;
+}
+body {
+  margin: 0 auto;
+  margin-top: 18px;
+  width: 780px;
+}
+
+.header h1 {
+  color: white;
+  float: left;
+}
+
+.header img {
+  padding-left: 27px;
+}
