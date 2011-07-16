@@ -178,6 +178,47 @@ def addDocs(request,store_name):
       resp = {'ok':False,'error':e}
       return HttpResponseServerError(json.json_encode(resp))
 
+def updateDoc(request,store_name):
+  try:
+    store = ContentStore.objects.get(name=store_name)
+    if not store:
+      resp = {
+        'ok' : False,
+        'msg' : 'store: %s does not exist.' % store_name
+      }
+      return HttpResponseNotFound(json.json_encode(resp))
+
+    doc = request.POST.get('doc');
+
+    if not doc:
+      resp = {'ok':False,'error':'no doc posted'}
+      return HttpResponseBadRequest(json.json_encode(resp))
+    else:
+      jsonDoc = simplejson.loads(doc.encode('utf-8'))
+      print jsonDoc
+      uid = long(jsonDoc['id'])
+      print uid
+      existingDocString = findDoc(store,uid)
+      print existingDocString
+      if not existingDocString:
+        resp = {'ok':False,'error':'doc: %d does not exist' % uid}
+        return HttpResponseBadRequest(json.json_encode(resp))
+
+      existingDoc = simplejson.loads(existingDocString)
+      print existingDoc
+      for k,v in doc.items():
+        existingDoc[k]=v
+      
+      kafkaProducer.send([json.json_encode(existingDoc).encode('utf-8')], store_name.encode('utf-8'))
+      resp = {'ok': True,'numPosted':1}
+      return HttpResponse(json.json_encode(resp))
+  except ValueError:
+    resp = {'ok':False,'error':'invalid json: %s' % doc}
+    return HttpResponseBadRequest(json.json_encode(resp))
+  except Exception as e:
+    resp = {'ok':False,'error':e}
+  return HttpResponseServerError(json.json_encode(resp))
+
 def startStore(request, store_name):
   try:
     store = ContentStore.objects.get(name=store_name)
@@ -278,18 +319,14 @@ def getSize(request,store_name):
   res = senseiClient.doQuery(req)
   resp = {'store':store_name,"size":res.totalDocs}
   return HttpResponse(json.json_encode(resp))
-  
-def getDoc(request,store_name,id):
-  uid = long(id)
-  if not ContentStore.objects.filter(name=store_name).exists():
-    resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
-    return HttpResponseNotFound(json.json_encode(resp))
+
+def findDoc(store,id):
   senseiHost = store.broker_host
   senseiPort = store.broker_port
   senseiClient = SenseiClient(senseiHost,senseiPort)
   req = SenseiRequest()
   sel = SenseiSelection("uid")
-  sel.addSelection(id)
+  sel.addSelection(str(id))
   req.count = 1
   req.selections = [sel]
   res = senseiClient.doQuery(req)
@@ -298,6 +335,14 @@ def getDoc(request,store_name,id):
     if res.hits and len(res.hits) > 0:
       hit = res.hits[0]
       doc = hit.srcData
+  return doc
+
+def getDoc(request,store_name,id):
+  uid = long(id)
+  if not ContentStore.objects.filter(name=store_name).exists():
+    resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
+    return HttpResponseNotFound(json.json_encode(resp))
+  doc = findDoc(store,uid)
   resp = {'store':store_name,"uid":uid,"doc":doc}
   return HttpResponse(json.json_encode(resp))
 

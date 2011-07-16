@@ -69,8 +69,7 @@ class Sindex:
     if not doc:
       return None
     uid = long(doc['id'])
-    jsonObj = json.JSONEncoder().encode(doc)
-    jsonString = json.dumps(jsonObj)
+    jsonString = json.dumps(doc)
     self.kafkaProducer.send([jsonString.encode('utf-8')],self.name.encode('utf-8'))
     return doc
     
@@ -80,11 +79,23 @@ class Sindex:
     messages = []
     for doc in docs:
       uid = long(doc['id'])
-      jsonObj = json.JSONEncoder().encode(doc)
-      jsonString = json.dumps(jsonObj)
+      jsonString = json.dumps(doc)
       messages.append(jsonString.encode('utf-8'))
     self.kafkaProducer.send(messages, self.name.encode('utf-8'))
     return len(messages)
+
+  def updateDoc(self,doc):
+    if not doc:
+      return 0
+    uid = long(doc['id'])
+    currentDoc = self.getDoc(uid)
+    if not currentDoc:
+      return 0
+    for k,v in doc.items():
+      currentDoc[k] = v
+    jsonString = json.dumps(currentDoc)
+    self.kafkaProducer.send([jsonString.encode('utf-8')],self.name.encode('utf-8'))
+    return 1
     
   def importFile(self,dataFile):
     fd = open(dataFile,'r+')
@@ -105,7 +116,10 @@ class Sindex:
       if res.hits and len(res.hits) > 0:
         hit = res.hits[0]
         doc = hit.srcData
-    return doc
+    if doc:
+      return json.JSONEncoder().encode(doc)
+    else:
+	  return None
 
   def delDoc(self,id):
     if not id:
