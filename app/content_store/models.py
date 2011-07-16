@@ -3,6 +3,7 @@ from django.db import models
 from django.db.models import Max
 from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
+from django.utils import simplejson
 
 from utils import enum
 from utils.enum import to_choices
@@ -26,7 +27,7 @@ default_schema = {
       }
     ],
     "compress-src-data": True,
-    "delete-field": "",
+    "delete-field": "isDeleted",
     "src-data-store": "lucene",
     "src-data-field": "src_data",
     "uid": "id"
@@ -45,6 +46,10 @@ class ContentStoreQuerySet(models.query.QuerySet):
 class ContentStoreManager(models.Manager):
   def get_query_set(self):
     return ContentStoreQuerySet(model=self.model, using=self._db)
+
+SUPPORTED_COLUMN_TYPES = set([
+  'int', 'short', 'char', 'long', 'float', 'double', 'string', 'date', 'text'])
+SUPPORTED_FACET_TYPES = set(['simple', 'path', 'range', 'multi', 'compact-multi'])
 
 class ContentStore(models.Model):
   _broker_host_cache = None
@@ -106,6 +111,49 @@ class ContentStore(models.Model):
     return res
 
   running_info = property(get_running_info)
+
+  def validate_config(self):  #TODO: do more validation.
+    def validate_facet(obj):
+      if not obj.get('name'):
+        return (False, 'Facet name is required.')
+      if obj.get('type') not in SUPPORTED_FACET_TYPES:
+        return (False, 'Facet type %s is not valid, supported types are %s.' % (obj.get('type'), SUPPORTED_FACET_TYPES))
+      return (True, None)
+
+    def validate_column(obj):
+      if not obj.get('name'):
+        return (False, 'Column name is required.')
+      if obj.get('type') not in SUPPORTED_COLUMN_TYPES:
+        return (False, 'Column type %s is not valid, supported types are %s.' % (obj.get('type'), SUPPORTED_COLUMN_TYPES))
+      return (True, None)
+
+    def validate_table(obj):
+      for column in obj['columns']:
+        valid, error = validate_column(column)
+        if not valid:
+          return (valid, error)
+
+      # TODO: remove hard coded delete-field.
+      obj['delete-field'] = 'isDeleted'
+
+      return (True, None)
+
+    try:
+      config = simplejson.loads(self.config)
+      for facet in config['facets']:
+        valid, error = validate_facet(facet)
+        if not valid:
+          return (valid, error)
+      valid, error = validate_table(config['table'])
+      if not valid:
+        return (valid, error)
+
+      self.config = json.json_encode(config)
+    except Exception as e:
+      logging.exception(e)
+      return (False, 'Configuration is not valid.')
+
+    return (True, None)
 
   def to_map(self):
     """
