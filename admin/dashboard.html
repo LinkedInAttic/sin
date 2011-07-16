@@ -12,8 +12,8 @@
     // ]]>
     </script>
     <script type="text/javascript" src="js/mustache.js" ></script>
-    <script type="text/javascript" src="http://documentcloud.github.com/underscore/underscore.js" ></script>
-    <script type="text/javascript" src="http://documentcloud.github.com/backbone/backbone.js" ></script>
+    <script type="text/javascript" src="js/underscore.js" ></script>
+    <script type="text/javascript" src="js/backbone.js" ></script>
     <script type="text/javascript" src="js/jquery.timeago.js" ></script>
     <script type="text/javascript" src="js/core.js" ></script>
     <!--script id="content-column-tmpl" type="text/x-mustache-tmpl">
@@ -135,7 +135,7 @@
     </script>
     <script id="content-store-tmpl" type="text/x-mustache-tmpl">
       <div class="store-container">
-        <div><a href="http://{{ broker_host }}:{{{broker_port}}}/">Search</a> | <a class="manage" href="javascript:_void();">Manage</a> | <a href="javascript:_void();" class="deleteStore">Delete</a> | <a class="restart" href="javascript:_void();">(Re-)Start</a> | <a class="stopStore" href="javascript:_void();">Stop</a> | <span>Status:</span> <span class="status">{{ status_display }}</span></div>
+        <div><a href="http://{{ broker_host }}:{{ broker_port }}/">Search</a> | <a class="manage" href="javascript:_void();">Schema</a> | <a class="admin" href="http://{{ broker_host }}:{{ broker_port }}/admin.html">Admin</a> | <a href="javascript:_void();" class="deleteStore">Delete</a> | <a class="restart" href="javascript:_void();">(Re-)Start</a> | <a class="stopStore" href="javascript:_void();">Stop</a> | <span>Status:</span> <span class="status">{{ status_display }}</span></div>
         <h2>{{ name }}</h2>
         <div>
           {{#has_running_info}}<p>Current Size: {{ running_info.numdocs }} documents</p>{{/has_running_info}}
