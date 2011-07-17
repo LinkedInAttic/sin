@@ -6,6 +6,7 @@ from twisted.web.resource import Resource
 from twisted.web.static import File
 from twisted.python import log
 from datetime import datetime
+import time
 
 SENSEI_HOME = '/tmp/sensei/'
 STORE_HOME = '/tmp/store/'
@@ -95,6 +96,18 @@ class RestartStore(Resource):
       if pid:
         log.msg("Stopping existing process %d for store %s" % (pid, name))
         os.kill(pid, 15)
+        psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
+                                    shell=True, stdout=subprocess.PIPE).stdout.read()
+        while len(psOutput) > 0:
+          print "Waiting for process %d to die" % pid
+          time.sleep(1)
+          try:
+            psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
+                                        shell=True, stdout=subprocess.PIPE).stdout.read()
+          except:
+            log.msg("Hit some IOError exception, ignore it...")
+            psOutput = "some error"
+
         del running[name]
       else:
         log.err("Store %s is not running" % name)
