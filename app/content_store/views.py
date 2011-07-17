@@ -217,7 +217,7 @@ def updateDoc(request,store_name):
     resp = {'ok':False,'error':e}
   return HttpResponseServerError(json.json_encode(resp))
 
-def startStore(request, store_name):
+def startStore(request, store_name, restart=False):
   try:
     store = ContentStore.objects.get(name=store_name)
     if not store:
@@ -262,7 +262,9 @@ def startStore(request, store_name):
          'webapp': webapp,
          })
       params["sensei_properties"] = sensei_properties
-      output = urllib2.urlopen("http://%s:%d/%s" % (node.host, node.agent_port, "start-store"),
+      output = urllib2.urlopen("http://%s:%d/%s"
+                               % (node.host, node.agent_port,
+                                  not restart and "start-store" or "restart-store"),
                                urllib.urlencode(params))
 
     store.status = enum.STORE_STATUS['running']
@@ -302,8 +304,7 @@ def stopStore(request, store_name):
     return HttpResponseServerError(json.json_encode({'ok':False,'error':e}))
 
 def restartStore(request, store_name):
-  stopStore(request, store_name)
-  return startStore(request, store_name)
+  return startStore(request, store_name, restart=True)
 
 def getSize(request,store_name):
   if not ContentStore.objects.get(name=store_name).exists():

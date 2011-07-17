@@ -42,10 +42,12 @@ class Root(Resource):
       else:
         return PageNotFoundError()
 
+
 class PageNotFoundError(Resource):
 
   def render_GET(self, request):
     return 'Page Not Found!'
+
 
 class StartStore(Resource):
 
@@ -61,7 +63,7 @@ class StartStore(Resource):
       sensei_custom_facets = request.args["sensei_custom_facets"][0]
       sensei_plugins = request.args["sensei_plugins"][0]
       schema = request.args["schema"][0]
-      log.msg("started store for " + name)
+      log.msg("Starting store %" % name)
       return doStartStore(name, sensei_port, broker_port,
                           sensei_properties, sensei_custom_facets,
                           sensei_plugins, schema)
@@ -71,6 +73,43 @@ class StartStore(Resource):
 
   def render_POST(self, request):
     return self.render_GET(request)
+
+
+class RestartStore(Resource):
+
+  def render_GET(self, request):
+    """
+    Restart a Sensei store.
+    """
+    global running
+    try:
+      name = request.args["name"][0]
+      sensei_port = request.args["sensei_port"][0]
+      broker_port = request.args["broker_port"][0]
+      sensei_properties = request.args["sensei_properties"][0]
+      sensei_custom_facets = request.args["sensei_custom_facets"][0]
+      sensei_plugins = request.args["sensei_plugins"][0]
+      schema = request.args["schema"][0]
+
+      pid = running.get(name)
+      if pid:
+        log.msg("Stopping existing process for store %s" % name)
+        os.system("kill %s" % pid)
+        del running[name]
+      else:
+        log.err("Store %s is not running" % name)
+
+      log.msg("Restarting store %s" % name)
+      return doStartStore(name, sensei_port, broker_port,
+                          sensei_properties, sensei_custom_facets,
+                          sensei_plugins, schema)
+    except:
+      log.err()
+      return "Error"
+
+  def render_POST(self, request):
+    return self.render_GET(request)
+
 
 def doStartStore(name, sensei_port, broker_port,
                  sensei_properties, sensei_custom_facets,
@@ -140,6 +179,7 @@ def doStartStore(name, sensei_port, broker_port,
   running[name] = p.pid
   return "Ok"
 
+
 class StopStore(Resource):
   def render_GET(self, request):
     """
@@ -163,7 +203,8 @@ class StopStore(Resource):
 
 VIEWS = {
   "start-store": StartStore(),
-  "stop-store": StopStore()
+  "stop-store": StopStore(),
+  "restart-store": RestartStore()
 }
 
 if __name__ == '__main__':
