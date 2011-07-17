@@ -195,18 +195,16 @@ def updateDoc(request,store_name):
       return HttpResponseBadRequest(json.json_encode(resp))
     else:
       jsonDoc = simplejson.loads(doc.encode('utf-8'))
-      print jsonDoc
       uid = long(jsonDoc['id'])
-      print uid
       existingDocString = findDoc(store,uid)
-      print existingDocString
+
       if not existingDocString:
         resp = {'ok':False,'error':'doc: %d does not exist' % uid}
         return HttpResponseBadRequest(json.json_encode(resp))
 
       existingDoc = simplejson.loads(existingDocString)
       print existingDoc
-      for k,v in doc.items():
+      for k,v in jsonDoc.items():
         existingDoc[k]=v
       
       kafkaProducer.send([json.json_encode(existingDoc).encode('utf-8')], store_name.encode('utf-8'))
@@ -328,6 +326,7 @@ def findDoc(store,id):
   sel = SenseiSelection("uid")
   sel.addSelection(str(id))
   req.count = 1
+  req.fetch = True
   req.selections = [sel]
   res = senseiClient.doQuery(req)
   doc = None
@@ -339,12 +338,18 @@ def findDoc(store,id):
 
 def getDoc(request,store_name,id):
   uid = long(id)
-  if not ContentStore.objects.filter(name=store_name).exists():
-    resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
+  try:
+    store = ContentStore.objects.get(name=store_name)
+    doc = findDoc(store,uid)
+    resp = {'store':store_name,"uid":uid,"doc":doc}
+    return HttpResponse(json.json_encode(resp))
+  except ContentStore.DoesNotExist:
+    resp = {'ok':False,'error':"store %s does not exist."}
     return HttpResponseNotFound(json.json_encode(resp))
-  doc = findDoc(store,uid)
-  resp = {'store':store_name,"uid":uid,"doc":doc}
-  return HttpResponse(json.json_encode(resp))
+  except Exception as e:
+    resp = {'ok':False,'error':e}
+    return HttpResponseServerError(json.json_encode(resp))
+    
 
 def delDoc(request,store_name,id):
   if not id:

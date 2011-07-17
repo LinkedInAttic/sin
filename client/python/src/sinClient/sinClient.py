@@ -91,6 +91,7 @@ class Sindex:
     currentDoc = self.getDoc(uid)
     if not currentDoc:
       return 0
+    print currentDoc
     for k,v in doc.items():
       currentDoc[k] = v
     jsonString = json.dumps(currentDoc)
@@ -109,6 +110,7 @@ class Sindex:
     sel = SenseiSelection("uid")
     sel.addSelection(str(uid))
     req.count = 1
+    req.fetch = True
     req.selections = [sel]
     res = self.senseiClient.doQuery(req)
     doc = None
@@ -117,7 +119,7 @@ class Sindex:
         hit = res.hits[0]
         doc = hit.srcData
     if doc:
-      return json.JSONEncoder().encode(doc)
+      return json.loads(doc)
     else:
 	  return None
 
@@ -242,6 +244,7 @@ class SinClient:
     if not jsonObj['ok']:
       errorMsg = "error: %s" % jsonObj.get('msg','unknown error')
       raise Exception(errorMsg)
+
 """
 if __name__ == '__main__':
   storeName = 'test'
