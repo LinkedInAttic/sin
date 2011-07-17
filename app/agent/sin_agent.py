@@ -94,7 +94,7 @@ class RestartStore(Resource):
       pid = running.get(name)
       if pid:
         log.msg("Stopping existing process %d for store %s" % (pid, name))
-        os.kill(pid, 0)
+        os.kill(pid, 15)
         del running[name]
       else:
         log.err("Store %s is not running" % name)
