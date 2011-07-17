@@ -1,0 +1,1 @@
+../sinClient/sinClient.py
