@@ -1,4 +1,5 @@
 import logging, urllib2
+import django.utils.log
 from django.db import models
 from django.db.models import Max
 from django.utils import simplejson
@@ -11,6 +12,9 @@ from utils import json
 
 from cluster.models import Group, Node
 import time
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 default_schema = {
   "facets": [
@@ -107,12 +111,12 @@ class ContentStore(models.Model):
         doc = urllib2.urlopen(url).read()
         res = simplejson.loads(doc.encode('utf-8'))
         if res[u'clusterinfo'] == []:
-          print "Clusterinfo is not available yet.  Try again..."
+          logger.info("Clusterinfo is not available yet.  Try again...")
           time.sleep(1)
           res = {}
-      except Exception as e:
+      except:
         # logging.exception(e)
-        print "Hit an exception. Try to get sysinfo again..."
+        logger.info("Hit an exception. Try to get sysinfo again...")
         time.sleep(1)
         res = {}
 

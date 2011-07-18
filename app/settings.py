@@ -140,17 +140,35 @@ INSTALLED_APPS = (
 LOGGING = {
   'version': 1,
   'disable_existing_loggers': False,
+  'formatters': {
+    'verbose': {
+      'format': '%(levelname)s %(asctime)s [%(module)s] %(message)s'
+      },
+    'simple': {
+      'format': '%(levelname)s %(message)s'
+      }
+    },
   'handlers': {
+    'console':{
+      'level':'INFO',
+      'class':'logging.StreamHandler',
+      'formatter': 'verbose'
+      },
     'mail_admins': {
       'level': 'ERROR',
       'class': 'django.utils.log.AdminEmailHandler'
-    }
-  },
+      }
+    },
   'loggers': {
+    'content_store': {
+      'handlers': ['console', 'mail_admins'],
+      'level': 'INFO',
+      'propagate': True,
+      },
     'django.request': {
       'handlers': ['mail_admins'],
       'level': 'ERROR',
       'propagate': True,
-    },
+      },
+    }
   }
-}
