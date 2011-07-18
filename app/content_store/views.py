@@ -11,7 +11,7 @@ from django.http import HttpResponseServerError
 import kafka
 
 from content_store.models import ContentStore
-from cluster.models import Group, Node
+from cluster.models import Group, Node, Membership
 
 from utils import enum, json
 
@@ -430,3 +430,30 @@ def allocateResource(store):
       nodeInfos.append(nodeDict)
 
   return nodeInfos
+
+
+def setupCluster(storeName, num_replicas=2, num_parts=10, desc=""):
+
+  store1 = ContentStore(name=storeName,
+                       replica=num_replicas,
+                       partitions=num_parts,
+                       description=desc)
+  store1.save()
+
+  n1 = Node.objects.create(host="node-1", group=Group(pk=1))
+  n2 = Node.objects.create(host="node-2", group=Group(pk=1))
+  n3 = Node.objects.create(host="node-3", group=Group(pk=1))
+  n4 = Node.objects.create(host="node-4", group=Group(pk=1))
+  n5 = Node.objects.create(host="node-5", group=Group(pk=1))
+
+  m1 = Membership.objects.create(node=n1, store=store1, replica=0, parts="0,1")
+  m2 = Membership.objects.create(node=n2, store=store1, replica=0, parts="2,3")
+  m3 = Membership.objects.create(node=n3, store=store1, replica=1, parts="0,1")
+  m4 = Membership.objects.create(node=n4, store=store1, replica=1, parts="2,3")
+
+  for node in store1.nodes.all():
+    print node.host
+
+  for member in store1.membership_set.all():
+    print member.node.host, member.replica
+
