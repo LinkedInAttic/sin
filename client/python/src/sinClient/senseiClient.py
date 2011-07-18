@@ -197,20 +197,22 @@ class SenseiRequest:
 class SenseiHit:
   docid = None
   uid = None
-  srcData = None
+  srcData = {}
   score = None
-  fieldVals = None
   explanation = None
   stored = None
   
-  def load(self,json):
-    self.docid = json.get(PARAM_RESULT_HIT_DOCID)
-    self.uid = json.get(PARAM_RESULT_HIT_UID)
-    self.score = json.get(PARAM_RESULT_HIT_SCORE)
-    self.srcData = json.get(PARAM_RESULT_HIT_SRC_DATA)
-    self.fieldVals = json
-    self.explanation = json.get(PARAM_RESULT_HIT_EXPLANATION)
-    self.stored = json.get(PARAM_RESULT_HIT_STORED_FIELDS)
+  def load(self,jsonHit):
+    self.docid = jsonHit.get(PARAM_RESULT_HIT_DOCID)
+    self.uid = jsonHit.get(PARAM_RESULT_HIT_UID)
+    self.score = jsonHit.get(PARAM_RESULT_HIT_SCORE)
+    srcStr = jsonHit.get(PARAM_RESULT_HIT_SRC_DATA)
+    self.explanation = jsonHit.get(PARAM_RESULT_HIT_EXPLANATION)
+    self.stored = jsonHit.get(PARAM_RESULT_HIT_STORED_FIELDS)
+    if srcStr:
+      self.srcData = dict(json.loads(srcStr))
+    else:
+      self.srcData = None
   
 class SenseiResultFacet:
   value = None
@@ -231,26 +233,29 @@ class SenseiResult:
   facetMap = None
   jsonMap = None
   
-  def load(self,json):
-    self.jsonMap = json
-    self.parsedQuery = json.get(PARAM_RESULT_PARSEDQUERY)
-    self.totalDocs = json.get(PARAM_RESULT_TOTALDOCS,0)
-    self.time = json.get(PARAM_RESULT_TIME,0)
-    self.numHits = json.get(PARAM_RESULT_NUMHITS,0)
-    hitList = json.get(PARAM_RESULT_HITS)
+  def load(self,jsonData):
+    self.jsonMap = jsonData
+    self.parsedQuery = jsonData.get(PARAM_RESULT_PARSEDQUERY)
+    self.totalDocs = jsonData.get(PARAM_RESULT_TOTALDOCS,0)
+    self.time = jsonData.get(PARAM_RESULT_TIME,0)
+    self.numHits = jsonData.get(PARAM_RESULT_NUMHITS,0)
+    hitList = jsonData.get(PARAM_RESULT_HITS)
     if hitList:
       self.hits = []
       for hit in hitList:
         senseiHit = SenseiHit()
         senseiHit.load(hit)
         self.hits.append(senseiHit)
-    facetMap = json.get(PARAM_RESULT_FACETS)
-    if facetMap:
-      facetMap = {}
-      for k,v in facetMap.items():
-        facetObj = SenseiResultFacet()
-        facetObj.load(v)
-        facetMap[k]=facetObj
+    map = jsonData.get(PARAM_RESULT_FACETS)
+    self.facetMap = {}
+    if map:
+      for k,v in map.items():
+        facetList = []
+        for facet in v:
+          facetObj = SenseiResultFacet()
+          facetObj.load(facet)
+          facetList.append(facetObj)
+        self.facetMap[k]=facetList
   
 class SenseiClient:
   host = "localhost"

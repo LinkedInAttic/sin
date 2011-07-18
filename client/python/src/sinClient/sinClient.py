@@ -3,9 +3,7 @@
 """Python client library for Sin
 """
 
-from senseiClient import SenseiClient
-from senseiClient import SenseiRequest
-from senseiClient import SenseiSelection
+from senseiClient import *
 
 import urllib
 import urllib2
@@ -245,6 +243,23 @@ class SinClient:
       errorMsg = "error: %s" % jsonObj.get('msg','unknown error')
       raise Exception(errorMsg)
 
+if __name__ == '__main__':
+  client = SinClient()
+  store = client.openStore('tweets')
+  searcher = store.getSenseiClient()
+  req = SenseiRequest()
+
+  req.fetch = True
+  req.count = 5
+  res = searcher.doQuery(req)
+
+  for hit in res.hits:
+    print hit.uid
+    srcdata = hit.srcData
+    if srcdata:
+      print srcdata.get('author-name')
+    else:
+      print 'none'
 """
 if __name__ == '__main__':
   storeName = 'test'
