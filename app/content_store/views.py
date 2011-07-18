@@ -147,7 +147,8 @@ def addDoc(request,store_name):
       resp = {'ok':False,'error':'invalid json: %s' % doc}
       return HttpResponseBadRequest(json.json_encode(resp))
     except Exception as e:
-      resp = {'ok':False,'error':e}
+      logging.exception(e)
+      resp = {'ok':False,'error':e.message}
       return HttpResponseServerError(json.json_encode(resp))
 
 def addDocs(request,store_name):
@@ -175,7 +176,8 @@ def addDocs(request,store_name):
       resp = {'ok':False,'error':'invalid json: %s' % docs}
       return HttpResponseBadRequest(json.json_encode(resp))
     except Exception as e:
-      resp = {'ok':False,'error':e}
+      logging.exception(e)
+      resp = {'ok':False,'error':e.message}
       return HttpResponseServerError(json.json_encode(resp))
 
 def updateDoc(request,store_name):
@@ -214,7 +216,7 @@ def updateDoc(request,store_name):
     resp = {'ok':False,'error':'invalid json: %s' % doc}
     return HttpResponseBadRequest(json.json_encode(resp))
   except Exception as e:
-    resp = {'ok':False,'error':e}
+    resp = {'ok':False,'error':e.message}
   return HttpResponseServerError(json.json_encode(resp))
 
 def startStore(request, store_name, restart=False):
@@ -276,7 +278,7 @@ def startStore(request, store_name, restart=False):
     return HttpResponse(json.json_encode(resp))
   except Exception as e:
     logging.exception(e)   
-    return HttpResponseServerError(json.json_encode({'ok':False,'error':e.msg}))
+    return HttpResponseServerError(json.json_encode({'ok':False,'error':e.message}))
 
 def stopStore(request, store_name):
   try:
@@ -302,7 +304,7 @@ def stopStore(request, store_name):
     })
     return HttpResponse(json.json_encode(resp))
   except Exception as e:
-    return HttpResponseServerError(json.json_encode({'ok':False,'error':e}))
+    return HttpResponseServerError(json.json_encode({'ok':False,'error':e.message}))
 
 def restartStore(request, store_name):
   return startStore(request, store_name, restart=True)
@@ -349,7 +351,8 @@ def getDoc(request,store_name,id):
     resp = {'ok':False,'error':"store %s does not exist."}
     return HttpResponseNotFound(json.json_encode(resp))
   except Exception as e:
-    resp = {'ok':False,'error':e}
+    logging.exception(e)
+    resp = {'ok':False,'error':e.message}
     return HttpResponseServerError(json.json_encode(resp))
     
 
@@ -367,7 +370,8 @@ def delDoc(request,store_name,id):
     resp = {'ok': True,'numDeleted':1}
     return HttpResponse(json.json_encode(resp))
   except Exception as e:
-    resp = {'ok':False,'error':e}
+    logging.exception(e)
+    resp = {'ok':False,'error':e.message}
     return HttpResponseServerError(json.json_encode(resp))
 
 def delDocs(request,store_name):
@@ -391,7 +395,8 @@ def delDocs(request,store_name):
     resp = {'ok': True,'numDeleted':len(delObjs)}
     return HttpResponse(json.json_encode(resp))
   except Exception as e:
-    resp = {'ok':False,'error':e}
+    logging.exception(e)
+    resp = {'ok':False,'error':e.message}
     return HttpResponseServerError(json.json_encode(resp))
 
 def available(request,store_name):
