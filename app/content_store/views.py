@@ -74,6 +74,9 @@ def newStore(request,store_name):
     description=desc
   )
   store.save()
+
+  setupCluster(store)
+
   resp = store.to_map()
   resp.update({
     'ok' : True,
@@ -247,15 +250,12 @@ def startStore(request, store_name, restart=False):
     params["sensei_plugins"] = sensei_plugins
     params["schema"] = store.config
   
-    nodes = store.group.nodes.all()
-    nodeInfos = allocateResource(store)
-    for i in range(len(nodeInfos)):
-      nodeInfo = nodeInfos[i]
-      node = nodes[i]
+    members = store.membership_set.order_by("sensei_node_id")
+    for member in members:
       sensei_properties = loader.render_to_string(
         'sensei-conf/sensei.properties',
-        {'node_id': nodeInfo["id"],
-         'node_partitions': ','.join(str(x) for x in nodeInfo["parts"]),
+        {'node_id': member.sensei_node_id,
+         'node_partitions': member.parts[1:len(member.parts)-1],
          'max_partition_id': store.partitions - 1,
          'store': store,
          'index': index,
@@ -263,7 +263,7 @@ def startStore(request, store_name, restart=False):
          })
       params["sensei_properties"] = sensei_properties
       output = urllib2.urlopen("http://%s:%d/%s"
-                               % (node.host, node.agent_port,
+                               % (member.node.host, member.node.agent_port,
                                   not restart and "start-store" or "restart-store"),
                                urllib.urlencode(params))
 
@@ -289,10 +289,13 @@ def stopStore(request, store_name):
     params = {}
     params["name"] = store_name
 
-    nodes = store.group.nodes.all()
-    for node in nodes:
-      output = urllib2.urlopen("http://%s:%d/%s" % (node.host, node.agent_port, "stop-store"),
+    members = store.membership_set.order_by("sensei_node_id")
+    for member in members:
+      output = urllib2.urlopen("http://%s:%d/%s" % (member.node.host,
+                                                    member.node.agent_port,
+                                                    "stop-store"),
                                urllib.urlencode(params))
+
     store.status = enum.STORE_STATUS['stopped']
     store.save()
     resp = store.to_map()
@@ -405,32 +408,6 @@ def stores(request):
   resp = objs.to_map_list()
   return HttpResponse(json.json_encode(resp))
 
-def allocateResource(store):
-  """
-  Given a store and its replica and partition requirement, figure out
-  the cluster layout.  Return a list of nodes with partition information.
-  """
-  nodes = store.group.nodes.all()
-  totalNodes = len(nodes)
-  numNodesPerReplica = totalNodes / store.replica
-  actualTotalNodes = numNodesPerReplica * store.replica
-  numPartsPerNode = store.partitions / numNodesPerReplica
-
-  nodeInfos = []
-  for i in range(store.replica):
-    for j in range(numNodesPerReplica):
-      nodeDict = {}
-      nodeId = i * numNodesPerReplica + j + 1
-      nodeDict["id"] = nodeId
-      nodeDict["name"] = nodes[nodeId - 1].host
-      parts = []
-      for k in range(numPartsPerNode):
-        parts.append(j * numPartsPerNode + k)
-      nodeDict["parts"] = parts
-      nodeInfos.append(nodeDict)
-
-  return nodeInfos
-
 def setupCluster(store):
   nodes = store.group.nodes.all()
   totalNodes = len(nodes)
@@ -484,3 +461,4 @@ def testSetupCluster(storeName,
   for member in store1.membership_set.order_by("sensei_node_id"):
     print member.node.host, member.replica, member.parts
 
+  print ','.join(str(x) for x in member.parts)

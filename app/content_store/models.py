@@ -117,13 +117,13 @@ class ContentStore(models.Model):
         res = simplejson.loads(doc.encode('utf-8'))
         if res.get(u'clusterinfo') == []:
           logger.info("Clusterinfo is not available yet.  Try again...")
-          time.sleep(1)
+          time.sleep(2)
         else:
           break;
       except:
         # logging.exception(e)
         logger.info("Hit an exception. Try to get sysinfo again...")
-        time.sleep(1)
+        time.sleep(2)
 
     return res
 
