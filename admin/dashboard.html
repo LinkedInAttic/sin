@@ -114,6 +114,8 @@
             <option value="false">false</option>
             <option value="true">true</option>
           </select></span>
+        <input class="{{#add}}add{{/add}}{{^add}}save{{/add}}-facet" type="button" value="{{#add}}Add Facet{{/add}}{{^add}}OK{{/add}}" />
+        {{^add}}<input class="cancel-edit-facet" type="button" value="Cancel" />{{/add}}
         </div>
         <div class="params-container" style="display: none;">
           Params:
@@ -127,8 +129,6 @@
             </div>
           </div>
         </div>
-        <input class="{{#add}}add{{/add}}{{^add}}save{{/add}}-facet" type="button" value="{{#add}}Add Facet{{/add}}{{^add}}OK{{/add}}" />
-        {{^add}}<input class="cancel-edit-facet" type="button" value="Cancel" />{{/add}}
       </div>
     </script>
     <script id="content-store-tmpl" type="text/x-mustache-tmpl">
