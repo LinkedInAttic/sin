@@ -10,7 +10,7 @@ from utils import enum
 from utils.enum import to_choices
 from utils import json
 
-from cluster.models import Group, Node
+from cluster.models import Group, Node, Membership
 import time
 import socket
 
@@ -78,6 +78,8 @@ class ContentStore(models.Model):
 
   group = models.ForeignKey(Group, related_name="stores", default=1)
 
+  nodes = models.ManyToManyField(Node, through="cluster.Membership")
+
   objects = ContentStoreManager()
 
   def get_sensei_port(self):
@@ -115,13 +117,13 @@ class ContentStore(models.Model):
         res = simplejson.loads(doc.encode('utf-8'))
         if res.get(u'clusterinfo') == []:
           logger.info("Clusterinfo is not available yet.  Try again...")
-          time.sleep(1)
+          time.sleep(2)
         else:
           break;
       except:
         # logging.exception(e)
         logger.info("Hit an exception. Try to get sysinfo again...")
-        time.sleep(1)
+        time.sleep(2)
 
     return res
 

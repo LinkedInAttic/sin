@@ -174,3 +174,10 @@ LOGGING = {
       },
     }
   }
+
+#
+# Cluster related constants
+#
+DEFAULT_REPLICAS = 3
+DEFAULT_PARTITIONS = 10
+MAX_PARTITIONS = 1024

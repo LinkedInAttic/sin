@@ -17,3 +17,9 @@ class Node(models.Model):
 
   group = models.ForeignKey(Group, related_name="nodes", null=True)
 
+class Membership(models.Model):
+  node = models.ForeignKey(Node)
+  store = models.ForeignKey("content_store.ContentStore")
+  replica = models.IntegerField(default=0)
+  sensei_node_id = models.IntegerField()
+  parts = models.CommaSeparatedIntegerField(max_length=1024)

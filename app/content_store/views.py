@@ -11,7 +11,7 @@ from django.http import HttpResponseServerError
 import kafka
 
 from content_store.models import ContentStore
-from cluster.models import Group, Node
+from cluster.models import Group, Node, Membership
 import logging
 from utils import enum, json
 
@@ -74,6 +74,9 @@ def newStore(request,store_name):
     description=desc
   )
   store.save()
+
+  setupCluster(store)
+
   resp = store.to_map()
   resp.update({
     'ok' : True,
@@ -249,15 +252,12 @@ def startStore(request, store_name, restart=False):
     params["sensei_plugins"] = sensei_plugins
     params["schema"] = store.config
   
-    nodes = store.group.nodes.all()
-    nodeInfos = allocateResource(store)
-    for i in range(len(nodeInfos)):
-      nodeInfo = nodeInfos[i]
-      node = nodes[i]
+    members = store.membership_set.order_by("sensei_node_id")
+    for member in members:
       sensei_properties = loader.render_to_string(
         'sensei-conf/sensei.properties',
-        {'node_id': nodeInfo["id"],
-         'node_partitions': ','.join(str(x) for x in nodeInfo["parts"]),
+        {'node_id': member.sensei_node_id,
+         'node_partitions': member.parts[1:len(member.parts)-1],
          'max_partition_id': store.partitions - 1,
          'store': store,
          'index': index,
@@ -268,7 +268,7 @@ def startStore(request, store_name, restart=False):
          })
       params["sensei_properties"] = sensei_properties
       output = urllib2.urlopen("http://%s:%d/%s"
-                               % (node.host, node.agent_port,
+                               % (member.node.host, member.node.agent_port,
                                   not restart and "start-store" or "restart-store"),
                                urllib.urlencode(params))
 
@@ -295,10 +295,13 @@ def stopStore(request, store_name):
     params = {}
     params["name"] = store_name
 
-    nodes = store.group.nodes.all()
-    for node in nodes:
-      output = urllib2.urlopen("http://%s:%d/%s" % (node.host, node.agent_port, "stop-store"),
+    members = store.membership_set.order_by("sensei_node_id")
+    for member in members:
+      output = urllib2.urlopen("http://%s:%d/%s" % (member.node.host,
+                                                    member.node.agent_port,
+                                                    "stop-store"),
                                urllib.urlencode(params))
+
     store.status = enum.STORE_STATUS['stopped']
     store.save()
     resp = store.to_map()
@@ -414,28 +417,57 @@ def stores(request):
   resp = objs.to_map_list()
   return HttpResponse(json.json_encode(resp))
 
-def allocateResource(store):
-  """
-  Given a store and its replica and partition requirement, figure out
-  the cluster layout.  Return a list of nodes with partition information.
-  """
+def setupCluster(store):
   nodes = store.group.nodes.all()
   totalNodes = len(nodes)
   numNodesPerReplica = totalNodes / store.replica
   actualTotalNodes = numNodesPerReplica * store.replica
   numPartsPerNode = store.partitions / numNodesPerReplica
+  remainingParts = store.partitions % numNodesPerReplica
 
-  nodeInfos = []
   for i in range(store.replica):
     for j in range(numNodesPerReplica):
-      nodeDict = {}
       nodeId = i * numNodesPerReplica + j + 1
-      nodeDict["id"] = nodeId
-      nodeDict["name"] = nodes[nodeId - 1].host
       parts = []
       for k in range(numPartsPerNode):
         parts.append(j * numPartsPerNode + k)
-      nodeDict["parts"] = parts
-      nodeInfos.append(nodeDict)
+      if remainingParts > 0 and j < remainingParts:
+        parts.append(store.partitions - remainingParts + j)
+      Membership.objects.create(node = nodes[nodeId - 1],
+                                store = store,
+                                replica = i,
+                                sensei_node_id = nodeId,
+                                parts = parts)
 
-  return nodeInfos
+
+def testSetupCluster(storeName,
+                     num_replicas = settings.DEFAULT_REPLICAS,
+                     num_parts = settings.DEFAULT_PARTITIONS,
+                     desc = ""):
+
+  store1 = ContentStore(name=storeName,
+                       replica=num_replicas,
+                       partitions=num_parts,
+                       description=desc)
+  store1.save()
+
+  n1 = Node.objects.create(host="node-1", group=Group(pk=1))
+  n2 = Node.objects.create(host="node-2", group=Group(pk=1))
+  n3 = Node.objects.create(host="node-3", group=Group(pk=1))
+  n4 = Node.objects.create(host="node-4", group=Group(pk=1))
+  n5 = Node.objects.create(host="node-5", group=Group(pk=1))
+  n6 = Node.objects.create(host="node-6", group=Group(pk=1))
+  n7 = Node.objects.create(host="node-7", group=Group(pk=1))
+  n8 = Node.objects.create(host="node-8", group=Group(pk=1))
+  n9 = Node.objects.create(host="node-9", group=Group(pk=1))
+  n10 = Node.objects.create(host="node-10", group=Group(pk=1))
+
+  setupCluster(store1)
+
+  for node in store1.nodes.all():
+    print node.host
+
+  for member in store1.membership_set.order_by("sensei_node_id"):
+    print member.node.host, member.replica, member.parts
+
+  print ','.join(str(x) for x in member.parts)
