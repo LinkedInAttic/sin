@@ -106,9 +106,13 @@ class ContentStore(models.Model):
         url = 'http://%s:%s/sensei/sysinfo' % (self.broker_host, self.broker_port)
         doc = urllib2.urlopen(url).read()
         res = simplejson.loads(doc.encode('utf-8'))
+        if res[u'clusterinfo'] == []:
+          print "Clusterinfo is not available yet.  Try again..."
+          time.sleep(1)
+          res = {}
       except Exception as e:
         # logging.exception(e)
-        print "Trying to get sysinfo again..."
+        print "Hit an exception. Try to get sysinfo again..."
         time.sleep(1)
         res = {}
 
