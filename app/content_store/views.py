@@ -262,6 +262,9 @@ def startStore(request, store_name, restart=False):
          'store': store,
          'index': index,
          'webapp': webapp,
+         'kafka_host': kafkaHost,
+         'kafka_port': kafkaPort,
+         'zookeeper_url': settings.ZOOKEEPER_URL,
          })
       params["sensei_properties"] = sensei_properties
       output = urllib2.urlopen("http://%s:%d/%s"
