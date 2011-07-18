@@ -106,22 +106,23 @@ class ContentStore(models.Model):
       return {}
 
     res = {}
-    while res == {}:
+    retry = 20
+    while retry > 0:
+      retry -= 1
       try:
         url = 'http://%s:%s/sensei/sysinfo' % (socket.gethostbyname(self.broker_host), self.broker_port)
         doc = urllib2.urlopen(url).read()
         res = simplejson.loads(doc.encode('utf-8'))
-        if res[u'clusterinfo'] == []:
+        if res.get(u'clusterinfo') == []:
           logger.info("Clusterinfo is not available yet.  Try again...")
           time.sleep(1)
-          res = {}
+        else:
+          break;
       except:
         # logging.exception(e)
         logger.info("Hit an exception. Try to get sysinfo again...")
         time.sleep(1)
-        res = {}
 
-    print res
     return res
 
   running_info = property(get_running_info)
