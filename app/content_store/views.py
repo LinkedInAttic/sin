@@ -431,8 +431,33 @@ def allocateResource(store):
 
   return nodeInfos
 
+def setupCluster(store):
+  nodes = store.group.nodes.all()
+  totalNodes = len(nodes)
+  numNodesPerReplica = totalNodes / store.replica
+  actualTotalNodes = numNodesPerReplica * store.replica
+  numPartsPerNode = store.partitions / numNodesPerReplica
+  remainingParts = store.partitions % numNodesPerReplica
 
-def setupCluster(storeName, num_replicas=2, num_parts=10, desc=""):
+  for i in range(store.replica):
+    for j in range(numNodesPerReplica):
+      nodeId = i * numNodesPerReplica + j + 1
+      parts = []
+      for k in range(numPartsPerNode):
+        parts.append(j * numPartsPerNode + k)
+      if remainingParts > 0 and j < remainingParts:
+        parts.append(store.partitions - remainingParts + j)
+      Membership.objects.create(node = nodes[nodeId - 1],
+                                store = store,
+                                replica = i,
+                                sensei_node_id = nodeId,
+                                parts = parts)
+
+
+def testSetupCluster(storeName,
+                     num_replicas = settings.DEFAULT_REPLICAS,
+                     num_parts = settings.DEFAULT_PARTITIONS,
+                     desc = ""):
 
   store1 = ContentStore(name=storeName,
                        replica=num_replicas,
@@ -445,15 +470,17 @@ def setupCluster(storeName, num_replicas=2, num_parts=10, desc=""):
   n3 = Node.objects.create(host="node-3", group=Group(pk=1))
   n4 = Node.objects.create(host="node-4", group=Group(pk=1))
   n5 = Node.objects.create(host="node-5", group=Group(pk=1))
+  n6 = Node.objects.create(host="node-6", group=Group(pk=1))
+  n7 = Node.objects.create(host="node-7", group=Group(pk=1))
+  n8 = Node.objects.create(host="node-8", group=Group(pk=1))
+  n9 = Node.objects.create(host="node-9", group=Group(pk=1))
+  n10 = Node.objects.create(host="node-10", group=Group(pk=1))
 
-  m1 = Membership.objects.create(node=n1, store=store1, replica=0, parts="0,1")
-  m2 = Membership.objects.create(node=n2, store=store1, replica=0, parts="2,3")
-  m3 = Membership.objects.create(node=n3, store=store1, replica=1, parts="0,1")
-  m4 = Membership.objects.create(node=n4, store=store1, replica=1, parts="2,3")
+  setupCluster(store1)
 
   for node in store1.nodes.all():
     print node.host
 
-  for member in store1.membership_set.all():
-    print member.node.host, member.replica
+  for member in store1.membership_set.order_by("sensei_node_id"):
+    print member.node.host, member.replica, member.parts
 
