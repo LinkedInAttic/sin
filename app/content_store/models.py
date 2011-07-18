@@ -12,6 +12,7 @@ from utils import json
 
 from cluster.models import Group, Node
 import time
+import socket
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -107,7 +108,7 @@ class ContentStore(models.Model):
     res = {}
     while res == {}:
       try:
-        url = 'http://%s:%s/sensei/sysinfo' % (self.broker_host, self.broker_port)
+        url = 'http://%s:%s/sensei/sysinfo' % (socket.gethostbyname(self.broker_host), self.broker_port)
         doc = urllib2.urlopen(url).read()
         res = simplejson.loads(doc.encode('utf-8'))
         if res[u'clusterinfo'] == []:
