@@ -22,12 +22,12 @@ def searchTwitter(opener,queryString,since_id):
 def extract(tweetHit):
   indexable = {}
   indexable['id'] = long(tweetHit['id_str'])
-  indexable['author-id'] = long(tweetHit['from_user_id'])
-  indexable['author-name'] = tweetHit['from_user']
-  indexable['profile-img'] = tweetHit.get('profile_image_url')
+  indexable['authorid'] = long(tweetHit['from_user_id'])
+  indexable['authorname'] = tweetHit['from_user']
+  indexable['profileimg'] = tweetHit.get('profile_image_url')
   indexable['text'] = tweetHit.get('text')
   timeString = tweetHit['created_at']
-  indexable['created-time'] = timeString
+  indexable['createdtime'] = timeString
   if timeString:
     try:
       dt = parse(timeString)
