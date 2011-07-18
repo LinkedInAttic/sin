@@ -10,6 +10,7 @@ from utils.enum import to_choices
 from utils import json
 
 from cluster.models import Group, Node
+import time
 
 default_schema = {
   "facets": [
@@ -100,14 +101,18 @@ class ContentStore(models.Model):
       return {}
 
     res = {}
-    try:
-      url = 'http://%s:%s/sensei/sysinfo' % (self.broker_host, self.broker_port)
+    while res == {}:
+      try:
+        url = 'http://%s:%s/sensei/sysinfo' % (self.broker_host, self.broker_port)
+        doc = urllib2.urlopen(url).read()
+        res = simplejson.loads(doc.encode('utf-8'))
+      except Exception as e:
+        # logging.exception(e)
+        print "Trying to get sysinfo again..."
+        time.sleep(1)
+        res = {}
 
-      doc = urllib2.urlopen(url).read()
-      res = simplejson.loads(doc.encode('utf-8'))
-    except Exception as e:
-      logging.exception(e)
-
+    print res
     return res
 
   running_info = property(get_running_info)
