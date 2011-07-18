@@ -12,7 +12,7 @@ import kafka
 
 from content_store.models import ContentStore
 from cluster.models import Group, Node
-
+import logging
 from utils import enum, json
 
 from django.utils import simplejson
@@ -275,7 +275,8 @@ def startStore(request, store_name, restart=False):
     })
     return HttpResponse(json.json_encode(resp))
   except Exception as e:
-    return HttpResponseServerError(json.json_encode({'ok':False,'error':e}))
+    logging.exception(e)   
+    return HttpResponseServerError(json.json_encode({'ok':False,'error':e.msg}))
 
 def stopStore(request, store_name):
   try:
