@@ -24,7 +24,9 @@ SENSEI_HOME = '/tmp/sensei/'
 
 STORE_HOME = '/tmp/store/'
 
-KAFKA_HOST = 'localhost'
+ZOOKEEPER_URL = 'sguo-md:2181'
+
+KAFKA_HOST = 'sguo-md'
 
 KAFKA_PORT = '9092'
 
@@ -172,3 +174,10 @@ LOGGING = {
       },
     }
   }
+
+#
+# Cluster related constants
+#
+DEFAULT_REPLICAS = 3
+DEFAULT_PARTITIONS = 10
+MAX_PARTITIONS = 1024

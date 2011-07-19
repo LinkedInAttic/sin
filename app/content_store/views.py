@@ -11,9 +11,11 @@ from django.http import HttpResponseServerError
 import kafka
 
 from content_store.models import ContentStore
-from cluster.models import Group, Node
+from cluster.models import Group, Node, Membership
 import logging
 from utils import enum, json
+from utils import ClusterLayout
+from utils.ClusterLayout import Rectangle, Label, SvgPlotter
 
 from django.utils import simplejson
 import shutil
@@ -74,6 +76,9 @@ def newStore(request,store_name):
     description=desc
   )
   store.save()
+
+  setupCluster(store)
+
   resp = store.to_map()
   resp.update({
     'ok' : True,
@@ -249,23 +254,23 @@ def startStore(request, store_name, restart=False):
     params["sensei_plugins"] = sensei_plugins
     params["schema"] = store.config
   
-    nodes = store.group.nodes.all()
-    nodeInfos = allocateResource(store)
-    for i in range(len(nodeInfos)):
-      nodeInfo = nodeInfos[i]
-      node = nodes[i]
+    members = store.membership_set.order_by("sensei_node_id")
+    for member in members:
       sensei_properties = loader.render_to_string(
         'sensei-conf/sensei.properties',
-        {'node_id': nodeInfo["id"],
-         'node_partitions': ','.join(str(x) for x in nodeInfo["parts"]),
+        {'node_id': member.sensei_node_id,
+         'node_partitions': member.parts[1:len(member.parts)-1],
          'max_partition_id': store.partitions - 1,
          'store': store,
          'index': index,
          'webapp': webapp,
+         'kafka_host': kafkaHost,
+         'kafka_port': kafkaPort,
+         'zookeeper_url': settings.ZOOKEEPER_URL,
          })
       params["sensei_properties"] = sensei_properties
       output = urllib2.urlopen("http://%s:%d/%s"
-                               % (node.host, node.agent_port,
+                               % (member.node.host, member.node.agent_port,
                                   not restart and "start-store" or "restart-store"),
                                urllib.urlencode(params))
 
@@ -292,10 +297,13 @@ def stopStore(request, store_name):
     params = {}
     params["name"] = store_name
 
-    nodes = store.group.nodes.all()
-    for node in nodes:
-      output = urllib2.urlopen("http://%s:%d/%s" % (node.host, node.agent_port, "stop-store"),
+    members = store.membership_set.order_by("sensei_node_id")
+    for member in members:
+      output = urllib2.urlopen("http://%s:%d/%s" % (member.node.host,
+                                                    member.node.agent_port,
+                                                    "stop-store"),
                                urllib.urlencode(params))
+
     store.status = enum.STORE_STATUS['stopped']
     store.save()
     resp = store.to_map()
@@ -411,28 +419,137 @@ def stores(request):
   resp = objs.to_map_list()
   return HttpResponse(json.json_encode(resp))
 
-def allocateResource(store):
+def setupCluster(store):
   """
-  Given a store and its replica and partition requirement, figure out
-  the cluster layout.  Return a list of nodes with partition information.
+  Set up the cluster for a given store based on currently available
+  Sensei nodes.  The cluster layout is determined by the store's number
+  of replicas and number of partitions.
   """
   nodes = store.group.nodes.all()
   totalNodes = len(nodes)
   numNodesPerReplica = totalNodes / store.replica
-  actualTotalNodes = numNodesPerReplica * store.replica
+  remainingNodes = totalNodes % store.replica
   numPartsPerNode = store.partitions / numNodesPerReplica
+  remainingParts = store.partitions % numNodesPerReplica
+  extraRow = remainingNodes > 0 and 1 or 0
 
-  nodeInfos = []
-  for i in range(store.replica):
-    for j in range(numNodesPerReplica):
-      nodeDict = {}
+  for i in range(store.replica + extraRow):
+    numNodes = numNodesPerReplica
+    if i == store.replica:
+      # The replica row for extra nodes
+      numNodes = remainingNodes
+    for j in range(numNodes):
       nodeId = i * numNodesPerReplica + j + 1
-      nodeDict["id"] = nodeId
-      nodeDict["name"] = nodes[nodeId - 1].host
       parts = []
       for k in range(numPartsPerNode):
         parts.append(j * numPartsPerNode + k)
-      nodeDict["parts"] = parts
-      nodeInfos.append(nodeDict)
+      if remainingParts > 0 and j < remainingParts:
+        parts.append(store.partitions - remainingParts + j)
+      Membership.objects.create(node = nodes[nodeId - 1],
+                                store = store,
+                                replica = i,
+                                sensei_node_id = nodeId,
+                                parts = parts)
 
-  return nodeInfos
+def buildClusterSVG(store, stream, xml_header=True):
+  """
+  Given a store, generate the SVG for its cluster layout.
+  The output is written to a file-like stream.  If ``xml_header'' is
+  True, the XML file header will be included in the output (this is
+  useful for generating an SVG file).
+  """
+  layout = ClusterLayout.ClusterLayout()
+
+  xOffset = 80
+  yOffset = 10
+  legend = 40
+  replicas = store.replica
+  members = store.membership_set.order_by("sensei_node_id")
+  totalNodes = len(members)
+  numNodesPerReplica = totalNodes / store.replica
+  remainingNodes = totalNodes % store.replica
+  numPartsPerNode = store.partitions / numNodesPerReplica
+  remainingParts = store.partitions % numNodesPerReplica
+  extraRow = remainingNodes > 0 and 1 or 0
+
+  for i in range(store.replica + extraRow):
+    y1 = yOffset + i * ClusterLayout.NODE_DISTANCE_Y
+    layout.addShape(Label(10, y1 + ClusterLayout.NODE_HEIGHT/2 + 2,
+                          "Replica " + str(i+1),
+                          fontSize=12, bold=True, color="darkblue"))
+    numNodes = numNodesPerReplica
+    if i == store.replica:
+      # The replica row for extra nodes
+      numNodes = remainingNodes
+    for j in range(numNodes):
+      x1 = xOffset + j * ClusterLayout.NODE_DISTANCE_X
+      layout.addShape(Rectangle(x1, y1, x1 + ClusterLayout.NODE_WIDTH, y1 + ClusterLayout.NODE_HEIGHT))
+      layout.addShape(Label(x1 + ClusterLayout.NODE_WIDTH/2, y1 + ClusterLayout.NODE_HEIGHT + 15,
+                            "Node %s" % str(i * numNodesPerReplica + j + 1),
+                            bold=True,
+                            alignment="middle"))
+      layout.addShape(Label(x1 + ClusterLayout.NODE_WIDTH/2,
+                            y1 + ClusterLayout.NODE_HEIGHT + 15 + ClusterLayout.DEFAULT_LABEL_SIZE + 1,
+                            "Parts: %s" % members[i * numNodesPerReplica + j].parts,
+                            alignment="middle"))
+
+  layout.setSize(xOffset + numNodesPerReplica * ClusterLayout.NODE_DISTANCE_X,
+                 yOffset + (store.replica + extraRow) * ClusterLayout.NODE_DISTANCE_Y)
+
+  plotter = SvgPlotter(stream)
+  plotter.visitImage(layout, xml_header)
+  return stream
+
+
+def testSetupCluster():
+
+  # Create some nodes
+
+  n1 = Node.objects.create(host="node-1", group=Group(pk=1))
+  n2 = Node.objects.create(host="node-2", group=Group(pk=1))
+  n3 = Node.objects.create(host="node-3", group=Group(pk=1))
+  n4 = Node.objects.create(host="node-4", group=Group(pk=1))
+  n5 = Node.objects.create(host="node-5", group=Group(pk=1))
+  n6 = Node.objects.create(host="node-6", group=Group(pk=1))
+  n7 = Node.objects.create(host="node-7", group=Group(pk=1))
+  n8 = Node.objects.create(host="node-8", group=Group(pk=1))
+  n9 = Node.objects.create(host="node-9", group=Group(pk=1))
+  n10 = Node.objects.create(host="node-10", group=Group(pk=1))
+
+  # Create test store 1
+
+  print "==== [ Test Store 1] ======================================"
+  store1 = ContentStore(name = "test-store1",
+                       replica = 3,
+                       partitions = 10,
+                       description = "This is test store one")
+  store1.save()
+  setupCluster(store1)
+
+  for node in store1.nodes.all():
+    print node.host
+
+  for member in store1.membership_set.order_by("sensei_node_id"):
+    print member.node.host, member.replica, member.parts
+
+  buildClusterSVG(store1, file("/tmp/%s.svg" % store1.name, "w+"), True)
+
+
+  # Create test store 2
+
+  print "==== [ Test Store 2] ======================================"
+  store2 = ContentStore(name = "test-store2",
+                       replica = 2,
+                       partitions = 5,
+                       description = "This is test store two")
+  store2.save()
+  setupCluster(store2)
+
+  for node in store2.nodes.all():
+    print node.host
+
+  for member in store2.membership_set.order_by("sensei_node_id"):
+    print member.node.host, member.replica, member.parts
+
+  buildClusterSVG(store2, file("/tmp/%s.svg" % store2.name, "w+"), True)
+
