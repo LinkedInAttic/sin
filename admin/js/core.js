@@ -3483,7 +3483,7 @@ $(function() {
     stopStore: function(){
       var me = this;
       var model = this.model;
-      $.blockUI({ message: '<img src="/static/images/indicator.gif" />' });
+      $.blockUI({ message: '<h1><img class="indicator" src="/static/images/indicator.gif" /> Stopping ' + me.model.get('name') + ' ...</h1>' });
       $.getJSON('/store/stop-store/'+model.get('name'),function(resp){
         if (resp.status_display)
           me.$('.status').text(resp.status_display);
@@ -3522,7 +3522,7 @@ $(function() {
 
     restart: function() {
       var me = this;
-      $.blockUI({ message: '<img src="/static/images/indicator.gif" />' });
+      $.blockUI({ message: '<h1><img class="indicator" src="/static/images/indicator.gif" /> Restarting ' + me.model.get('name') + ' ...</h1>' });
       $.getJSON('/store/restart-store/'+this.model.get('name') + '/', function(res) {
         if (res.status_display)
           me.$('.status').text(res.status_display);
