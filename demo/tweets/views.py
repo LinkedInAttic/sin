@@ -50,13 +50,16 @@ def search(request):
   try:
     res = searcher.doQuery(req);
     hits = []
-    for senseiHit in res.hits:
-      hits.append(senseiHit.srcData)
-    authorFacetList = res.facetMap['authorname']
     facetList = []
-    for authorFacet in authorFacetList:
-      obj = {'value':authorFacet.value,'count':authorFacet.count,'selected':authorFacet.selected}
-      facetList.append(obj)
+    if res.hits:
+      for senseiHit in res.hits:
+        hits.append(senseiHit.srcData)
+    if res.facetMap:
+      authorFacetList = res.facetMap.get('authorname')
+      if authorFacetList:
+        for authorFacet in authorFacetList:
+          obj = {'value':authorFacet.value,'count':authorFacet.count,'selected':authorFacet.selected}
+          facetList.append(obj)
     resp = {'ok':True,'numHits':res.numHits,'totalDocs':res.totalDocs,'hits':hits,'authornamefacet':facetList}
     return HttpResponse(json.dumps(resp))
   except Exception as e:

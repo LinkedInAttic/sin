@@ -14,7 +14,7 @@
 		  url=url+"authorname="+src.value+"&selected="+src.checked;
 	    }
 	    $.getJSON(url,function(res){
-		  $('#hits').text(res.numHits+" / "+res.totalDocs);
+		  $('#hits').text(res.numHits);
 		rowNode = $('#hitsTable');
 		  rowNode.empty();
 		  rowNode.append('<tr><th>profile-img</th><th>author-id</th><th>author-name</th><th>created-time</th><th>text</th></tr>');
@@ -51,7 +51,7 @@
   <body>
 	<h1 align="center">Search My Tweets Index</h1>
 	<p>
-		Hits: <span id="hits"></span>
+		Found: <span id="hits"></span> tweets
 	</p>
 		<input type="text" id="query" size="70" />
 		<input type="button" value="Search" onclick="doSearch(this)"/>	
