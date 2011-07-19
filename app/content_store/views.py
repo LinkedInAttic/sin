@@ -421,12 +421,18 @@ def setupCluster(store):
   nodes = store.group.nodes.all()
   totalNodes = len(nodes)
   numNodesPerReplica = totalNodes / store.replica
+  remainingNodes = totalNodes % store.replica
   actualTotalNodes = numNodesPerReplica * store.replica
   numPartsPerNode = store.partitions / numNodesPerReplica
   remainingParts = store.partitions % numNodesPerReplica
+  extraRow = remainingNodes > 0 and 1 or 0
 
-  for i in range(store.replica):
-    for j in range(numNodesPerReplica):
+  for i in range(store.replica + extraRow):
+    numNodes = numNodesPerReplica
+    if i == store.replica:
+      # The replica row for extra nodes
+      numNodes = remainingNodes
+    for j in range(numNodes):
       nodeId = i * numNodesPerReplica + j + 1
       parts = []
       for k in range(numPartsPerNode):
@@ -469,5 +475,3 @@ def testSetupCluster(storeName,
 
   for member in store1.membership_set.order_by("sensei_node_id"):
     print member.node.host, member.replica, member.parts
-
-  print ','.join(str(x) for x in member.parts)
