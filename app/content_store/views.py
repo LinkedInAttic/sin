@@ -25,6 +25,9 @@ from senseiClient import SenseiClient
 from senseiClient import SenseiRequest
 from senseiClient import SenseiSelection
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
 kafkaHost = settings.KAFKA_HOST
 kafkaPort = int(settings.KAFKA_PORT)
 kafkaProducer = kafka.KafkaProducer(kafkaHost, kafkaPort)
@@ -153,7 +156,7 @@ def addDoc(request,store_name):
       resp = {'ok':False,'error':'invalid json: %s' % doc}
       return HttpResponseBadRequest(json.json_encode(resp))
     except Exception as e:
-      logging.exception(e)
+      logger.error(e.message)
       resp = {'ok':False,'error':e.message}
       return HttpResponseServerError(json.json_encode(resp))
 
@@ -182,7 +185,7 @@ def addDocs(request,store_name):
       resp = {'ok':False,'error':'invalid json: %s' % docs}
       return HttpResponseBadRequest(json.json_encode(resp))
     except Exception as e:
-      logging.exception(e)
+      logger.error(e.messages)
       resp = {'ok':False,'error':e.message}
       return HttpResponseServerError(json.json_encode(resp))
 
@@ -270,6 +273,9 @@ def startStore(request, store_name, restart=False):
          'zookeeper_url': settings.ZOOKEEPER_URL,
          })
       params["sensei_properties"] = sensei_properties
+
+      logger.info("Sending request: http://%s:%d/%s" % (member.node.host, member.node.agent_port,
+                                                not restart and "start-store" or "restart-store"))
       output = urllib2.urlopen("http://%s:%d/%s"
                                % (member.node.host, member.node.agent_port,
                                   not restart and "start-store" or "restart-store"),
