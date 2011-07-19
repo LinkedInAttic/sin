@@ -1,0 +1,62 @@
+
+* Twitter Search Demo
+
+** Install Sin Python Client
+
+   Make sure that you have Sin Python client installed.  You can install
+   the client using the following commands:
+
+     $ cd sin/client/python/
+     $ python setup.py install
+
+** Start Sin
+
+     $ cd sin/app
+     $ manage.py runserver
+
+** Create a new store with name "tweets"
+
+   You can keep default values for parameters like number of replicas,
+   number of partitions, etc.
+
+** Edit schema
+
+   1. Add the following three columns:
+   
+      |------------+--------+-------|
+      | Name       | Type   | Multi |
+      |------------+--------+-------|
+      | authorname | string | false |
+      | time       | long   | false |
+      | text       | text   | false |
+      |------------+--------+-------|
+   
+   2. Remove column "content"
+
+   3. Add two facets, both of them should be simple:
+
+      authorname
+      time
+   
+   4. Press "save"
+
+** Start store "tweets" on Sin
+
+   Just press the (Re-)Start button for store "tweets" to get it started.
+
+** Start indexing tweet data
+
+     $ cd sin/client/python/src/tools
+     $ python -i twitterSearch.py
+
+** Start Tweets demo server
+
+     $ cd sin/demo
+     $ python manage.py runserver localhost:7000
+
+** Do twitter search
+
+   Now you should be able to do twitter search from the following URL:
+
+     http://localhost:7000/tweets/search
+
