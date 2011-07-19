@@ -53,3 +53,10 @@
   display: none;
 }
 
+.indicator {
+  display: none;
+  border: none;
+  width: 13px;
+  height: 13px;
+}
+
