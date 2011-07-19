@@ -24,9 +24,9 @@ SENSEI_HOME = '/tmp/sensei/'
 
 STORE_HOME = '/tmp/store/'
 
-ZOOKEEPER_URL = 'sguo-md:2181'
+ZOOKEEPER_URL = 'localhost:2181'
 
-KAFKA_HOST = 'sguo-md'
+KAFKA_HOST = 'localhost'
 
 KAFKA_PORT = '9092'
 
