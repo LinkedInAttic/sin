@@ -2983,17 +2983,18 @@ $(function() {
     stopStore: function(){
       var me = this;
       var model = this.model;
+      me.$('.stop-indicator').show();
       $.getJSON('/store/stop-store/'+model.get('name'),function(resp){
         if (resp.status_display)
           me.$('.status').text(resp.status_display);
         if (resp.status < 15)
           me.$('.endpoint').hide();
 
+        me.$('.stop-indicator').hide();
+
         if (!resp["ok"]){
           alert(resp["msg"]);
         }
-        else
-          alert('done');
       });
     },
     
@@ -3021,16 +3022,17 @@ $(function() {
 
     restart: function() {
       var me = this;
+      me.$('.restart-indicator').show();
       $.getJSON('/store/restart-store/'+this.model.get('name') + '/', function(res) {
         if (res.status_display)
           me.$('.status').text(res.status_display);
         if (res.status == 15)
           me.$('.endpoint').show();
 
+        me.$('.restart-indicator').hide();
+
         if (!res.ok)
           alert(res.error);
-        else
-          alert('done');
       });
     },
 
