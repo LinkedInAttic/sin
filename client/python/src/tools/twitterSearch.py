@@ -7,8 +7,8 @@ from dateutil.parser import *
 
 from sinClient import *
 
-queryString = "#inday"
-batchsize = 5
+queryString = "apple"
+batchsize = 100
 baseurl = 'http://search.twitter.com/search.json'
 
 def searchTwitter(opener,queryString,since_id):

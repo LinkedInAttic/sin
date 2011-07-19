@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Sin Demo - Tweets</title>
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script type="text/javascript">
+      function doSearch(src){
+	    url = "/tweets/search?";
+	    qstring=$("#query").val();
+		url=url+"query="+qstring+"&";
+		
+	    if (src.type == "checkbox"){
+		  url=url+"authorname="+src.value+"&selected="+src.checked;
+	    }
+	    $.getJSON(url,function(res){
+		  $('#hits').text(res.numHits+" / "+res.totalDocs);
+		rowNode = $('#hitsTable');
+		  rowNode.empty();
+		  rowNode.append('<tr><th>profile-img</th><th>author-id</th><th>author-name</th><th>created-time</th><th>text</th></tr>');
+
+		  for (i=0;i<res.hits.length;++i){
+			hit = res.hits[i];
+			rowString="<tr>";
+			rowString+="<td><img src=\""+hit.profileimg+"\"/></td>";
+			rowString+="<td>"+hit.authorid+"</td>";
+			rowString+="<td>"+hit.authorname+"</td>";
+			rowString+="<td>"+hit.createdtime+"</td>";
+			rowString+="<td>"+hit.text+"</td>";
+			rowNode.append(rowString);
+		  }
+		
+		  facetNode = $('#facets');
+		  facetNode.empty();
+		  authorFacetList = res.authornamefacet;
+		  for (i=0;i<authorFacetList.length;++i){
+			facet = authorFacetList[i];
+			facetString="<li>";
+			facetString+="<input id=\"authorname\" type=\"checkbox\" value=\""+facet.value+"\" onclick=\"doSearch(this)\"";
+			if (facet.selected){
+				facetString+=" checked ";
+			}
+			facetString+=">";
+			facetString+=facet.value+" ("+facet.count+")</input></li>";
+			facetNode.append(facetString);
+		  } 
+	    });
+      }
+    </script>
+  </head>
+  <body>
+	<h1 align="center">Search My Tweets Index</h1>
+	<p>
+		Hits: <span id="hits"></span>
+	</p>
+		<input type="text" id="query" size="70" />
+		<input type="button" value="Search" onclick="doSearch(this)"/>	
+		<div id="authors">
+			Top Authors: 
+			<ul id="facets">
+			</ul>
+		</div>	
+	<p>
+		
+		<div id="hits">
+		<table id="hitsTable" border="1" width="100%">
+		</table>
+		</div>
+	</p>
+  </body>
+</html>

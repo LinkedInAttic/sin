@@ -6,6 +6,11 @@ from sinClient.senseiClient import *
 from sinClient.sinClient import *
 
 
+from django.http import HttpResponseServerError
+from django.http import HttpResponse
+import logging
+import json
+
 storeName = 'tweets'
 sinClient = SinClient('localhost',8000)
 store = sinClient.openStore(storeName)
@@ -22,15 +27,39 @@ sort = SenseiSort('time',True)
 req.sorts = [sort]
 req.facets={'authorname':facetSpec}
 
+sel = SenseiSelection('authorname')
+req.selections.append(sel)
+
 def search(request):
-  q = request.POST.get('query')
+  q = request.GET.get('query')
+  
   if not q or len(q)==0:
     req.query = None
   else:
     req.query = "text:%s" %q
-  result = searcher.doQuery(req)
-  return render_to_response('search.html',{
-    "result": result,
-    },context_instance=template.RequestContext(request))
-
+  authorname = request.GET.get('authorname')
+  authorSelected = request.GET.get('selected')
   
+  if authorSelected=="true":
+    if not authorname in sel.values:
+      sel.values.append(authorname)
+  else:
+    if authorname in sel.values:
+      sel.values.remove(authorname)
+  
+  try:
+    res = searcher.doQuery(req);
+    hits = []
+    for senseiHit in res.hits:
+      hits.append(senseiHit.srcData)
+    authorFacetList = res.facetMap['authorname']
+    facetList = []
+    for authorFacet in authorFacetList:
+      obj = {'value':authorFacet.value,'count':authorFacet.count,'selected':authorFacet.selected}
+      facetList.append(obj)
+    resp = {'ok':True,'numHits':res.numHits,'totalDocs':res.totalDocs,'hits':hits,'authornamefacet':facetList}
+    return HttpResponse(json.dumps(resp))
+  except Exception as e:
+    logging.exception(e)
+    resp = {'ok':False,'error':e.message}
+    return HttpResponseServerError(json.dumps(resp))
