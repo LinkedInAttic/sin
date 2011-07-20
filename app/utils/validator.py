@@ -4,9 +4,9 @@ from decimal import *
 from django.utils import simplejson as json
 import re
 
-MIN_SHORT = -32768
+MIN_SHORT = 0                   # Not -32768
 MAX_SHORT = 32767
-MIN_INT = -2147483648
+MIN_INT = 0                     # Not -2147483648
 MAX_INT = 2147483647
 
 class DocValidator(object):
@@ -74,7 +74,9 @@ class DocValidator(object):
                 return (False, "Multi-value column %s contains some out-of-range value(s)" % key)
           elif defined_type == "long":
             for val_str in val_strs:
-              long(val_str)
+              val = long(val_str)
+              if val < 0:
+                return (False, "Multi-value column %s contains some out-of-range value(s)" % key)
           elif defined_type == "short":
             for val_str in val_strs:
               val = int(val_str)
@@ -82,7 +84,9 @@ class DocValidator(object):
                 return (False, "Multi-value column %s contains some out-of-range value(s)" % key)
           elif defined_type == "float" or defined_type == "double":
             for val_str in val_strs:
-              float(val_str)
+              val = float(val_str)
+              if val < 0:
+                return (False, "Multi-value column %s contains some out-of-range value(s)" % key)
         except:
           return (False, "Multi-value columns %s contains some invalid value(s)" % key)
       else:
@@ -103,10 +107,11 @@ class DocValidator(object):
             return (False, "Column %s does not have a short value" % key)
           elif value < MIN_SHORT or value > MAX_SHORT:
             return (False, "Column %s has an out-of-range value" % key)
-        elif defined_type == "float" and not isinstance(value, (int, long, float)):
-          return (False, "Column %s does not have a float value" % key)
-        elif defined_type == "double" and not isinstance(value, (int, long, float)):
-          return (False, "Column %s does not have a double value" % key)
+        elif defined_type == "float" or defined_type == "double":
+          if not isinstance(value, (int, long, float)):
+            return (False, "Column %s does not have a float/double value" % key)
+          elif value < 0:
+            return (False, "Column %s has an out-of-range value" % key)
         elif defined_type == "text" and not isinstance(value, basestring):
           return (False, "Column %s does not have a text value" % key)
   
@@ -249,6 +254,9 @@ if __name__ == "__main__":
   print validator.validate({"id": 123, "scores":"  60.5, 95.5  "}) # Delimiter should be ';'
   print validator.validate({"id": 123, "age": -2147483648888})     # Out of range
   print validator.validate({"id": 123, "age": 2147483648888})      # Out of range
+  print validator.validate({"id": 123, "age": [1,2,3]})            # age does not have an integer value
+  print validator.validate({"id": 123, "age": -10})                # Out of range (negative)
+  print validator.validate({"id": 123, "price": -10.50})           # 
 
   print "-------------------------------------------------------------"
 
