@@ -3483,6 +3483,11 @@ $(function() {
     stopStore: function(){
       var me = this;
       var model = this.model;
+      var really = confirm("This will stop your store '" + model.get('name')
+        + "', do you really want to continue?");
+      if (!really)
+        return false;
+
       $.blockUI({ message: '<h1><img class="indicator" src="/static/images/indicator.gif" /> Stopping ' + me.model.get('name') + ' ...</h1>' });
       $.getJSON('/store/stop-store/'+model.get('name'),function(resp){
         if (resp.status_display)
@@ -3522,6 +3527,11 @@ $(function() {
 
     restart: function() {
       var me = this;
+      var really = confirm("This will restart your store '" + me.model.get('name')
+        + "', do you really want to continue?");
+      if (!really)
+        return false;
+
       $.blockUI({ message: '<h1><img class="indicator" src="/static/images/indicator.gif" /> Restarting ' + me.model.get('name') + ' ...</h1>' });
       $.getJSON('/store/restart-store/'+this.model.get('name') + '/', function(res) {
         if (res.status_display)
