@@ -65,7 +65,7 @@ def newStore(request,store_name):
     return HttpResponseNotAllowed(json.json_encode(resp))
 
   replica = int(request.POST.get('replica','2'))
-  partitions = int(request.POST.get('partitions','10'))
+  partitions = int(request.POST.get('partitions','2'))
   desc = request.POST.get('desc',"")
 
   # Check for nodes:
