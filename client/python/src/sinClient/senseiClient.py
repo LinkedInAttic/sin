@@ -16,7 +16,7 @@
 
 import urllib
 import urllib2
-import json
+from django.utils import simplejson as json
 
 PARAM_OFFSET = "start"
 PARAM_COUNT = "rows"

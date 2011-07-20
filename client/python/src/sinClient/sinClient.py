@@ -10,7 +10,7 @@ import urllib2
 import time
 import kafka
 
-import json
+from django.utils import simplejson as json
 
 class Sindex:
   opener = None
