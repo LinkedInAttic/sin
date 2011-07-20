@@ -19,11 +19,10 @@ class Sindex:
   baseurl = None
   config = None
   created = None
-  kafkaProducer = None
   description = None
   status = None
   
-  def __init__(self,id,name,description,created,url,config,senseiClient,kafkaHost,kafkaPort,status):
+  def __init__(self,id,name,description,created,url,config,senseiClient,status):
     self.id = id
     self.name = name
     self.created = created
@@ -34,7 +33,6 @@ class Sindex:
     self.opener.addheaders = [('User-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_7) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.91 Safari/534.30')]
     self.baseurl = url
     self.config = config
-    self.kafkaProducer = kafka.KafkaProducer(kafkaHost, kafkaPort)
     self.status = status
   
   def available(self):
@@ -43,8 +41,7 @@ class Sindex:
     res = self.opener.open(urlReq)
     jsonObj = dict(json.loads(res.read()))
     if not jsonObj['ok']:
-      print "error: %s" % jsonObj.get('error','unknown error')
-      return False
+      raise Exception("error: %s" % jsonObj.get('error','unknown error'))
     return jsonObj.get('available',False)
 
   def start(self):
@@ -53,7 +50,7 @@ class Sindex:
     res = self.opener.open(urlReq)
     jsonObj = dict(json.loads(res.read()))
     if not jsonObj['ok']:
-      print "error: %s" % jsonObj.get('error','unknown error')
+      raise Exception("error: %s" % jsonObj.get('error','unknown error'))
 
   def start(self):
     url = '%s/%s/%s' % (self.baseurl,'stop-store',self.name)
@@ -61,40 +58,49 @@ class Sindex:
     res = self.opener.open(urlReq)
     jsonObj = dict(json.loads(res.read()))
     if not jsonObj['ok']:
-      print "error: %s" % jsonObj.get('error','unknown error')
+      raise Exception("error: %s" % jsonObj.get('error','unknown error'))
   
   def addDoc(self,doc):
     if not doc:
-      return None
-    uid = long(doc['id'])
-    jsonString = json.dumps(doc)
-    self.kafkaProducer.send([jsonString.encode('utf-8')],self.name.encode('utf-8'))
-    return doc
+      raise Exception('no doc supplied')
+    url = '%s/%s/%s' % (self.baseurl,'add-doc',self.name)
+    
+    params = urllib.urlencode({'doc': doc})
+    urlReq = urllib2.Request(url,params)
+    res = self.opener.open(urlReq)
+
+    jsonObj = dict(json.loads(res.read()))
+	if not jsonObj['ok']:
+      raise Exception("error: %s" % jsonObj.get('error','unknown error'))
+    return jsonObj.get('numPosted',0)
     
   def addDocs(self,docs):
     if not docs:
-      return 0
-    messages = []
-    for doc in docs:
-      uid = long(doc['id'])
-      jsonString = json.dumps(doc)
-      messages.append(jsonString.encode('utf-8'))
-    self.kafkaProducer.send(messages, self.name.encode('utf-8'))
-    return len(messages)
+      raise Exception('no docs supplied')
+	url = '%s/%s/%s' % (self.baseurl,'add-docs',self.name)
+
+    params = urllib.urlencode({'docs': docs})
+    urlReq = urllib2.Request(url,params)
+    res = self.opener.open(urlReq)
+
+    jsonObj = dict(json.loads(res.read()))
+	if not jsonObj['ok']:
+      raise Exception("error: %s" % jsonObj.get('error','unknown error'))
+    return jsonObj.get('numPosted',0)
 
   def updateDoc(self,doc):
     if not doc:
-      return 0
-    uid = long(doc['id'])
-    currentDoc = self.getDoc(uid)
-    if not currentDoc:
-      return 0
-    print currentDoc
-    for k,v in doc.items():
-      currentDoc[k] = v
-    jsonString = json.dumps(currentDoc)
-    self.kafkaProducer.send([jsonString.encode('utf-8')],self.name.encode('utf-8'))
-    return 1
+      	raise Exception('no doc supplied')
+	url = '%s/%s/%s' % (self.baseurl,'update-doc',self.name)
+
+	params = urllib.urlencode({'doc': doc})
+	urlReq = urllib2.Request(url,params)
+	res = self.opener.open(urlReq)
+
+	jsonObj = dict(json.loads(res.read()))
+	if not jsonObj['ok']:
+	    raise Exception("error: %s" % jsonObj.get('error','unknown error'))
+	return jsonObj.get('numPosted',0)
     
   def importFile(self,dataFile):
     fd = open(dataFile,'r+')
@@ -125,6 +131,7 @@ class Sindex:
     if not id:
       return 0
     uid = long(id)
+    url = '%s/%s/%s' % (self.baseurl,'delete-doc',self.name)
     doc = {'id':uid,'isDeleted':True}
     jsonObj = json.JSONEncoder().encode(doc)
     jsonString = json.dumps(jsonObj)
@@ -182,13 +189,11 @@ class SinClient:
     storeConfig = jsonObj.get('config')
     storeCreated = jsonObj['created']
     storeStatus = jsonObj['status']
-    kafkaHost = jsonObj['kafkaHost']
-    kafkaPort = jsonObj['kafkaPort']
     description = jsonObj.get('description',None)
     status = jsonObj['status_display']
     
     senseiClient = SenseiClient(self.host,brokerPort)
-    sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,kafkaHost,kafkaPort,status)
+    sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,status)
     while not sindex.available():
       time.sleep(0.5)
     

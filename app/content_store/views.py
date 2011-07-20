@@ -357,6 +357,9 @@ def findDoc(store,id):
 
 def getDoc(request,store_name,id):
   uid = long(id)
+  if (uid<0)
+    resp = {'ok':False,'error':'negative uid'}
+    return HttpResponseBadRequest(json.json_encode(resp))
   try:
     store = ContentStore.objects.get(name=store_name)
     doc = findDoc(store,uid)
@@ -376,6 +379,11 @@ def delDoc(request,store_name,id):
     resp = {'ok': True,'numDeleted':0}
     return HttpResponse(json.json_encode(resp))
   uid = long(id)
+
+  if (uid<0)
+    resp = {'ok':False,'error':'negative uid'}
+    return HttpResponseBadRequest(json.json_encode(resp))
+
   if not ContentStore.objects.filter(name=store_name).exists():
     resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
     return HttpResponseNotFound(json.json_encode(resp))
@@ -404,6 +412,9 @@ def delDocs(request,store_name):
   try:
     delObjs = []
     for uid in uidList:
+	  if (uid<0)
+	    resp = {'ok':False,'error':'negative uid'}
+	    return HttpResponseBadRequest(json.json_encode(resp))
       delDoc = {'id':uid,'isDeleted':True}
       delObjs.append(json.json_encode(delDoc).encode('utf-8'))
     kafkaProducer.send(delObjs,store_name.encode('utf-8'))
