@@ -64,7 +64,7 @@ class StartStore(Resource):
       sensei_custom_facets = request.args["sensei_custom_facets"][0]
       sensei_plugins = request.args["sensei_plugins"][0]
       schema = request.args["schema"][0]
-      log.msg("Starting store %" % name)
+      log.msg("Starting store %s" % name)
       return doStartStore(name, sensei_port, broker_port,
                           sensei_properties, sensei_custom_facets,
                           sensei_plugins, schema)
