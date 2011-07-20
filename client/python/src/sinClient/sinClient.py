@@ -70,37 +70,37 @@ class Sindex:
     res = self.opener.open(urlReq)
 
     jsonObj = dict(json.loads(res.read()))
-	if not jsonObj['ok']:
+    if not jsonObj['ok']:
       raise Exception("error: %s" % jsonObj.get('error','unknown error'))
     return jsonObj.get('numPosted',0)
     
   def addDocs(self,docs):
     if not docs:
       raise Exception('no docs supplied')
-	url = '%s/%s/%s' % (self.baseurl,'add-docs',self.name)
+    url = '%s/%s/%s' % (self.baseurl,'add-docs',self.name)
 
     params = urllib.urlencode({'docs': docs})
     urlReq = urllib2.Request(url,params)
     res = self.opener.open(urlReq)
 
     jsonObj = dict(json.loads(res.read()))
-	if not jsonObj['ok']:
+    if not jsonObj['ok']:
       raise Exception("error: %s" % jsonObj.get('error','unknown error'))
     return jsonObj.get('numPosted',0)
 
   def updateDoc(self,doc):
     if not doc:
-      	raise Exception('no doc supplied')
-	url = '%s/%s/%s' % (self.baseurl,'update-doc',self.name)
+        raise Exception('no doc supplied')
+    url = '%s/%s/%s' % (self.baseurl,'update-doc',self.name)
 
-	params = urllib.urlencode({'doc': doc})
-	urlReq = urllib2.Request(url,params)
-	res = self.opener.open(urlReq)
+    params = urllib.urlencode({'doc': doc})
+    urlReq = urllib2.Request(url,params)
+    res = self.opener.open(urlReq)
 
-	jsonObj = dict(json.loads(res.read()))
-	if not jsonObj['ok']:
-	    raise Exception("error: %s" % jsonObj.get('error','unknown error'))
-	return jsonObj.get('numPosted',0)
+    jsonObj = dict(json.loads(res.read()))
+    if not jsonObj['ok']:
+      raise Exception("error: %s" % jsonObj.get('error','unknown error'))
+    return jsonObj.get('numPosted',0)
     
   def importFile(self,dataFile):
     fd = open(dataFile,'r+')
@@ -125,7 +125,7 @@ class Sindex:
     if doc:
       return json.loads(doc)
     else:
-	  return None
+    return None
 
   def delDoc(self,id):
     if not id:
