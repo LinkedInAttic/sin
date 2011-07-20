@@ -325,7 +325,8 @@ def restartStore(request, store_name):
   return startStore(request, store_name, restart=True)
 
 def getSize(request,store_name):
-  if not ContentStore.objects.get(name=store_name).exists():
+  store = ContentStore.objects.get(name=store_name)
+  if not store:
     resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
     return HttpResponseNotFound(json.json_encode(resp))
   senseiHost = store.broker_host
