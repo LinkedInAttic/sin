@@ -92,6 +92,12 @@ def newStore(request,store_name):
   return HttpResponse(json.json_encode(resp))
 
 def deleteStore(request,store_name):
+  if True:  # Temporarily disable store deletion.
+    resp = {
+      'ok' : False,
+      'msg' : 'delete store is not currently supported.',
+    }
+    return HttpResponse(json.json_encode(resp))
   if not ContentStore.objects.filter(name=store_name).exists():
     resp = {
       'ok' : False,
