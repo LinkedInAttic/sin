@@ -54,6 +54,14 @@ class Sindex:
     jsonObj = dict(json.loads(res.read()))
     if not jsonObj['ok']:
       print "error: %s" % jsonObj.get('error','unknown error')
+
+  def stop(self):
+    url = '%s/%s/%s' % (self.baseurl,'stop-store',self.name)
+    urlReq = urllib2.Request(url)
+    res = self.opener.open(urlReq)
+    jsonObj = dict(json.loads(res.read()))
+    if not jsonObj['ok']:
+      print "error: %s" % jsonObj.get('error','unknown error')
   
   def addDoc(self,doc):
     if not doc:
