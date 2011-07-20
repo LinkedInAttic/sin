@@ -67,7 +67,7 @@ class ContentStore(models.Model):
   description = models.CharField(max_length=1024,unique=False)
 
   replica = models.IntegerField(default=2)
-  partitions = models.IntegerField(default=10)
+  partitions = models.IntegerField(default=2)
 
   config = models.TextField(default=json.json_encode(default_schema))
 
