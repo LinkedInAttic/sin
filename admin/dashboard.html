@@ -131,9 +131,9 @@
           {{#description}}<p>Description: {{description}}</p>{{/description}}
           <p>Created: <span class="timeago">{{created}}</span></p>
           <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Search endpoint: <a target="_blank" href="http://{{ broker_host }}:{{broker_port}}/sensei">http://{{broker_host}}:{{broker_port}}/sensei</a></p>
-          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Add doc endpoint: <a target="_blank" href="http://{{sin_host}}:{{sin_port}}/store/addDoc/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/add-doc/{{name}}/</a></p>
-          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Add docs endpoint: <a target="_blank" href="http://{{sin_host}}:{{sin_port}}/store/addDocs/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/add-docs/{{name}}/</a></p>
-          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Update doc endpoint: <a target="_blank" href="http://{{sin_host}}:{{sin_port}}/store/addDocs/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/update-doc/{{name}}/</a></p>
+          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Add doc endpoint: <a target="_blank" href="http://{{sin_host}}:{{sin_port}}/store/add-doc/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/add-doc/{{name}}/</a></p>
+          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Add docs endpoint: <a target="_blank" href="http://{{sin_host}}:{{sin_port}}/store/add-docs/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/add-docs/{{name}}/</a></p>
+          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Update doc endpoint: <a target="_blank" href="http://{{sin_host}}:{{sin_port}}/store/update-doc/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/update-doc/{{name}}/</a></p>
           </p>
         </div>
         <div class="manage-tab" style="display: none;">
