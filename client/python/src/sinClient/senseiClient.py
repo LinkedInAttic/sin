@@ -138,7 +138,7 @@ class SenseiSelection:
     self.properties[name]=value
   
   def removeProperty(self,name):
-    del properties[name]
+    del self.properties[name]
 
   def getSelectNotParam(self):
     return "%s.%s.%s" % (PARAM_SELECT, self.field, PARAM_SELECT_NOT)

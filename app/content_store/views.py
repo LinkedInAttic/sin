@@ -16,6 +16,7 @@ import logging
 from utils import enum, json
 from utils import ClusterLayout
 from utils.ClusterLayout import Rectangle, Label, SvgPlotter
+from utils import validator
 
 from django.utils import simplejson
 import shutil
@@ -31,6 +32,7 @@ logger.setLevel(logging.INFO)
 kafkaHost = settings.KAFKA_HOST
 kafkaPort = int(settings.KAFKA_PORT)
 kafkaProducer = kafka.KafkaProducer(kafkaHost, kafkaPort)
+validators = {}
 
 def storeExists(request,store_name):
   resp = {
@@ -131,6 +133,7 @@ def updateConfig(request, store_name):
     valid, error = store.validate_config()
     if valid:
       store.save()
+      validators[store_name] = validator.DocValidator(config)
       resp['ok'] = True
     else:
       resp['error'] = error
@@ -152,11 +155,16 @@ def addDocs(request,store_name):
     resp = {'ok':False,'error':'no docs posted'}
     return HttpResponseBadRequest(json.json_encode(resp))
   else:
+    validator = validators[store_name]
     try:
       # import pdb; pdb.set_trace()
       jsonDocs = simplejson.loads(docs)
       messages = []
       for doc in jsonDocs:
+        (valid, error) = validator.validate(obj)
+        if not valid:
+          resp = {'ok': False,'numPosted':0}
+          return HttpResponse(json.json_encode(resp))
         str = json.json_encode(doc).encode('utf-8')
         messages.append(str)
       kafkaProducer.send(messages, store_name.encode('utf-8'))
@@ -239,6 +247,7 @@ def startStore(request, store_name, restart=False):
     params["sensei_custom_facets"] = sensei_custom_facets
     params["sensei_plugins"] = sensei_plugins
     params["schema"] = store.config
+    validators[store_name] = validator.DocValidator(store.config)
   
     members = store.membership_set.order_by("sensei_node_id")
     for member in members:
