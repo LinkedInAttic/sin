@@ -41,8 +41,10 @@ def storeExists(request,store_name):
   return HttpResponse(json.dumps(resp))
 
 def openStore(request,store_name):
-  store = ContentStore.objects.get(name=store_name)
-  if not store:
+  store = None
+  try:
+    store = ContentStore.objects.get(name=store_name)
+  except ContentStore.DoesNotExist:
     resp = {
       'ok' : False,
       'error' : 'store: %s does not exist.' % store_name
@@ -179,8 +181,10 @@ def addDocs(request,store_name):
 
 def updateDoc(request,store_name):
   try:
-    store = ContentStore.objects.get(name=store_name)
-    if not store:
+    store = None
+    try:
+      store = ContentStore.objects.get(name=store_name)
+    except ContentStore.DoesNotExist:
       resp = {
         'ok' : False,
         'msg' : 'store: %s does not exist.' % store_name
@@ -218,8 +222,10 @@ def updateDoc(request,store_name):
 
 def startStore(request, store_name, restart=False):
   try:
-    store = ContentStore.objects.get(name=store_name)
-    if not store:
+    store = None
+    try:
+      store = ContentStore.objects.get(name=store_name)
+    except ContentStore.DoesNotExist:
       resp = {
         'ok' : False,
         'msg' : 'store: %s does not exist.' % store_name
@@ -283,8 +289,10 @@ def startStore(request, store_name, restart=False):
 
 def stopStore(request, store_name):
   try:
-    store = ContentStore.objects.get(name=store_name)
-    if not store:
+    store = None
+    try:
+      store = ContentStore.objects.get(name=store_name)
+    except ContentStore.DoesNotExist:
       resp = {
         'ok' : False,
         'msg' : 'store: %s does not exist.' % store_name
@@ -314,8 +322,10 @@ def restartStore(request, store_name):
   return startStore(request, store_name, restart=True)
 
 def getSize(request,store_name):
-  store = ContentStore.objects.get(name=store_name)
-  if not store:
+  store = None
+  try:
+    store = ContentStore.objects.get(name=store_name)
+  except ContentStore.DoesNotExist:
     resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
     return HttpResponseNotFound(json.dumps(resp))
   senseiHost = store.broker_host
