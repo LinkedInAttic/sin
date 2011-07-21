@@ -16,6 +16,7 @@ import logging
 from utils import enum, json
 from utils import ClusterLayout
 from utils.ClusterLayout import Rectangle, Label, SvgPlotter
+from utils import validator
 
 from django.utils import simplejson
 import shutil
@@ -31,6 +32,7 @@ logger.setLevel(logging.INFO)
 kafkaHost = settings.KAFKA_HOST
 kafkaPort = int(settings.KAFKA_PORT)
 kafkaProducer = kafka.KafkaProducer(kafkaHost, kafkaPort)
+validators = {}
 
 def storeExists(request,store_name):
   resp = {
@@ -125,6 +127,7 @@ def updateConfig(request, store_name):
     valid, error = store.validate_config()
     if valid:
       store.save()
+      validators[store_name] = validator.DocValidator(config)
       resp['ok'] = True
     else:
       resp['error'] = error
@@ -149,8 +152,12 @@ def addDoc(request,store_name):
   else:
     try:
       jsonDoc = simplejson.loads(doc.encode('utf-8'))
-      kafkaProducer.send([json.json_encode(jsonDoc).encode('utf-8')], store_name.encode('utf-8'))
-      resp = {'ok': True,'numPosted':1}
+      (valid, error) = validators[store_name].validate(jsonDoc)
+      if not valid:
+        resp = {'ok': False,'numPosted':0}
+      else:
+        kafkaProducer.send([json.json_encode(jsonDoc).encode('utf-8')], store_name.encode('utf-8'))
+        resp = {'ok': True,'numPosted':1}
       return HttpResponse(json.json_encode(resp))
     except ValueError:
       resp = {'ok':False,'error':'invalid json: %s' % doc}
@@ -172,10 +179,15 @@ def addDocs(request,store_name):
     resp = {'ok':False,'error':'no docs posted'}
     return HttpResponseBadRequest(json.json_encode(resp))
   else:
+    validtor = validators[store_name]
     try:
       jsonArray = simplejson.loads(docs.encode('utf-8'))
       messages = []
       for obj in jsonArray:
+        (valid, error) = validator.validate(obj)
+        if not valid:
+          resp = {'ok': False,'numPosted':0}
+          return HttpResponse(json.json_encode(resp))
         str = json.json_encode(obj).encode('utf-8')
         messages.append(str)
       kafkaProducer.send(messages, store_name.encode('utf-8'))
@@ -257,6 +269,7 @@ def startStore(request, store_name, restart=False):
     params["sensei_custom_facets"] = sensei_custom_facets
     params["sensei_plugins"] = sensei_plugins
     params["schema"] = store.config
+    validators[store_name] = validator.DocValidator(store.config)
   
     members = store.membership_set.order_by("sensei_node_id")
     for member in members:
