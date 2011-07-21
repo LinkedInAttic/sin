@@ -43,8 +43,7 @@ class Sindex:
     res = self.opener.open(urlReq)
     jsonObj = dict(json.loads(res.read()))
     if not jsonObj['ok']:
-      print "error: %s" % jsonObj.get('error','unknown error')
-      return False
+      raise Exception("error: %s" % jsonObj.get('error','unknown error'))
     return jsonObj.get('available',False)
 
   def start(self):
@@ -53,7 +52,7 @@ class Sindex:
     res = self.opener.open(urlReq)
     jsonObj = dict(json.loads(res.read()))
     if not jsonObj['ok']:
-      print "error: %s" % jsonObj.get('error','unknown error')
+      raise Exception("error: %s" % jsonObj.get('error','unknown error'))
 
   def start(self):
     url = '%s/%s/%s' % (self.baseurl,'stop-store',self.name)
@@ -61,7 +60,7 @@ class Sindex:
     res = self.opener.open(urlReq)
     jsonObj = dict(json.loads(res.read()))
     if not jsonObj['ok']:
-      print "error: %s" % jsonObj.get('error','unknown error')
+      raise Exception("error: %s" % jsonObj.get('error','unknown error'))
   
   def addDoc(self,doc):
     if not doc:
@@ -219,10 +218,6 @@ class SinClient:
     
     senseiClient = SenseiClient(self.host,brokerPort)
     sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,kafkaHost,kafkaPort,status)
-    while not sindex.available():
-      time.sleep(0.5)
-    
-    print "%s added" %name
     return sindex
   
   def storeExists(self,name):
@@ -243,6 +238,7 @@ class SinClient:
       errorMsg = "error: %s" % jsonObj.get('msg','unknown error')
       raise Exception(errorMsg)
 
+"""
 if __name__ == '__main__':
   client = SinClient()
   store = client.openStore('tweets')
@@ -260,7 +256,7 @@ if __name__ == '__main__':
       print srcdata.get('author-name')
     else:
       print 'none'
-"""
+
 if __name__ == '__main__':
   storeName = 'test'
   client = SinClient()
