@@ -46,7 +46,9 @@ class DocValidator(object):
         defined_type = "long"
       else:
         if key not in self.columns:
-          return (False, "Column %s is not declared in schema" % key)
+          # Tolerate unknown columns
+          continue
+          # return (False, "Column %s is not declared in schema" % key)
         defined_type = self.columns[key]["type"]
         if (self.columns[key].get("multi") == "true"):
           is_multi = True
@@ -93,27 +95,41 @@ class DocValidator(object):
         #
         # Single-value column
         #
-        if defined_type == "string" and not isinstance(value, (basestring, bool)):
-          return (False, "Column %s does not have a string value" % key)
-        elif defined_type == "int":
-          if not isinstance(value, int):
-            return (False, "Column %s does not have an int value" % key)
-          elif value < MIN_INT or value > MAX_INT:
-            return (False, "Column %s has an out-of-range value" % key)
-        elif defined_type == "long" and not isinstance(value, (int, long)):
-          return (False, "Column %s does not have a long value" % key)
-        elif defined_type == "short":
-          if not isinstance(value, int):
-            return (False, "Column %s does not have a short value" % key)
-          elif value < MIN_SHORT or value > MAX_SHORT:
-            return (False, "Column %s has an out-of-range value" % key)
-        elif defined_type == "float" or defined_type == "double":
-          if not isinstance(value, (int, long, float)):
-            return (False, "Column %s does not have a float/double value" % key)
-          elif value < 0:
-            return (False, "Column %s has an out-of-range value" % key)
-        elif defined_type == "text" and not isinstance(value, basestring):
-          return (False, "Column %s does not have a text value" % key)
+        try:
+          if defined_type == "string" and not isinstance(value, (basestring, bool, int, long, float)):
+            return (False, "Column %s does not have a string value" % key)
+          elif defined_type == "int":
+            if isinstance(value, basestring):
+              value = int(value)
+            elif not isinstance(value, int):
+              return (False, "Column %s does not have an int value" % key)
+            elif value < MIN_INT or value > MAX_INT:
+              return (False, "Column %s has an out-of-range value" % key)
+          elif defined_type == "long":
+            if isinstance(value, basestring):
+              value = long(value)
+            elif not isinstance(value, (int, long)):
+              return (False, "Column %s does not have a long value" % key)
+            elif value < 0:
+              return (False, "Column %s has an out-of-range value" % key)
+          elif defined_type == "short":
+            if isinstance(value, basestring):
+              value = int(value)
+            elif not isinstance(value, int):
+              return (False, "Column %s does not have a short value" % key)
+            elif value < MIN_SHORT or value > MAX_SHORT:
+              return (False, "Column %s has an out-of-range value" % key)
+          elif defined_type == "float" or defined_type == "double":
+            if isinstance(value, basestring):
+              value = float(value)
+            elif not isinstance(value, (int, long, float)):
+              return (False, "Column %s does not have a float/double value" % key)
+            elif value < 0:
+              return (False, "Column %s has an out-of-range value" % key)
+          elif defined_type == "text" and not isinstance(value, basestring):
+            return (False, "Column %s does not have a text value" % key)
+        except:
+          return (False, "Column %s contains an invalid value" % key)
   
     return (True, None)
 
@@ -254,10 +270,11 @@ if __name__ == "__main__":
   print validator.validate({"id": 123, "age": 2147483648888})      # Out of range
   print validator.validate({"id": 123, "age": [1,2,3]})            # age does not have an integer value
   print validator.validate({"id": 123, "age": -10})                # Out of range (negative)
-  print validator.validate({"id": 123, "price": -10.50})           # 
-  print validator.validate({"id": -123})                           #negative id
-  print validator.validate({"id": "abc"})                          #not valid id
-  print validator.validate({"id": 123.345})                        #id out of range
+  print validator.validate({"id": 123, "price": -10.50})           # Out of range (negative)
+  print validator.validate({"id": 123, "price": "xyz"})            # invalid value
+  print validator.validate({"id": -123})                           # negative id
+  print validator.validate({"id": "abc"})                          # not valid id
+  print validator.validate({"id": 123.345})                        # does not have a long value
 
   print "-------------------------------------------------------------"
 
@@ -272,3 +289,4 @@ if __name__ == "__main__":
   print validator.validate({"id": 123, "skills":"123"})
   print validator.validate({"id": 123, "skills":"  123,   456,   789  "})
   print validator.validate({"id": 123, "scores":"  60.5; ;; 95.5  "})
+  print validator.validate({"id": 123, "price":"  25.678 "})
