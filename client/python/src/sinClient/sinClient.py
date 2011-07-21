@@ -116,15 +116,6 @@ class Sindex:
     if not id:
       return None
 
-    url = '%s/%s/%s/%s' % (self.baseurl, 'get-doc', id, self.name)
-    urlReq = urllib2.Request(url)
-    res = self.opener.open(urlReq)
-
-    jsonObj = dict(json.loads(res.read()))
-    if not jsonObj['ok']:
-      raise Exception("error: %s" % jsonObj.get('error','unknown error'))
-    return jsonObj.get('numDeleted',0)
-    
     req = SenseiRequest()
     sel = SenseiSelection("uid")
     sel.addSelection(str(id))
@@ -138,7 +129,7 @@ class Sindex:
         hit = res.hits[0]
         doc = hit.srcData
     if doc:
-      return json.loads(doc)
+      return doc
     else:
       return None
 
