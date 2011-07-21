@@ -3483,6 +3483,11 @@ $(function() {
     stopStore: function(){
       var me = this;
       var model = this.model;
+      var really = confirm("This will stop your store '" + model.get('name')
+        + "', do you really want to continue?");
+      if (!really)
+        return false;
+
       $.blockUI({ message: '<h1><img class="indicator" src="/static/images/indicator.gif" /> Stopping ' + me.model.get('name') + ' ...</h1>' });
       $.getJSON('/store/stop-store/'+model.get('name'),function(resp){
         if (resp.status_display)
@@ -3500,6 +3505,11 @@ $(function() {
     
     deleteStore: function(){
       var model = this.model;
+      var really = confirm("This will delete your store '" + model.get('name')
+        + "', do you really want to continue?");
+      if (!really)
+        return false;
+
       $.getJSON('/store/delete-store/'+model.get('name'),function(resp){
         if (resp["ok"]){
           sinView.collection.remove(model);

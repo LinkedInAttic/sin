@@ -122,7 +122,7 @@
     </script>
     <script id="content-store-tmpl" type="text/x-mustache-tmpl">
       <div class="store-container">
-        <div><a target="_blank" href="http://{{ broker_host }}:{{ broker_port }}/">Search</a> | <a class="manage" href="javascript:_void();">Schema</a> | <a class="admin" target="_blank" href="http://{{ broker_host }}:{{ broker_port }}/admin.html">Admin</a> | <a href="javascript:_void();" class="deleteStore">Delete</a> | <a class="restart" href="javascript:_void();">(Re-)Start</a> | <a class="stopStore" href="javascript:_void();">Stop</a> | <span>Status:</span> <span class="status">{{ status_display }}</span></div>
+        <div><a target="_blank" href="http://{{ broker_host }}:{{ broker_port }}/demo.html">Search</a> | <a class="manage" href="javascript:_void();">Schema</a> | <a class="admin" target="_blank" href="http://{{ broker_host }}:{{ broker_port }}/admin.html">Admin</a> | <a href="javascript:_void();" class="deleteStore">Delete</a> | <a class="restart" href="javascript:_void();">(Re-)Start</a> | <a class="stopStore" href="javascript:_void();">Stop</a> | <span>Status:</span> <span class="status">{{ status_display }}</span></div>
         <h2>{{ name }}</h2>
         <div>
           <p>
@@ -131,9 +131,8 @@
           {{#description}}<p>Description: {{description}}</p>{{/description}}
           <p>Created: <span class="timeago">{{created}}</span></p>
           <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Search endpoint: <a target="_blank" href="http://{{ broker_host }}:{{broker_port}}/sensei">http://{{broker_host}}:{{broker_port}}/sensei</a></p>
-          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Add doc endpoint: <a target="_blank" href="http://{{sin_host}}:{{sin_port}}/store/addDoc/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/add-doc/{{name}}/</a></p>
-          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Add docs endpoint: <a target="_blank" href="http://{{sin_host}}:{{sin_port}}/store/addDocs/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/add-docs/{{name}}/</a></p>
-          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Update doc endpoint: <a target="_blank" href="http://{{sin_host}}:{{sin_port}}/store/addDocs/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/update-doc/{{name}}/</a></p>
+          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Add docs endpoint: <a target="_blank" href="http://{{sin_host}}:{{sin_port}}/store/add-docs/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/add-docs/{{name}}/</a></p>
+          <p class="endpoint" {{^is_running}}style="display: none;"{{/is_running}}>Update doc endpoint: <a target="_blank" href="http://{{sin_host}}:{{sin_port}}/store/update-doc/{{name}}/">http://{{sin_host}}:{{sin_port}}/store/update-doc/{{name}}/</a></p>
           </p>
         </div>
         <div class="manage-tab" style="display: none;">
@@ -184,7 +183,7 @@
       <div class="new-store" style="display:none;">
         New Store Name: <input class="new-store-name" type="text" /> <br />
         Replica: <input class="new-store-replica" type="text" /> <br />
-        Partitions: <input class="new-store-partitions" type="text" value="10" /> <br />
+        Partitions: <input class="new-store-partitions" type="text" value="2" /> <br />
         Description: <textarea class="new-store-desc"></textarea> <br />
         <input class="new-store-add" type="button" value="Add New Store" />
       </div>
