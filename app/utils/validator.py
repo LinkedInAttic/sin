@@ -106,28 +106,28 @@ class DocValidator(object):
               value = int(value)
             elif not isinstance(value, int):
               return (False, "Column %s does not have an int value" % key)
-            elif value < MIN_INT or value > MAX_INT:
+            if value < MIN_INT or value > MAX_INT:
               return (False, "Column %s has an out-of-range value" % key)
           elif defined_type == "long":
             if isinstance(value, basestring):
               value = long(value)
             elif not isinstance(value, (int, long)):
               return (False, "Column %s does not have a long value" % key)
-            elif value < 0:
+            if value < 0:
               return (False, "Column %s has an out-of-range value" % key)
           elif defined_type == "short":
             if isinstance(value, basestring):
               value = int(value)
             elif not isinstance(value, int):
               return (False, "Column %s does not have a short value" % key)
-            elif value < MIN_SHORT or value > MAX_SHORT:
+            if value < MIN_SHORT or value > MAX_SHORT:
               return (False, "Column %s has an out-of-range value" % key)
           elif defined_type == "float" or defined_type == "double":
             if isinstance(value, basestring):
               value = float(value)
             elif not isinstance(value, (int, long, float)):
               return (False, "Column %s does not have a float/double value" % key)
-            elif value < 0:
+            if value < 0:
               return (False, "Column %s has an out-of-range value" % key)
           elif defined_type == "text" and not isinstance(value, basestring):
             return (False, "Column %s does not have a text value" % key)
@@ -290,6 +290,7 @@ if __name__ == "__main__":
   # Invalid ones
   print validator.validate({"not-defined-col":123})                # Required uid field is missing
   print validator.validate({"id": 123, "time":123, "age":12345678901234567890}) # age has a long value
+  print validator.validate({"id": 123, "time":123, "age":"12345678901234567890"}) # age has a long value
   print validator.validate({"id": 123, "skills":123})              # Multi-value column skills should have a string value
   print validator.validate({"id": 123, "skills":"123,aaa"})        # skills contains invalid values
   print validator.validate({"id": 123, "skills":"99999999999"})    # Out of range

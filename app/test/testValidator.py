@@ -141,9 +141,11 @@ class TestValidator(unittest.TestCase):
     valid, error = self.validator.validate({"id": 123.345})
     self.assertEqual(False, valid, "not a long id");              
 
-  def testLongValue(self):
+  def testOutOfRangeError(self):
     valid, error = self.validator.validate({"id": 123, "time":123, "age":12345678901234567890})
-    self.assertEqual(False, valid, "age has a long value");
+    self.assertEqual(False, valid, "age value is out of range");
+    valid, error = self.validator.validate({"id": 123, "time":123, "age":"12345678901234567890"})
+    self.assertEqual(False, valid, "age value is out of range");
 
   def testMultiValueHasString(self):
     valid, error = self.validator.validate({"id": 123, "skills":123})
