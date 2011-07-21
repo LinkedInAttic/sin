@@ -101,14 +101,14 @@ class Sindex:
     batch = []
     fd = open(dataFile,'r+')
     for line in fd:
-      batch.append(line)
+      jsonObj = dict(json.loads(line))
+      batch.append(jsonObj)
       if batch.length >= batchSize:
-        // send the batch
+        addDocs(batch)
         batch = []
-      //self.kafkaProducer.send([line], self.name.encode('utf-8'))
     fd.close()
-    if batch.length > 0
-      // send the rest
+    if batch.length > 0:
+      addDocs(batch)
 
     
   def getDoc(self, id):
