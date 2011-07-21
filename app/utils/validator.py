@@ -245,7 +245,6 @@ if __name__ == "__main__":
 
   # Invalid ones
   print validator.validate({"not-defined-col":123})                # Required uid field is missing
-  print validator.validate({"id": 123, "not-defined-col":123})     # One column is not declared in schema
   print validator.validate({"id": 123, "time":123, "authorname":123}) # authorname does not have a string value
   print validator.validate({"id": 123, "time":123, "age":12345678901234567890}) # age has a long value
   print validator.validate({"id": 123, "skills":123})              # Multi-value column skills should have a string value
@@ -257,10 +256,16 @@ if __name__ == "__main__":
   print validator.validate({"id": 123, "age": [1,2,3]})            # age does not have an integer value
   print validator.validate({"id": 123, "age": -10})                # Out of range (negative)
   print validator.validate({"id": 123, "price": -10.50})           # 
+  print validator.validate({"id": -123})                           #negative id
+  print validator.validate({"id": "abc"})                          #not valid id
+  print validator.validate({"id": 123.345})                        #id out of range
 
   print "-------------------------------------------------------------"
 
   # Valid ones
+  
+  print validator.validate({"id": 123, "not-defined-col":123})     
+  print validator.validate({"id": "123", "time":123})
   print validator.validate({"id": 123, "time":123})
   print validator.validate({"id": 123, "time":123, "price":123})
   print validator.validate({"id": 123, "time":123, "price":123, "isPublic":True}) # Boolean value is OK for string
