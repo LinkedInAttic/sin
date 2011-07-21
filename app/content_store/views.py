@@ -179,7 +179,7 @@ def addDocs(request,store_name):
     resp = {'ok':False,'error':'no docs posted'}
     return HttpResponseBadRequest(json.json_encode(resp))
   else:
-    validtor = validators[store_name]
+    validator = validators[store_name]
     try:
       jsonArray = simplejson.loads(docs.encode('utf-8'))
       messages = []
