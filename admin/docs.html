@@ -241,13 +241,7 @@ doc = {'id': 7,
 store = sinClient.openStore('myStore')
 
 """
-Add 1 doc to the store
-"""
-store.addDoc(doc)
-
-
-"""
-Add 2 docs to the store in a batch
+Add docs to the store in a batch
 store.addDocs([doc,doc])
 """
 
@@ -269,26 +263,8 @@ store.importFile('/tmp/mydata.json')
 
 	<a name="addDocRest">
 	<h4>Rest end-point:</h4>
-	<p>We offer 3 Rest APIs for adding docs into our store:</p>
-<p>Add 1 doc into the store:</p>
-	<ul>
-	<li>Method: POST</li>
-	<li>Url: http://sinHost:sinPort/store/add-doc/&lt;store-name&gt;</li>
-	<li>Parameter:
-		<ul>
-			<li>doc - json representation of your doc</li>
-		</ul>
-	</li>
-	<li>Example:
-		<pre><code>
-doc = 
-{
-'id' : 8,
-'color' : 'red'
-}
-		</code></pre>
-	</li>
-	</ul>
+	<p>We offer 2 Rest APIs for adding docs into our store:</p>
+
 <p>Add multiple docs into the store in a batch:</p>
 		<ul>
 		<li>Method: POST</li>

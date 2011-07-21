@@ -170,9 +170,9 @@ def addDocs(request,store_name):
       for doc in jsonDocs:
         (valid, error) = validator.validate(doc)
         if not valid:
-          logger.warn("Found an invalid doc for store %s" % store_name)
+          logger.warn("Found an invalid doc for store %s when adding docs" % store_name)
           resp = {'ok': False,'numPosted':0, 'error':error}
-          return HttpResponse(json.dumps(resp))
+          return HttpResponseBadRequest(json.dumps(resp))
         str = json.dumps(doc).encode('utf-8')
         messages.append(str)
       kafkaProducer.send(messages, store_name.encode('utf-8'))
@@ -205,6 +205,13 @@ def updateDoc(request,store_name):
       return HttpResponseBadRequest(json.dumps(resp))
     else:
       jsonDoc = json.loads(doc.encode('utf-8'))
+
+      (valid, error) = validator.validate(jsonDoc)
+      if not valid:
+        logger.warn("Found an invalid doc for store %s when updating a doc" % store_name)
+        resp = {'ok': False,'numPosted':0, 'error':error}
+        return HttpResponseBadRequest(json.dumps(resp))
+
       uid = long(jsonDoc['id'])
       existingDocString = findDoc(store,uid)
 

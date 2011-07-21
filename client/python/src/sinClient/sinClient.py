@@ -209,7 +209,7 @@ class SinClient:
     
     return sindex
 
-  def newStore(self,name,rep=2,parts=10,description=""):
+  def newStore(self,name,rep=1,parts=10,description=""):
     baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
     url = '%s/%s/%s' % (baseurl,'new-store',name)
     params = urllib.urlencode(dict(replica=rep,partitions=parts,desc=description))
