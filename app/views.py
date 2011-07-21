@@ -3,7 +3,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader
 from django.http import Http404
 
-from utils import enum, json
+from utils import enum
 
 def home(request):
   return HttpResponseRedirect('/static/index.html')

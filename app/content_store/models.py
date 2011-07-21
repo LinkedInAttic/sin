@@ -1,14 +1,11 @@
-import logging, urllib2
+import logging, urllib2, json
 import django.utils.log
 from django.db import models
 from django.db.models import Max
-from django.utils import simplejson
 from django.utils.translation import ugettext_lazy as _
-from django.utils import simplejson
 
 from utils import enum
 from utils.enum import to_choices
-from utils import json
 
 from cluster.models import Group, Node, Membership
 import time
@@ -69,7 +66,7 @@ class ContentStore(models.Model):
   replica = models.IntegerField(default=2)
   partitions = models.IntegerField(default=2)
 
-  config = models.TextField(default=json.json_encode(default_schema))
+  config = models.TextField(default=json.dumps(default_schema))
 
   created = models.DateTimeField(auto_now_add=True)
 
@@ -114,7 +111,7 @@ class ContentStore(models.Model):
       try:
         url = 'http://%s:%s/sensei/sysinfo' % (socket.gethostbyname(self.broker_host), self.broker_port)
         doc = urllib2.urlopen(url).read()
-        res = simplejson.loads(doc.encode('utf-8'))
+        res = json.loads(doc.encode('utf-8'))
         if res.get(u'clusterinfo') == []:
           logger.info("Clusterinfo is not available yet.  Try again...")
           time.sleep(2)
@@ -156,7 +153,7 @@ class ContentStore(models.Model):
       return (True, None)
 
     try:
-      config = simplejson.loads(self.config)
+      config = json.loads(self.config)
       for facet in config['facets']:
         valid, error = validate_facet(facet)
         if not valid:
@@ -165,7 +162,7 @@ class ContentStore(models.Model):
       if not valid:
         return (valid, error)
 
-      self.config = json.json_encode(config)
+      self.config = json.dumps(config)
     except Exception as e:
       logging.exception(e)
       return (False, 'Configuration is not valid.')

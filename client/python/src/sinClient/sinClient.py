@@ -73,7 +73,7 @@ class Sindex:
       raise Exception('no docs supplied')
     url = '%s/%s/%s' % (self.baseurl,'add-docs',self.name)
 
-    params = urllib.urlencode({'docs': json.JSONEncoder().encode(docs)})
+    params = urllib.urlencode({'docs': json.dumps(docs)})
     urlReq = urllib2.Request(url,params)
     res = self.opener.open(urlReq)
 
