@@ -139,50 +139,25 @@ def updateConfig(request, store_name):
 
   return HttpResponse(json.json_encode(resp))
 
-def addDoc(request,store_name):
-  if not ContentStore.objects.filter(name=store_name).exists():
-    resp = {
-      'ok' : False,
-      'msg' : 'store: %s does not exist.' % store_name
-    }
-    return HttpResponseNotFound(json.json_encode(resp))
-
-  doc = request.POST.get('doc');
-  
-  if not doc:
-    resp = {'ok':False,'error':'no doc posted'}
-    return HttpResponseBadRequest(json.json_encode(resp))
-  else:
-    try:
-      jsonDoc = simplejson.loads(doc.encode('utf-8'))
-      kafkaProducer.send([json.json_encode(jsonDoc).encode('utf-8')], store_name.encode('utf-8'))
-      resp = {'ok': True,'numPosted':1}
-      return HttpResponse(json.json_encode(resp))
-    except ValueError:
-      resp = {'ok':False,'error':'invalid json: %s' % doc}
-      return HttpResponseBadRequest(json.json_encode(resp))
-    except Exception as e:
-      logger.error(e.message)
-      resp = {'ok':False,'error':e.message}
-      return HttpResponseServerError(json.json_encode(resp))
-
 def addDocs(request,store_name):
+  """Add a list of documents."""
   if not ContentStore.objects.filter(name=store_name).exists():
     resp = {
       'ok' : False,
       'msg' : 'store: %s does not exist.' % store_name
     }
     return HttpResponseNotFound(json.json_encode(resp))
-  docs = request.POST.get('docs');  
+  docs = request.POST.get('docs');
   if not docs:
     resp = {'ok':False,'error':'no docs posted'}
     return HttpResponseBadRequest(json.json_encode(resp))
   else:
     try:
-      jsonArray = simplejson.loads(docs.encode('utf-8'))
+      # import pdb; pdb.set_trace()
+      jsonDocs = simplejson.loads(docs)
       messages = []
-      for obj in jsonArray:
-        str = json.json_encode(obj).encode('utf-8')
+      for doc in jsonDocs:
+        str = json.json_encode(doc).encode('utf-8')
         messages.append(str)
       kafkaProducer.send(messages, store_name.encode('utf-8'))
       resp = {'ok':True,'numPosted':len(messages)}
@@ -196,6 +171,7 @@ def addDocs(request,store_name):
       return HttpResponseServerError(json.json_encode(resp))
 
 def updateDoc(request,store_name):
+  """Update a document."""
   try:
     store = ContentStore.objects.get(name=store_name)
     if not store:
@@ -281,7 +257,7 @@ def startStore(request, store_name, restart=False):
       params["sensei_properties"] = sensei_properties
 
       logger.info("Sending request: http://%s:%d/%s" % (member.node.host, member.node.agent_port,
-                                                not restart and "start-store" or "restart-store"))
+                                                        not restart and "start-store" or "restart-store"))
       output = urllib2.urlopen("http://%s:%d/%s"
                                % (member.node.host, member.node.agent_port,
                                   not restart and "start-store" or "restart-store"),
@@ -331,7 +307,8 @@ def restartStore(request, store_name):
   return startStore(request, store_name, restart=True)
 
 def getSize(request,store_name):
-  if not ContentStore.objects.get(name=store_name).exists():
+  store = ContentStore.objects.get(name=store_name)
+  if not store:
     resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
     return HttpResponseNotFound(json.json_encode(resp))
   senseiHost = store.broker_host
@@ -379,49 +356,21 @@ def getDoc(request,store_name,id):
     resp = {'ok':False,'error':e.message}
     return HttpResponseServerError(json.json_encode(resp))
     
-
-def delDoc(request,store_name,id):
-  if not id:
-    resp = {'ok': True,'numDeleted':0}
-    return HttpResponse(json.json_encode(resp))
-  uid = long(id)
-
-  if uid<0:
-    resp = {'ok':False,'error':'negative uid'}
-    return HttpResponseBadRequest(json.json_encode(resp))
-
-  if not ContentStore.objects.filter(name=store_name).exists():
-    resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
-    return HttpResponseNotFound(json.json_encode(resp))
-  try:
-    doc = {'id':uid,'isDeleted':True}
-    kafkaProducer.send([json.json_encode(doc).encode('utf-8')],store_name.encode('utf-8'))
-    resp = {'ok': True,'numDeleted':1}
-    return HttpResponse(json.json_encode(resp))
-  except Exception as e:
-    logging.exception(e)
-    resp = {'ok':False,'error':e.message}
-    return HttpResponseServerError(json.json_encode(resp))
-
-def delDocs(request,store_name):
+def delDocs(request, store_name):
   ids = request.POST.get('ids')
-  if not ids:
+
+  if not ids or len(ids) == 0:
     resp = {'ok': True,'numDeleted':0}
     return HttpResponse(json.json_encode(resp))
-  uidList = ids.split(",")
-  if len(uidList) == 0:
-    resp = {'ok': True,'numDeleted':0}
-    return HttpResponse(json.json_encode(resp))
+
   if not ContentStore.objects.filter(name=store_name).exists():
     resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
     return HttpResponseNotFound(json.json_encode(resp))
+
   try:
     delObjs = []
-    for uid in uidList:
-      if uid<0:
-        resp = {'ok':False,'error':'negative uid'}
-        return HttpResponseBadRequest(json.json_encode(resp))
-      delDoc = {'id':uid,'isDeleted':True}
+    for id in ids:
+      delDoc = {'id':id,'isDeleted':True}
       delObjs.append(json.json_encode(delDoc).encode('utf-8'))
     kafkaProducer.send(delObjs,store_name.encode('utf-8'))
     resp = {'ok': True,'numDeleted':len(delObjs)}

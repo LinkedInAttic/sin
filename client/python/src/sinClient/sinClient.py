@@ -36,6 +36,7 @@ class Sindex:
     self.status = status
   
   def available(self):
+    """Check if the store is available."""
     url = '%s/%s/%s' % (self.baseurl,'available',self.name)
     urlReq = urllib2.Request(url)
     res = self.opener.open(urlReq)
@@ -45,6 +46,7 @@ class Sindex:
     return jsonObj.get('available',False)
 
   def start(self):
+    """Start the store."""
     url = '%s/%s/%s' % (self.baseurl,'start-store',self.name)
     urlReq = urllib2.Request(url)
     res = self.opener.open(urlReq)
@@ -52,7 +54,8 @@ class Sindex:
     if not jsonObj['ok']:
       raise Exception("error: %s" % jsonObj.get('error','unknown error'))
 
-  def start(self):
+  def stop(self):
+    """Stop the store."""
     url = '%s/%s/%s' % (self.baseurl,'stop-store',self.name)
     urlReq = urllib2.Request(url)
     res = self.opener.open(urlReq)
@@ -61,25 +64,16 @@ class Sindex:
       raise Exception("error: %s" % jsonObj.get('error','unknown error'))
   
   def addDoc(self,doc):
-    if not doc:
-      raise Exception('no doc supplied')
-    url = '%s/%s/%s' % (self.baseurl,'add-doc',self.name)
-    
-    params = urllib.urlencode({'doc': doc})
-    urlReq = urllib2.Request(url,params)
-    res = self.opener.open(urlReq)
+    """Add a document to the store."""
+    return self.addDocs([doc])
 
-    jsonObj = dict(json.loads(res.read()))
-    if not jsonObj['ok']:
-      raise Exception("error: %s" % jsonObj.get('error','unknown error'))
-    return jsonObj.get('numPosted',0)
-    
   def addDocs(self,docs):
+    """Add a list of documents."""
     if not docs:
       raise Exception('no docs supplied')
     url = '%s/%s/%s' % (self.baseurl,'add-docs',self.name)
 
-    params = urllib.urlencode({'docs': docs})
+    params = urllib.urlencode({'docs': json.JSONEncoder().encode(docs)})
     urlReq = urllib2.Request(url,params)
     res = self.opener.open(urlReq)
 
@@ -89,8 +83,9 @@ class Sindex:
     return jsonObj.get('numPosted',0)
 
   def updateDoc(self,doc):
+    """Update a document."""
     if not doc:
-        raise Exception('no doc supplied')
+      raise Exception('no doc supplied')
     url = '%s/%s/%s' % (self.baseurl,'update-doc',self.name)
 
     params = urllib.urlencode({'doc': doc})
@@ -116,7 +111,20 @@ class Sindex:
       // send the rest
 
     
-  def getDoc(self,uid):
+  def getDoc(self, id):
+    """Retrieve a document based its document ID."""
+    if not id:
+      return None
+
+    url = '%s/%s/%s/%s' % (self.baseurl, 'get-doc', id, self.name)
+    urlReq = urllib2.Request(url)
+    res = self.opener.open(urlReq)
+
+    jsonObj = dict(json.loads(res.read()))
+    if not jsonObj['ok']:
+      raise Exception("error: %s" % jsonObj.get('error','unknown error'))
+    return jsonObj.get('numDeleted',0)
+    
     req = SenseiRequest()
     sel = SenseiSelection("uid")
     sel.addSelection(str(uid))
@@ -132,30 +140,34 @@ class Sindex:
     if doc:
       return json.loads(doc)
     else:
-    return None
+      return None
 
   def delDoc(self,id):
-    if not id:
-      return 0
-    uid = long(id)
-    url = '%s/%s/%s' % (self.baseurl,'delete-doc',self.name)
-    doc = {'id':uid,'isDeleted':True}
-    jsonObj = json.JSONEncoder().encode(doc)
-    jsonString = json.dumps(jsonObj)
-    self.kafkaProducer.send([jsonString.encode('utf-8')],self.name.encode('utf-8'))
-    return 1
+    """Delete a document based on the document ID.
 
-  def delDocs(self,idList):
+    Return 1 if the document is deleted successfully; 0 otherwise.
+    
+    """
+    return delDocs([id])
+
+  def delDocs(self, idList):
+    """Delete multiple documents based on a list of document IDs.
+
+    Return the number of documents deleted successfully.
+
+    """
     if not idList or len(idList)==0:
       return 0
-    delObjs = []
-    for id in idList:
-      delDoc = {'id':id,'isDeleted':True}
-      jsonObj = json.JSONEncoder().encode(delDoc)
-      jsonString = json.dumps(jsonObj)
-      delObjs.append(jsonString.encode('utf-8'))
-    self.kafkaProducer.send(delObjs,self.name.encode('utf-8'))
-    return len(idList)
+
+    url = '%s/%s/%s' % (self.baseurl,'delete-docs',self.name)
+    params = urllib.urlencode({"ids": idList})
+    urlReq = urllib2.Request(url, params)
+    res = self.opener.open(urlReq)
+
+    jsonObj = json.loads(res.read())
+    if not jsonObj["ok"]:
+      raise Exception("error: %s" % jsonObj.get("error", "unknown error"))
+    return jsonObj.get("numDeleted", 0)
 
   def getSize(self):
     req = SenseiRequest()
@@ -254,7 +266,7 @@ class SinClient:
     if not jsonObj['ok']:
       errorMsg = "error: %s" % jsonObj.get('msg','unknown error')
       raise Exception(errorMsg)
-
+"""
 if __name__ == '__main__':
   client = SinClient()
   store = client.openStore('tweets')
@@ -272,7 +284,7 @@ if __name__ == '__main__':
       print srcdata.get('author-name')
     else:
       print 'none'
-"""
+
 if __name__ == '__main__':
   storeName = 'test'
   client = SinClient()
