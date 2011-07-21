@@ -245,7 +245,6 @@ if __name__ == "__main__":
 
   # Invalid ones
   print validator.validate({"not-defined-col":123})                # Required uid field is missing
-  print validator.validate({"id": 123, "time":123, "authorname":123}) # authorname does not have a string value
   print validator.validate({"id": 123, "time":123, "age":12345678901234567890}) # age has a long value
   print validator.validate({"id": 123, "skills":123})              # Multi-value column skills should have a string value
   print validator.validate({"id": 123, "skills":"123,aaa"})        # skills contains invalid values
@@ -264,6 +263,7 @@ if __name__ == "__main__":
 
   # Valid ones
   
+  print validator.validate({"id": 123, "time":123, "authorname":123})
   print validator.validate({"id": 123, "not-defined-col":123})     
   print validator.validate({"id": "123", "time":123})
   print validator.validate({"id": 123, "time":123})
