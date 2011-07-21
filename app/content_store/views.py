@@ -188,7 +188,8 @@ def addDocs(request,store_name):
       for doc in jsonDocs:
         (valid, error) = validator.validate(doc)
         if not valid:
-          resp = {'ok': False,'numPosted':0}
+          logger.warn("Found an invalid doc for store %s" % store_name)
+          resp = {'ok': False,'numPosted':0, 'error':error}
           return HttpResponse(json.dumps(resp))
         str = json.dumps(doc).encode('utf-8')
         messages.append(str)
