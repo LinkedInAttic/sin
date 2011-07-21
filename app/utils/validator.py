@@ -1,8 +1,11 @@
-import types
+import types, json, logging
 from types import *
 from decimal import *
-from django.utils import simplejson as json
 import re
+
+from django.core.cache import cache
+
+from content_store.models import ContentStore
 
 MIN_SHORT = 0                   # Not -32768
 MAX_SHORT = 32767
@@ -132,6 +135,31 @@ class DocValidator(object):
           return (False, "Column %s contains an invalid value" % key)
   
     return (True, None)
+
+def _get_cache_key(store_name):
+  return 'doc_validator_%s' % store_name
+
+def erase_validator(store_name):
+  cache.delete(_get_cache_key(store_name))
+
+def get_validator(store_name):
+  cache_key = _get_cache_key(store_name)
+  validator = cache.get(cache_key)
+  if not validator:
+    store = None
+    try:
+      store = ContentStore.objects.get(name=store_name)
+    except ContentStore.DoesNotExist:
+      return None, "store %s does not exist" % store_name
+    try:
+      validator = DocValidator(store.config)
+    except Exception as e:
+      logging.exception(e);
+      return None, str(e)
+
+    cache.set(cache_key, validator)
+
+  return validator, None
 
 if __name__ == "__main__":
 

@@ -30,6 +30,13 @@ KAFKA_HOST = 'localhost'
 
 KAFKA_PORT = '9092'
 
+CACHES = {
+  'default': {
+    'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    'LOCATION': 'sin_main'
+  }
+}
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.

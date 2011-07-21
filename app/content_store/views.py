@@ -141,7 +141,7 @@ def updateConfig(request, store_name):
     valid, error = store.validate_config()
     if valid:
       store.save()
-      validators[store_name] = validator.DocValidator(config)
+      validator.erase_validator(store_name)
       resp['ok'] = True
     else:
       resp['error'] = error
@@ -163,19 +163,27 @@ def addDocs(request,store_name):
     resp = {'ok':False,'error':'no docs posted'}
     return HttpResponseBadRequest(json.dumps(resp))
   else:
-    validator = validators[store_name]
+    my_validator, error = validator.get_validator(store_name)
+    if not my_validator:
+      resp = {
+        'ok': False,
+        'msg': error,
+      }
+      return HttpResponse(json.dumps(resp))
+
     try:
       jsonDocs = json.loads(docs.encode('utf-8'))
       messages = []
       for doc in jsonDocs:
-        (valid, error) = validator.validate(doc)
+        (valid, error) = my_validator.validate(doc)
         if not valid:
           logger.warn("Found an invalid doc for store %s when adding docs" % store_name)
           resp = {'ok': False,'numPosted':0, 'error':error}
           return HttpResponseBadRequest(json.dumps(resp))
         str = json.dumps(doc).encode('utf-8')
         messages.append(str)
-      kafkaProducer.send(messages, store_name.encode('utf-8'))
+      if messages:
+        kafkaProducer.send(messages, store_name.encode('utf-8'))
       resp = {'ok':True,'numPosted':len(messages)}
       return HttpResponse(json.dumps(resp))
     except ValueError:
@@ -206,7 +214,15 @@ def updateDoc(request,store_name):
     else:
       jsonDoc = json.loads(doc.encode('utf-8'))
 
-      (valid, error) = validator.validate(jsonDoc)
+      my_validator, error = validator.get_validator(store_name)
+      if not my_validator:
+        resp = {
+          'ok': False,
+          'msg': error,
+        }
+        return HttpResponse(json.dumps(resp))
+
+      (valid, error) = my_validator.validate(jsonDoc)
       if not valid:
         logger.warn("Found an invalid doc for store %s when updating a doc" % store_name)
         resp = {'ok': False,'numPosted':0, 'error':error}
@@ -265,7 +281,6 @@ def startStore(request, store_name, restart=False):
     params["sensei_custom_facets"] = sensei_custom_facets
     params["sensei_plugins"] = sensei_plugins
     params["schema"] = store.config
-    validators[store_name] = validator.DocValidator(store.config)
   
     members = store.membership_set.order_by("sensei_node_id")
     for member in members:
