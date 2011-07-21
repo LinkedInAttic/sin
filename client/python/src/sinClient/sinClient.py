@@ -102,12 +102,19 @@ class Sindex:
       raise Exception("error: %s" % jsonObj.get('error','unknown error'))
     return jsonObj.get('numPosted',0)
     
-  def importFile(self,dataFile):
+  def importFile(self,dataFile,batchSize=100):
+    batch = []
     fd = open(dataFile,'r+')
     for line in fd:
-      print line
-      self.kafkaProducer.send([line], self.name.encode('utf-8'))
+      batch.append(line)
+      if batch.length >= batchSize:
+        // send the batch
+        batch = []
+      //self.kafkaProducer.send([line], self.name.encode('utf-8'))
     fd.close()
+    if batch.length > 0
+      // send the rest
+
     
   def getDoc(self,uid):
     req = SenseiRequest()
@@ -223,7 +230,7 @@ class SinClient:
     status = jsonObj['status_display']
     
     senseiClient = SenseiClient(self.host,brokerPort)
-    sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,kafkaHost,kafkaPort,status)
+    sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,status)
     while not sindex.available():
       time.sleep(0.5)
     
