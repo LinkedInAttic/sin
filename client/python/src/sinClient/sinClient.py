@@ -242,13 +242,8 @@ class SinClient:
     status = jsonObj['status_display']
     
     senseiClient = SenseiClient(self.host,brokerPort)
-    sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,status)
-    while not sindex.available():
-      time.sleep(0.5)
-    
-    print "%s added" %name
-    return sindex
-  
+    return Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,status)
+
   def storeExists(self,name):
     baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
     url = '%s/%s/%s' % (baseurl,'exists',name)
@@ -266,6 +261,7 @@ class SinClient:
     if not jsonObj['ok']:
       errorMsg = "error: %s" % jsonObj.get('msg','unknown error')
       raise Exception(errorMsg)
+
 """
 if __name__ == '__main__':
   client = SinClient()
