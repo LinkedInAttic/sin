@@ -10,38 +10,24 @@
 </div>
   <h1>Get Started</h1>
   <h3><a href="index.html">Home</a></h3>
-  <h2>1. Install client library</h2>
-    <ul>
-      <li>Download client library <a href="/static/downloads.html">here</a></li>
-      <li>Install: <pre><code>python setup.py install</code></pre>
-      </li>
-    </ul>
-  <h2 >2. Do it</h2>
+  <h2>Quick Start:</h2>
+  <ul>
+	<li>Create a new store from the <a href="/static/dashboard.html">Dashboard</a>, with a name, say myidx</li>
+	<li>Start the store</li>
+	<li>Submit a doc to it by:
+		<pre><code>curl -X POST 'http://sinHost:sinPort/store/add-docs/myidx' -d 'docs=[{"id":1,"contents":"sin is awesome"}]' -i</code></pre>
+	</li>
+	<li>Refresh the <a href="/static/dashboard.html">Dashboard</a>, you should see store size increased</li>
+	<li>Now you can search using the Search Endpoint, e.g.
+		<pre><code>
+curl -X GET 'http://searchHost:searchPort/sensei?q=awesome&amp;start=0&amp;rows=10&amp;fetchstored=true' -i
+		</code><pre>
+	</li> 
+  </ul>
+
+  <h2>Want more?</h2>
   <p>
-  <pre><code>
-    from sinClient import SinClient
-    from senseiClient import SenseiRequest
-    
-""" connect to where Sin is running
-    client = SinClient(sinHost,sinPort)
-    store = client.newStore('cars')
-    
-    print store.status
-
-    store.start()
-
-    store.importFile('data/test.json')
-
-    searcher = store.getSenseiClient()
-
-    res = searcher.doQuery()
-
-    print res.numHits
-
-    store.stop()
-  </code></pre>
-  </p>
-  <p>
+	Checkout the <a href="/static/docs.html">Documentation</a> and learn the Sinful ways.
   </p>
   </body>
 </html>

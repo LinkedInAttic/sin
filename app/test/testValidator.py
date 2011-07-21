@@ -27,7 +27,6 @@ class TestValidator(unittest.TestCase):
         "name": "authorname", 
         "termvector": "", 
         "delimiter": "", 
-        "parentModel": {}, 
         "type": "string", 
         "store": ""
       }, 
@@ -38,7 +37,6 @@ class TestValidator(unittest.TestCase):
         "name": "time", 
         "termvector": "", 
         "delimiter": "", 
-        "parentModel": {}, 
         "type": "long", 
         "store": ""
       }, 
@@ -49,7 +47,6 @@ class TestValidator(unittest.TestCase):
         "name": "text", 
         "termvector": "NO", 
         "delimiter": "", 
-        "parentModel": {}, 
         "type": "text", 
         "store": "NO"
       },
@@ -60,7 +57,6 @@ class TestValidator(unittest.TestCase):
         "name": "price", 
         "termvector": "NO", 
         "delimiter": "", 
-        "parentModel": {}, 
         "type": "float", 
         "store": "NO"
       },
@@ -71,7 +67,6 @@ class TestValidator(unittest.TestCase):
         "name": "isPublic", 
         "termvector": "NO", 
         "delimiter": "", 
-        "parentModel": {}, 
         "type": "string", 
         "store": "NO"
       },
@@ -82,7 +77,6 @@ class TestValidator(unittest.TestCase):
         "name": "skills", 
         "termvector": "NO", 
         "delimiter": "", 
-        "parentModel": {}, 
         "type": "short", 
         "store": "NO"
       },
@@ -93,7 +87,6 @@ class TestValidator(unittest.TestCase):
         "name": "scores", 
         "termvector": "NO", 
         "delimiter": ";", 
-        "parentModel": {}, 
         "type": "float", 
         "store": "NO"
       },
@@ -104,7 +97,6 @@ class TestValidator(unittest.TestCase):
         "name": "age", 
         "termvector": "NO", 
         "delimiter": "", 
-        "parentModel": {}, 
         "type": "int", 
         "store": "NO"
       }
@@ -115,7 +107,6 @@ class TestValidator(unittest.TestCase):
       "name": "authorname", 
       "dynamic": "false", 
       "depends": "", 
-      "parentModel": {}, 
       "params": [], 
       "type": "simple"
     }, 
@@ -123,7 +114,6 @@ class TestValidator(unittest.TestCase):
       "name": "time", 
       "dynamic": "false", 
       "depends": "", 
-      "parentModel": {}, 
       "params": [], 
       "type": "simple"
     }
@@ -136,71 +126,71 @@ class TestValidator(unittest.TestCase):
 # Invalid ones
 
   def testUIDExistence(self):
-    testresult = self.validator.validate({"not-defined-col":123})
-    self.assertEqual(False, testresult[0], "UID not defined");
+    valid, error = self.validator.validate({"not-defined-col":123})
+    self.assertEqual(False, valid, "UID not defined");
     
   def testUIDNegative(self):
-    testresult = self.validator.validate({"id": -123})
-    self.assertEqual(False, testresult[0], "negative id");  
+    valid, error = self.validator.validate({"id": -123})
+    self.assertEqual(False, valid, "negative id");  
     
   def testUIDString(self):
-    testresult = self.validator.validate({"id": "abc"})
-    self.assertEqual(False, testresult[0], "string id");  
+    valid, error = self.validator.validate({"id": "abc"})
+    self.assertEqual(False, valid, "string id");  
     
   def testUIDNotLong(self):
-    testresult = self.validator.validate({"id": 123.345})
-    self.assertEqual(False, testresult[0], "not a long id");              
+    valid, error = self.validator.validate({"id": 123.345})
+    self.assertEqual(False, valid, "not a long id");              
 
   def testLongValue(self):
-    testresult = self.validator.validate({"id": 123, "time":123, "age":12345678901234567890})
-    self.assertEqual(False, testresult[0], "age has a long value");
+    valid, error = self.validator.validate({"id": 123, "time":123, "age":12345678901234567890})
+    self.assertEqual(False, valid, "age has a long value");
 
   def testMultiValueHasString(self):
-    testresult = self.validator.validate({"id": 123, "skills":123})
-    self.assertEqual(False, testresult[0], "Multi-value column skills should have a string value");    
+    valid, error = self.validator.validate({"id": 123, "skills":123})
+    self.assertEqual(False, valid, "Multi-value column skills should have a string value");    
 
   def testInvalidValuesA(self):
-    testresult = self.validator.validate({"id": 123, "skills":"123,aaa"})
-    self.assertEqual(False, testresult[0], "skills contains invalid values");
+    valid, error = self.validator.validate({"id": 123, "skills":"123,aaa"})
+    self.assertEqual(False, valid, "skills contains invalid values");
     
   def testInvalidValuesB(self):
-    testresult = self.validator.validate({"id": 123, "age": [1,2,3]})
-    self.assertEqual(False, testresult[0], "age does not have an integer value");  
+    valid, error = self.validator.validate({"id": 123, "age": [1,2,3]})
+    self.assertEqual(False, valid, "age does not have an integer value");  
     
   def testInvalidValuesC(self):
-    testresult = self.validator.validate({"id": 123, "price": "xyz"})
-    self.assertEqual(False, testresult[0], "invalid value");               
+    valid, error = self.validator.validate({"id": 123, "price": "xyz"})
+    self.assertEqual(False, valid, "invalid value");               
 
   def testOutOfRangeA(self):
-    testresult = self.validator.validate({"id": 123, "skills":"99999999999"})
-    self.assertEqual(False, testresult[0], "Out of range"); 
+    valid, error = self.validator.validate({"id": 123, "skills":"99999999999"})
+    self.assertEqual(False, valid, "Out of range"); 
     
   def testOutOfRangeB(self):
-    testresult = self.validator.validate({"id": 123, "age": -2147483648888})
-    self.assertEqual(False, testresult[0], "Out of range");            
+    valid, error = self.validator.validate({"id": 123, "age": -2147483648888})
+    self.assertEqual(False, valid, "Out of range");            
     
   def testOutOfRangeC(self):
-    testresult = self.validator.validate({"id": 123, "age": 2147483648888})
-    self.assertEqual(False, testresult[0], "Out of range");  
+    valid, error = self.validator.validate({"id": 123, "age": 2147483648888})
+    self.assertEqual(False, valid, "Out of range");  
     
   def testOutOfRangeD(self):
-    testresult = self.validator.validate({"id": 123, "age": -10})
-    self.assertEqual(False, testresult[0], "Out of range (negative)");  
+    valid, error = self.validator.validate({"id": 123, "age": -10})
+    self.assertEqual(False, valid, "Out of range (negative)");  
     
   def testOutOfRangeE(self):
-    testresult = self.validator.validate({"id": 123, "price": -10.50})
-    self.assertEqual(False, testresult[0], "Out of range (negative)");    
+    valid, error = self.validator.validate({"id": 123, "price": -10.50})
+    self.assertEqual(False, valid, "Out of range (negative)");    
     
   def testDelimiter(self):
-    testresult = self.validator.validate({"id": 123, "scores":"  60.5, 95.5  "})
-    self.assertEqual(False, testresult[0], "Delimiter should be ';'");    
+    valid, error = self.validator.validate({"id": 123, "scores":"  60.5, 95.5  "})
+    self.assertEqual(False, valid, "Delimiter should be ';'");    
     
     
 # Valid ones
     
   def __checkValid(self, doc):
-    testresult = self.validator.validate(doc)
-    self.assertEqual(True, testresult[0], "should be valid one");    
+    valid, error = self.validator.validate(doc)
+    self.assertEqual(True, valid, "should be valid one");    
  
   def testValid_1(self):
     self.__checkValid({"id": 123, "time":123, "authorname":123}); 
@@ -231,9 +221,6 @@ class TestValidator(unittest.TestCase):
     
   def testValid_10(self):
     self.__checkValid({"id": 123, "price":"  25.678 "});                        
-
-
-
 
 if __name__ == "__main__":
     unittest.main()
