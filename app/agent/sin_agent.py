@@ -204,7 +204,20 @@ class StopStore(Resource):
       name = request.args["name"][0]
       pid = running.get(name)
       if pid:
-        os.system("kill %s" % pid)
+        log.msg("Stopping existing process %d for store %s" % (pid, name))
+        os.kill(pid, 15)
+        psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
+                                    shell=True, stdout=subprocess.PIPE).stdout.read()
+        while len(psOutput) > 0:
+          print "Waiting for process %d to die" % pid
+          time.sleep(1)
+          try:
+            psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
+                                        shell=True, stdout=subprocess.PIPE).stdout.read()
+          except:
+            log.msg("Hit some IOError exception, ignore it...")
+            psOutput = "some error"
+
         del running[name]
       return "Stopped %s" % pid
     except:
