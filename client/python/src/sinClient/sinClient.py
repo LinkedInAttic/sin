@@ -97,13 +97,19 @@ class Sindex:
       raise Exception("error: %s" % jsonObj.get('error','unknown error'))
     return jsonObj.get('numPosted',0)
     
-  def importFile(self,dataFile):
+  def importFile(self,dataFile,batchSize=100):
+    batch = []
     fd = open(dataFile,'r+')
     for line in fd:
-      print line
-      # XXX to be finished
-      # self.kafkaProducer.send([line], self.name.encode('utf-8'))
+      batch.append(line)
+      if batch.length >= batchSize:
+        // send the batch
+        batch = []
+      //self.kafkaProducer.send([line], self.name.encode('utf-8'))
     fd.close()
+    if batch.length > 0
+      // send the rest
+
     
   def getDoc(self, id):
     """Retrieve a document based its document ID."""
@@ -260,7 +266,7 @@ class SinClient:
     if not jsonObj['ok']:
       errorMsg = "error: %s" % jsonObj.get('msg','unknown error')
       raise Exception(errorMsg)
-
+"""
 if __name__ == '__main__':
   client = SinClient()
   store = client.openStore('tweets')
@@ -278,7 +284,7 @@ if __name__ == '__main__':
       print srcdata.get('author-name')
     else:
       print 'none'
-"""
+
 if __name__ == '__main__':
   storeName = 'test'
   client = SinClient()
