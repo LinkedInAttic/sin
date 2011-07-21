@@ -72,10 +72,16 @@ def newStore(request,store_name):
   partitions = int(request.POST.get('partitions','2'))
   desc = request.POST.get('desc',"")
 
+  num_nodes = Node.objects.count()
+
   # Check for nodes:
-  if Node.objects.count() == 0:
+  if num_nodes == 0:
     # n = Node.objects.create(host=socket.gethostname(), group=Group(pk=1))
     n = Node.objects.create(host='localhost', group=Group(pk=1))
+
+  if replica > num_nodes:
+    resp = {'ok': False, 'error':'Num of replicas is too big'}
+    return HttpResponseBadRequest(json.dumps(resp))
 
   store = ContentStore(
     name=store_name,
