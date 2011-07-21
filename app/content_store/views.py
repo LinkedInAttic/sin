@@ -183,13 +183,13 @@ def addDocs(request,store_name):
   else:
     validator = validators[store_name]
     try:
-      jsonArray = json.loads(docs.encode('utf-8'))
+      jsonDocs = json.loads(docs.encode('utf-8'))
       messages = []
       for doc in jsonDocs:
         (valid, error) = validator.validate(doc)
         if not valid:
           resp = {'ok': False,'numPosted':0}
-          return HttpResponse(json.json_encode(resp))
+          return HttpResponse(json.dumps(resp))
         str = json.dumps(doc).encode('utf-8')
         messages.append(str)
       kafkaProducer.send(messages, store_name.encode('utf-8'))
@@ -340,7 +340,8 @@ def restartStore(request, store_name):
   return startStore(request, store_name, restart=True)
 
 def getSize(request,store_name):
-  if not ContentStore.objects.get(name=store_name).exists():
+  store = ContentStore.objects.get(name=store_name)
+  if not store:
     resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
     return HttpResponseNotFound(json.dumps(resp))
   senseiHost = store.broker_host
