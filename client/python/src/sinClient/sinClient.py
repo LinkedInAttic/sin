@@ -104,11 +104,11 @@ class Sindex:
       jsonObj = dict(json.loads(line))
       batch.append(jsonObj)
       if batch.length >= batchSize:
-        addDocs(batch)
+        self.addDocs(batch)
         batch = []
     fd.close()
     if batch.length > 0:
-      addDocs(batch)
+      self.addDocs(batch)
 
     
   def getDoc(self, id):
@@ -127,7 +127,7 @@ class Sindex:
     
     req = SenseiRequest()
     sel = SenseiSelection("uid")
-    sel.addSelection(str(uid))
+    sel.addSelection(str(id))
     req.count = 1
     req.fetch = True
     req.selections = [sel]
@@ -148,7 +148,7 @@ class Sindex:
     Return 1 if the document is deleted successfully; 0 otherwise.
     
     """
-    return delDocs([id])
+    return self.delDocs([id])
 
   def delDocs(self, idList):
     """Delete multiple documents based on a list of document IDs.

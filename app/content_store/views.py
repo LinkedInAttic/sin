@@ -161,7 +161,7 @@ def addDocs(request,store_name):
       jsonDocs = simplejson.loads(docs)
       messages = []
       for doc in jsonDocs:
-        (valid, error) = validator.validate(obj)
+        (valid, error) = validator.validate(doc)
         if not valid:
           resp = {'ok': False,'numPosted':0}
           return HttpResponse(json.json_encode(resp))
