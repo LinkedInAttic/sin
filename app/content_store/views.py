@@ -76,8 +76,18 @@ def newStore(request,store_name):
 
   # Check for nodes:
   if num_nodes == 0:
-    # n = Node.objects.create(host=socket.gethostname(), group=Group(pk=1))
-    n = Node.objects.create(host='localhost', group=Group(pk=1))
+    def _get_local_pub_ip():
+      """Get local public ip address.
+
+      By creating a udp socket and assigning a DUMMY public ip address and a
+      DUMMY port, and getting the local sock name.
+      """
+      skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+      skt.connect(('74.125.224.0', 80))
+      return skt.getsockname()[0]
+
+    n = Node.objects.create(host=_get_local_pub_ip(), group=Group(pk=1))
+    num_nodes = 1
 
   if replica > num_nodes:
     resp = {'ok': False, 'error':'Num of replicas is too big'}
