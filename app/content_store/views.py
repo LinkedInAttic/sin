@@ -176,7 +176,9 @@ def updateConfig(request, store_name):
 
 def addDocs(request,store_name):
   """Add a list of documents."""
-  if not ContentStore.objects.filter(name=store_name).exists():
+  try:
+    store = ContentStore.objects.get(name=store_name)
+  except ContentStore.DoesNotExist:
     resp = {
       'ok' : False,
       'msg' : 'store: %s does not exist.' % store_name
@@ -207,7 +209,7 @@ def addDocs(request,store_name):
         str = json.dumps(doc).encode('utf-8')
         messages.append(str)
       if messages:
-        kafkaProducer.send(messages, store_name.encode('utf-8'))
+        kafkaProducer.send(messages, store.unique_name.encode('utf-8'))
       resp = {'ok':True,'numPosted':len(messages)}
       return HttpResponse(json.dumps(resp))
     except ValueError:
@@ -264,7 +266,7 @@ def updateDoc(request,store_name):
       for k,v in jsonDoc.items():
         existingDoc[k]=v
       
-      kafkaProducer.send([json.dumps(existingDoc).encode('utf-8')], store_name.encode('utf-8'))
+      kafkaProducer.send([json.dumps(existingDoc).encode('utf-8')], store.unique_name.encode('utf-8'))
       resp = {'ok': True,'numPosted':1}
       return HttpResponse(json.dumps(resp))
   except ValueError:
@@ -433,7 +435,9 @@ def delDocs(request, store_name):
     resp = {'ok': True,'numDeleted':0}
     return HttpResponse(json.dumps(resp))
 
-  if not ContentStore.objects.filter(name=store_name).exists():
+  try:
+    store = ContentStore.objects.get(name=store_name)
+  except ContentStore.DoesNotExist:
     resp = {'ok' : False,'error' : 'store: %s does not exist.' % store_name}
     return HttpResponseNotFound(json.dumps(resp))
 
@@ -442,7 +446,7 @@ def delDocs(request, store_name):
     for id in ids:
       delDoc = {'id':id,'isDeleted':True}
       delObjs.append(json.dumps(delDoc).encode('utf-8'))
-    kafkaProducer.send(delObjs,store_name.encode('utf-8'))
+    kafkaProducer.send(delObjs,store.unique_name.encode('utf-8'))
     resp = {'ok': True,'numDeleted':len(delObjs)}
     return HttpResponse(json.dumps(resp))
   except Exception as e:
