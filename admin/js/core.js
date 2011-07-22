@@ -3505,6 +3505,7 @@ $(function() {
     
     deleteStore: function(){
       var model = this.model;
+      $.blockUI({ message: '<h1><img class="indicator" src="/static/images/indicator.gif" /> Deleting ' + model.get('name') + ' ...</h1>' });
       var really = confirm("This will delete your store '" + model.get('name')
         + "', do you really want to continue?");
       if (!really)
@@ -3518,6 +3519,7 @@ $(function() {
         else{
           alert(resp["msg"]);
         }  
+        $.unblockUI();
       });
     },
 
