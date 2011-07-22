@@ -4,7 +4,7 @@ from django.db import models
 from django.db.models import Max
 from django.utils.translation import ugettext_lazy as _
 
-from utils import enum
+from utils import enum, totimestamp
 from utils.enum import to_choices
 
 from cluster.models import Group, Node, Membership
@@ -78,6 +78,11 @@ class ContentStore(models.Model):
   nodes = models.ManyToManyField(Node, through="cluster.Membership")
 
   objects = ContentStoreManager()
+
+  def get_unique_name(self):
+    return "%s_%s" % (self.name, long(totimestamp(self.created)*1000))
+
+  unique_name = property(get_unique_name)
 
   def get_sensei_port(self):
     return self.sensei_port_base + self.pk

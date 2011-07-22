@@ -1,4 +1,4 @@
-import sys, json
+import sys, json, shutil, errno
 import random, os, subprocess
 from twisted.internet import reactor
 from twisted.web import server, resource
@@ -82,7 +82,6 @@ class RestartStore(Resource):
     """
     Restart a Sensei store.
     """
-    global running
     try:
       name = request.args["name"][0]
       sensei_port = request.args["sensei_port"][0]
@@ -92,30 +91,18 @@ class RestartStore(Resource):
       sensei_plugins = request.args["sensei_plugins"][0]
       schema = request.args["schema"][0]
 
-      pid = running.get(name)
-      if pid:
-        log.msg("Stopping existing process %d for store %s" % (pid, name))
-        os.kill(pid, 15)
-        psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
-                                    shell=True, stdout=subprocess.PIPE).stdout.read()
-        while len(psOutput) > 0:
-          print "Waiting for process %d to die" % pid
-          time.sleep(1)
-          try:
-            psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
-                                        shell=True, stdout=subprocess.PIPE).stdout.read()
-          except:
-            log.msg("Hit some IOError exception, ignore it...")
-            psOutput = "some error"
-
-        del running[name]
+      res, msg = doStopStore(name)
+      if res:
+        log.msg("Restarting store %s" % name)
+        return doStartStore(name, sensei_port, broker_port,
+                            sensei_properties, sensei_custom_facets,
+                            sensei_plugins, schema)
       else:
-        log.err("Store %s is not running" % name)
-
-      log.msg("Restarting store %s" % name)
-      return doStartStore(name, sensei_port, broker_port,
-                          sensei_properties, sensei_custom_facets,
-                          sensei_plugins, schema)
+        resp = {
+          'ok': res,
+          'msg': msg,
+        }
+        return json.dumps(resp)
     except:
       log.err()
       return "Error"
@@ -192,6 +179,72 @@ def doStartStore(name, sensei_port, broker_port,
   running[name] = p.pid
   return "Ok"
 
+def doStopStore(name):
+  """Stop a Sensei store.
+  """
+  global running
+  try:
+    pid = running.get(name)
+    if pid:
+      log.msg("Stopping existing process %d for store %s" % (pid, name))
+      os.kill(pid, 15)
+      psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
+                                  shell=True, stdout=subprocess.PIPE).stdout.read()
+      while len(psOutput) > 0:
+        print "Waiting for process %d to die" % pid
+        time.sleep(1)
+        try:
+          psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
+                                      shell=True, stdout=subprocess.PIPE).stdout.read()
+        except:
+          log.msg("Hit some IOError exception, ignore it...")
+          psOutput = "some error"
+
+      del running[name]
+    else:
+      log.err("Store %s is not running" % name)
+    return True, None
+  except Exception as e:
+    log.err()
+    return False, str(e)
+
+class DeleteStore(Resource):
+  def render_GET(self, request):
+    """
+    Delete a Sensei store.
+    """
+    log.msg("in DeleteStore...")
+    try:
+      name = request.args["name"][0]
+      res, msg = doStopStore(name)
+      if res:
+        store_home = os.path.join(STORE_HOME, name)
+        try:
+          shutil.rmtree(store_home)
+        except OSError as ose:
+          if ose.errno == errno.ENOENT:
+            log.msg("store home for %s does not exist." % name)
+          else:
+            raise
+        resp = {
+          'ok': True,
+        }
+      else:
+        resp = {
+          'ok': res,
+          'msg': msg,
+        }
+      return json.dumps(resp)
+    except Exception as e:
+      log.err()
+      resp = {
+        'ok': False,
+        'msg': str(e),
+      }
+      return json.dumps(resp)
+
+  def render_POST(self, request):
+    return self.render_GET(request)
 
 class StopStore(Resource):
   def render_GET(self, request):
@@ -199,27 +252,14 @@ class StopStore(Resource):
     Stop a Sensei store.
     """
     log.msg("in StopStore...")
-    global running
     try:
       name = request.args["name"][0]
-      pid = running.get(name)
-      if pid:
-        log.msg("Stopping existing process %d for store %s" % (pid, name))
-        os.kill(pid, 15)
-        psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
-                                    shell=True, stdout=subprocess.PIPE).stdout.read()
-        while len(psOutput) > 0:
-          print "Waiting for process %d to die" % pid
-          time.sleep(1)
-          try:
-            psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
-                                        shell=True, stdout=subprocess.PIPE).stdout.read()
-          except:
-            log.msg("Hit some IOError exception, ignore it...")
-            psOutput = "some error"
-
-        del running[name]
-      return "Stopped %s" % pid
+      res, msg = doStopStore(name)
+      resp = {
+        'ok': res,
+        'msg': msg,
+      }
+      return json.dumps(resp)
     except:
       log.err()
       return "Error"
@@ -230,7 +270,8 @@ class StopStore(Resource):
 VIEWS = {
   "start-store": StartStore(),
   "stop-store": StopStore(),
-  "restart-store": RestartStore()
+  "restart-store": RestartStore(),
+  "delete-store": DeleteStore(),
 }
 
 if __name__ == '__main__':

@@ -83,8 +83,11 @@ def newStore(request,store_name):
       DUMMY port, and getting the local sock name.
       """
       skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-      skt.connect(('74.125.224.0', 80))
-      return skt.getsockname()[0]
+      try:
+        skt.connect(('74.125.224.0', 80))
+        return skt.getsockname()[0]
+      finally:
+        skt.close()
 
     n = Node.objects.create(host=_get_local_pub_ip(), group=Group(pk=1))
     num_nodes = 1
@@ -112,25 +115,36 @@ def newStore(request,store_name):
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
 def deleteStore(request,store_name):
-  if True:  # Temporarily disable store deletion.
-    resp = {
-      'ok' : False,
-      'msg' : 'delete store is not currently supported.',
-    }
-    return HttpResponse(json.dumps(resp))
-  if not ContentStore.objects.filter(name=store_name).exists():
-    resp = {
-      'ok' : False,
-      'msg' : 'store: %s does not exist.' % store_name
-    }
-    return HttpResponseNotFound(json.dumps(resp))
-  stopStore(request, store_name)
+  try:
+    store = None
+    try:
+      store = ContentStore.objects.get(name=store_name)
+    except ContentStore.DoesNotExist:
+      resp = {
+        'ok' : False,
+        'msg' : 'store: %s does not exist.' % store_name
+      }
+      return HttpResponseNotFound(json.dumps(resp))
+    params = {}
+    params["name"] = store_name
 
-  ContentStore.objects.filter(name=store_name).delete()
-  resp = {
-    'ok' : True,
-    'msg' : 'store: %s successfully deleted.' % store_name
-  }
+    members = store.membership_set.order_by("sensei_node_id")
+    for member in members:
+      output = urllib2.urlopen("http://%s:%d/%s" % (member.node.host,
+                                                    member.node.agent_port,
+                                                    "delete-store"),
+                               urllib.urlencode(params))
+
+    store.delete()
+    resp = {
+      'ok': True,
+    }
+  except Exception as e:
+    logging.exception(e)
+    resp = {
+      'ok': False,
+      'msg': str(e),
+    }
   return HttpResponse(json.dumps(resp))
 
 def updateConfig(request, store_name):
