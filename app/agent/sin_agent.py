@@ -7,9 +7,12 @@ from twisted.web.static import File
 from twisted.python import log
 from datetime import datetime
 import time
+from twisted.internet import defer
+from twisted.web.server import NOT_DONE_YET
 
 SENSEI_HOME = '/tmp/sensei/'
 STORE_HOME = '/tmp/store/'
+CALL_BACK_LATER = 'Call back later'
 
 SIN_AGENT_PORT = 6664
 
@@ -84,6 +87,14 @@ class RestartStore(Resource):
     """
     try:
       name = request.args["name"][0]
+
+      res, msg = doStopStore(name)
+      if msg == CALL_BACK_LATER:
+        print ">>> call later"
+        reactor.callLater(1, self.render_GET, request)
+        return NOT_DONE_YET
+
+      print ">>> it is done now"
       sensei_port = request.args["sensei_port"][0]
       broker_port = request.args["broker_port"][0]
       sensei_properties = request.args["sensei_properties"][0]
@@ -91,21 +102,23 @@ class RestartStore(Resource):
       sensei_plugins = request.args["sensei_plugins"][0]
       schema = request.args["schema"][0]
 
-      res, msg = doStopStore(name)
       if res:
         log.msg("Restarting store %s" % name)
-        return doStartStore(name, sensei_port, broker_port,
-                            sensei_properties, sensei_custom_facets,
-                            sensei_plugins, schema)
+        request.write(doStartStore(name, sensei_port, broker_port,
+                                   sensei_properties, sensei_custom_facets,
+                                   sensei_plugins, schema))
       else:
         resp = {
           'ok': res,
           'msg': msg,
         }
-        return json.dumps(resp)
+        request.write(json.dumps(resp))
+        request.finish()
     except:
+      # XXX make sure not .write is called after .finish
       log.err()
-      return "Error"
+      request.write("Error")
+      request.finish()
 
   def render_POST(self, request):
     return self.render_GET(request)
@@ -180,8 +193,7 @@ def doStartStore(name, sensei_port, broker_port,
   return "Ok"
 
 def doStopStore(name):
-  """Stop a Sensei store.
-  """
+  """Stop a Sensei store."""
   global running
   try:
     pid = running.get(name)
@@ -190,15 +202,10 @@ def doStopStore(name):
       os.kill(pid, 15)
       psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
                                   shell=True, stdout=subprocess.PIPE).stdout.read()
-      while len(psOutput) > 0:
+
+      if len(psOutput) > 0:
         print "Waiting for process %d to die" % pid
-        time.sleep(1)
-        try:
-          psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
-                                      shell=True, stdout=subprocess.PIPE).stdout.read()
-        except:
-          log.msg("Hit some IOError exception, ignore it...")
-          psOutput = "some error"
+        return False, CALL_BACK_LATER
 
       del running[name]
     else:
@@ -254,6 +261,11 @@ class StopStore(Resource):
     log.msg("in StopStore...")
     try:
       name = request.args["name"][0]
+
+      if msg == CALL_BACK_LATER:
+        # XXX
+        return NOT_DONE_YET
+
       res, msg = doStopStore(name)
       resp = {
         'ok': res,
