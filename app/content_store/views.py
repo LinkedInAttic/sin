@@ -115,6 +115,13 @@ def newStore(request,store_name):
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
 def deleteStore(request,store_name):
+  password = request.REQUEST.get('password', '')
+  if password != getattr(settings, 'DELETE_PASSWORD', ''):
+    resp = {
+      'ok' : False,
+      'msg' : 'Invalid password.',
+    }
+    return HttpResponse(json.dumps(resp))
   try:
     store = None
     try:
