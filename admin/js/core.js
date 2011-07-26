@@ -3505,13 +3505,17 @@ $(function() {
     
     deleteStore: function(){
       var model = this.model;
-      $.blockUI({ message: '<h1><img class="indicator" src="/static/images/indicator.gif" /> Deleting ' + model.get('name') + ' ...</h1>' });
-      var really = confirm("This will delete your store '" + model.get('name')
+      /*var really = confirm("This will delete your store '" + model.get('name')
         + "', do you really want to continue?");
       if (!really)
+        return false;*/
+
+      var password = prompt('Please provide the delete password:');
+      if (password == null)
         return false;
 
-      $.getJSON('/store/delete-store/'+model.get('name'),function(resp){
+      $.blockUI({ message: '<h1><img class="indicator" src="/static/images/indicator.gif" /> Deleting ' + model.get('name') + ' ...</h1>' });
+      $.post('/store/delete-store/'+model.get('name'), {password: password}, function(resp){
         if (resp["ok"]){
           sinView.collection.remove(model);
           $(model.view.el).remove();
@@ -3520,7 +3524,7 @@ $(function() {
           alert(resp["msg"]);
         }  
         $.unblockUI();
-      });
+      }, 'json');
     },
 
     initialize: function() {
