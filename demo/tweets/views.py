@@ -1,6 +1,6 @@
 from django import template
 from django.shortcuts import render_to_response
-
+from django.conf import settings
 from django import forms
 from sinClient.senseiClient import *
 from sinClient.sinClient import *
@@ -11,9 +11,8 @@ from django.http import HttpResponse
 import logging
 import json
 
-storeName = 'tweets'
-sinClient = SinClient('localhost',8000)
-store = sinClient.openStore(storeName)
+sinClient = SinClient(settings.SIN_HOST,settings.SIN_PORT)
+store = sinClient.openStore(settings.SIN_STORE)
 searcher = store.getSenseiClient()
 
 req = SenseiRequest()
