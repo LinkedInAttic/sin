@@ -7,9 +7,11 @@ from twisted.web.static import File
 from twisted.python import log
 from datetime import datetime
 import time
+from twisted.web.server import NOT_DONE_YET
 
 SENSEI_HOME = '/tmp/sensei/'
 STORE_HOME = '/tmp/store/'
+CALL_BACK_LATER = 'CallBackLater'
 
 SIN_AGENT_PORT = 6664
 
@@ -78,12 +80,17 @@ class StartStore(Resource):
 
 class RestartStore(Resource):
 
-  def render_GET(self, request):
+  def render_GET(self, request, isCallback=False):
     """
     Restart a Sensei store.
     """
     try:
       name = request.args["name"][0]
+      res, msg = doStopStore(name)
+      if msg == CALL_BACK_LATER:
+        reactor.callLater(1, self.render_GET, request, True)
+        return NOT_DONE_YET
+
       sensei_port = request.args["sensei_port"][0]
       broker_port = request.args["broker_port"][0]
       sensei_properties = request.args["sensei_properties"][0]
@@ -91,21 +98,26 @@ class RestartStore(Resource):
       sensei_plugins = request.args["sensei_plugins"][0]
       schema = request.args["schema"][0]
 
-      res, msg = doStopStore(name)
       if res:
         log.msg("Restarting store %s" % name)
-        return doStartStore(name, sensei_port, broker_port,
-                            sensei_properties, sensei_custom_facets,
-                            sensei_plugins, schema)
-      else:
-        resp = {
-          'ok': res,
-          'msg': msg,
+        request.write(doStartStore(name, sensei_port, broker_port,
+                                   sensei_properties, sensei_custom_facets,
+                                   sensei_plugins, schema))
+        res, msg = True, None
+
+      resp = {
+        'ok': res,
+        'msg': msg,
         }
+      if isCallback:
+        request.write(json.dumps(resp))
+        request.finish()
+      else:
         return json.dumps(resp)
     except:
       log.err()
-      return "Error"
+      request.write("Error")
+      request.finish()
 
   def render_POST(self, request):
     return self.render_GET(request)
@@ -179,44 +191,17 @@ def doStartStore(name, sensei_port, broker_port,
   running[name] = p.pid
   return "Ok"
 
-def doStopStore(name):
-  """Stop a Sensei store.
-  """
-  global running
-  try:
-    pid = running.get(name)
-    if pid:
-      log.msg("Stopping existing process %d for store %s" % (pid, name))
-      os.kill(pid, 15)
-      psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
-                                  shell=True, stdout=subprocess.PIPE).stdout.read()
-      while len(psOutput) > 0:
-        print "Waiting for process %d to die" % pid
-        time.sleep(1)
-        try:
-          psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
-                                      shell=True, stdout=subprocess.PIPE).stdout.read()
-        except:
-          log.msg("Hit some IOError exception, ignore it...")
-          psOutput = "some error"
-
-      del running[name]
-    else:
-      log.err("Store %s is not running" % name)
-    return True, None
-  except Exception as e:
-    log.err()
-    return False, str(e)
-
 class DeleteStore(Resource):
-  def render_GET(self, request):
-    """
-    Delete a Sensei store.
-    """
+  def render_GET(self, request, isCallback=False):
+    """Delete a Sensei store."""
     log.msg("in DeleteStore...")
     try:
       name = request.args["name"][0]
       res, msg = doStopStore(name)
+      if msg == CALL_BACK_LATER:
+        reactor.callLater(1, self.render_GET, request, True)
+        return NOT_DONE_YET
+
       if res:
         store_home = os.path.join(STORE_HOME, name)
         try:
@@ -234,7 +219,12 @@ class DeleteStore(Resource):
           'ok': res,
           'msg': msg,
         }
-      return json.dumps(resp)
+      
+      if isCallback:
+        request.write(json.dumps(resp))
+        request.finish()
+      else:
+        return json.dumps(resp)
     except Exception as e:
       log.err()
       resp = {
@@ -247,25 +237,59 @@ class DeleteStore(Resource):
     return self.render_GET(request)
 
 class StopStore(Resource):
-  def render_GET(self, request):
-    """
-    Stop a Sensei store.
-    """
+  def render_GET(self, request, isCallback=False):
+    """Stop a Sensei store."""
     log.msg("in StopStore...")
     try:
       name = request.args["name"][0]
+
       res, msg = doStopStore(name)
+      if msg == CALL_BACK_LATER:
+        reactor.callLater(1, self.render_GET, request, True)
+        return NOT_DONE_YET
+
       resp = {
         'ok': res,
         'msg': msg,
       }
-      return json.dumps(resp)
+
+      if isCallback:
+        request.write(json.dumps(resp))
+        request.finish()
+      else:
+        return json.dumps(resp)
     except:
       log.err()
-      return "Error"
+      request.write("Error")
+      request.finish()
 
   def render_POST(self, request):
     return self.render_GET(request)
+
+
+def doStopStore(name):
+  """Stop a Sensei store."""
+  global running
+  try:
+    pid = running.get(name)
+    if pid:
+      log.msg("Stopping existing process %d for store %s" % (pid, name))
+      os.kill(pid, 15)
+      psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
+                                  shell=True, stdout=subprocess.PIPE).stdout.read()
+
+      if len(psOutput) > 0:
+        print "Waiting for process %d to die" % pid
+        return False, CALL_BACK_LATER
+
+      del running[name]
+    else:
+      log.err("Store %s is not running" % name)
+    return True, None
+  except Exception as e:
+    log.err()
+    return False, str(e)
+
 
 VIEWS = {
   "start-store": StartStore(),
