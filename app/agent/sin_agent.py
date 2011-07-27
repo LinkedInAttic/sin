@@ -7,12 +7,11 @@ from twisted.web.static import File
 from twisted.python import log
 from datetime import datetime
 import time
-from twisted.internet import defer
 from twisted.web.server import NOT_DONE_YET
 
 SENSEI_HOME = '/tmp/sensei/'
 STORE_HOME = '/tmp/store/'
-CALL_BACK_LATER = 'Call back later'
+CALL_BACK_LATER = 'CallBackLater'
 
 SIN_AGENT_PORT = 6664
 
@@ -81,20 +80,17 @@ class StartStore(Resource):
 
 class RestartStore(Resource):
 
-  def render_GET(self, request):
+  def render_GET(self, request, isCallback=False):
     """
     Restart a Sensei store.
     """
     try:
       name = request.args["name"][0]
-
       res, msg = doStopStore(name)
       if msg == CALL_BACK_LATER:
-        print ">>> call later"
-        reactor.callLater(1, self.render_GET, request)
+        reactor.callLater(1, self.render_GET, request, True)
         return NOT_DONE_YET
 
-      print ">>> it is done now"
       sensei_port = request.args["sensei_port"][0]
       broker_port = request.args["broker_port"][0]
       sensei_properties = request.args["sensei_properties"][0]
@@ -107,15 +103,18 @@ class RestartStore(Resource):
         request.write(doStartStore(name, sensei_port, broker_port,
                                    sensei_properties, sensei_custom_facets,
                                    sensei_plugins, schema))
-      else:
-        resp = {
-          'ok': res,
-          'msg': msg,
+        res, msg = True, None
+
+      resp = {
+        'ok': res,
+        'msg': msg,
         }
+      if isCallback:
         request.write(json.dumps(resp))
         request.finish()
+      else:
+        return json.dumps(resp)
     except:
-      # XXX make sure not .write is called after .finish
       log.err()
       request.write("Error")
       request.finish()
@@ -192,6 +191,82 @@ def doStartStore(name, sensei_port, broker_port,
   running[name] = p.pid
   return "Ok"
 
+class DeleteStore(Resource):
+  def render_GET(self, request, isCallback=False):
+    """Delete a Sensei store."""
+    log.msg("in DeleteStore...")
+    try:
+      name = request.args["name"][0]
+      res, msg = doStopStore(name)
+      if msg == CALL_BACK_LATER:
+        reactor.callLater(1, self.render_GET, request, True)
+        return NOT_DONE_YET
+
+      if res:
+        store_home = os.path.join(STORE_HOME, name)
+        try:
+          shutil.rmtree(store_home)
+        except OSError as ose:
+          if ose.errno == errno.ENOENT:
+            log.msg("store home for %s does not exist." % name)
+          else:
+            raise
+        resp = {
+          'ok': True,
+        }
+      else:
+        resp = {
+          'ok': res,
+          'msg': msg,
+        }
+      
+      if isCallback:
+        request.write(json.dumps(resp))
+        request.finish()
+      else:
+        return json.dumps(resp)
+    except Exception as e:
+      log.err()
+      resp = {
+        'ok': False,
+        'msg': str(e),
+      }
+      return json.dumps(resp)
+
+  def render_POST(self, request):
+    return self.render_GET(request)
+
+class StopStore(Resource):
+  def render_GET(self, request, isCallback=False):
+    """Stop a Sensei store."""
+    log.msg("in StopStore...")
+    try:
+      name = request.args["name"][0]
+
+      res, msg = doStopStore(name)
+      if msg == CALL_BACK_LATER:
+        reactor.callLater(1, self.render_GET, request, True)
+        return NOT_DONE_YET
+
+      resp = {
+        'ok': res,
+        'msg': msg,
+      }
+
+      if isCallback:
+        request.write(json.dumps(resp))
+        request.finish()
+      else:
+        return json.dumps(resp)
+    except:
+      log.err()
+      request.write("Error")
+      request.finish()
+
+  def render_POST(self, request):
+    return self.render_GET(request)
+
+
 def doStopStore(name):
   """Stop a Sensei store."""
   global running
@@ -215,69 +290,6 @@ def doStopStore(name):
     log.err()
     return False, str(e)
 
-class DeleteStore(Resource):
-  def render_GET(self, request):
-    """
-    Delete a Sensei store.
-    """
-    log.msg("in DeleteStore...")
-    try:
-      name = request.args["name"][0]
-      res, msg = doStopStore(name)
-      if res:
-        store_home = os.path.join(STORE_HOME, name)
-        try:
-          shutil.rmtree(store_home)
-        except OSError as ose:
-          if ose.errno == errno.ENOENT:
-            log.msg("store home for %s does not exist." % name)
-          else:
-            raise
-        resp = {
-          'ok': True,
-        }
-      else:
-        resp = {
-          'ok': res,
-          'msg': msg,
-        }
-      return json.dumps(resp)
-    except Exception as e:
-      log.err()
-      resp = {
-        'ok': False,
-        'msg': str(e),
-      }
-      return json.dumps(resp)
-
-  def render_POST(self, request):
-    return self.render_GET(request)
-
-class StopStore(Resource):
-  def render_GET(self, request):
-    """
-    Stop a Sensei store.
-    """
-    log.msg("in StopStore...")
-    try:
-      name = request.args["name"][0]
-
-      if msg == CALL_BACK_LATER:
-        # XXX
-        return NOT_DONE_YET
-
-      res, msg = doStopStore(name)
-      resp = {
-        'ok': res,
-        'msg': msg,
-      }
-      return json.dumps(resp)
-    except:
-      log.err()
-      return "Error"
-
-  def render_POST(self, request):
-    return self.render_GET(request)
 
 VIEWS = {
   "start-store": StartStore(),
