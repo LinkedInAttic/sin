@@ -1,15 +1,7 @@
-<html>
-  <head><title>Sin - Documentation</title>
-    <link rel="stylesheet" href="css/styles.css" type="text/css" media="screen" title="no title" charset="utf-8">
-  </head>
-<body>
-  <div class="header">
-    <img src="images/sin-small.png" />
-    <h1>Welcome to Sin</h1>
-  </div>
-  <h1>Documentation</h1>
-  <h3><a href="index.html">Home</a></h3>
+{% extends "base.html" %}
+{% load url from future %}
 
+{% block content %}
    <h1>Contents:</h1>
 	<ul>
 		<li><a href="#overview">Overview</li>
@@ -362,5 +354,4 @@ print res.numHits
 <p>Query the store:</p>
 From the Dashboard, after the store is turned on, you will see a search end-point. You can search using this end-point.
 To learn more about the syntax of this API, checkout: <a href="http://javasoze.github.com/sensei/docs/src/docbkx/sensei.html#d0e1084">Sensei Rest Documentation</a>.
-  </body>
-</html>
+{% endblock %}

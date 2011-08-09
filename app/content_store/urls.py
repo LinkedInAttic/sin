@@ -15,5 +15,8 @@ urlpatterns = patterns('content_store.views',
   (r'^get-doc/(?P<id>\d+)/(?P<store_name>[^/]+)/?$','getDoc'),
   (r'^delete-docs/(?P<store_name>[^/]+)/?$','delDocs'),
   (r'^available/(?P<store_name>[^/]+)/?$','available'),
+  (r'^collaborators/(?P<store_name>[^/]+)/?$','collaborators'),
+  (r'^add-collab/(?P<store_name>[^/]+)/?$','add_collab'),
+  (r'^remove-collab/(?P<store_name>[^/]+)/?$','remove_collab'),
   (r'^stores/?$','stores'),
 )

@@ -3174,6 +3174,122 @@ $(function() {
     }
   });
 
+  window.CollabModel = Backbone.Model.extend({
+  });
+
+  window.CollabCollection = Backbone.Collection.extend({
+    model: CollabModel
+  });
+
+  window.CollabItemView = Backbone.View.extend({
+    tagName: 'li',
+
+    template: $('#collab-item-tmpl').html(),
+
+    events: {
+      'click .remove': 'removeMe',
+      'mouseout': 'mouseOut',
+      'mouseover': 'mouseOver'
+    },
+
+    initialize: function() {
+      _.bindAll(this, 'mouseOut', 'mouseOver', 'removeMe', 'render');
+      this.model.bind('change', this.render);
+      this.model.view = this;
+    },
+
+    removeMe: function() {
+      var me = this;
+      $.post('/store/remove-collab/'+me.options.parentView.options.store.get('name'),
+        {username: me.model.get('username')},
+        function(res) {
+          if (res.ok) {
+            var collab = me.options.parentView.collection.get(res.id);
+            if (collab) {
+              me.options.parentView.collection.remove(collab);
+              $(me.el).detach();
+            }
+          }
+          else {
+            alert(res.error);
+          }
+        },
+        'json'
+      );
+    },
+
+    mouseOut: function() {
+      this.$('.op').hide();
+    },
+
+    mouseOver: function() {
+      this.$('.op').show();
+    },
+
+    render: function() {
+      $(this.el).html($.mustache(this.template, this.model.toJSON()));
+      return this;
+    }
+  });
+
+  window.CollabView = Backbone.View.extend({
+    template: $('#collab-tmpl').html(),
+
+    events: {
+      'click .add': 'addNew'
+    },
+
+    initialize: function() {
+      _.bindAll(this, 'addNew', 'render');
+    },
+
+    addNew: function() {
+      var me = this;
+
+      var username = this.$('.new-collab').val();
+      if (username == '') {
+        alert('Username is required.');
+        return;
+      }
+
+      $.post('/store/add-collab/'+me.options.store.get('name'), {username: username}, function(res) {
+        if (res.ok) {
+          var collab = me.collection.get(res.id);
+          if (!collab) {  // new user.
+            var collab = new CollabModel(res);
+            me.collection.add(collab);
+            me.render();
+          }
+        }
+        else {
+          alert(res.error);
+        }
+      }, 'json');
+    },
+
+    render: function() {
+      var me = this;
+      if (!this.options.rendered) {
+        $(this.el).html($.mustache(this.template, {}));
+        this.options.rendered = true;
+      }
+      
+      var itemContainer = this.$('.item-container');
+
+      this.collection.each(function(item) {
+        if (!item.view) {
+          var view = new CollabItemView({
+            model: item
+          });
+          view.options.parentView = me;
+        }
+        itemContainer.append(item.view.render().el);
+      });
+
+      return this;
+    }
+  });
+
   window.ContentStoreCollection = Backbone.Collection.extend({
     model: ContentStoreModel,
     url: '/store/stores/'
@@ -3473,7 +3589,8 @@ $(function() {
       'click .add-column': 'addColumn',
       'click .add-facet': 'addFacet',
       'click .manage': 'showManage',
-      'click .cancel-edit-store': 'showManage',
+      'click .collaborators': 'showCollaborators',
+      'click .close-all-tabs': 'closeAllTabs',
       'click .restart': 'restart',
       'click .show-raw': 'showRaw',
       'click .save-store-raw': 'saveStoreRaw',
@@ -3505,17 +3622,13 @@ $(function() {
     
     deleteStore: function(){
       var model = this.model;
-      /*var really = confirm("This will delete your store '" + model.get('name')
+      var really = confirm("This will delete your store '" + model.get('name')
         + "', do you really want to continue?");
       if (!really)
-        return false;*/
-
-      var password = prompt('Please provide the delete password:');
-      if (password == null)
         return false;
 
       $.blockUI({ message: '<h1><img class="indicator" src="/static/images/indicator.gif" /> Deleting ' + model.get('name') + ' ...</h1>' });
-      $.post('/store/delete-store/'+model.get('name'), {password: password}, function(resp){
+      $.getJSON('/store/delete-store/'+model.get('name'), function(resp){
         if (resp["ok"]){
           sinView.collection.remove(model);
           $(model.view.el).remove();
@@ -3524,11 +3637,11 @@ $(function() {
           alert(resp["msg"]);
         }  
         $.unblockUI();
-      }, 'json');
+      });
     },
 
     initialize: function() {
-      _.bindAll(this, 'showManage', 'showRaw', 'restart', 'render', 'updateConfig', 'saveStoreRaw', 'saveStore', 'stopStore', 'deleteStore', 'addColumn', 'addFacet');
+      _.bindAll(this, 'showManage', 'closeAllTabs', 'showCollaborators', 'showRaw', 'restart', 'render', 'updateConfig', 'saveStoreRaw', 'saveStore', 'stopStore', 'deleteStore', 'addColumn', 'addFacet');
       this.model.view = this;
     },
 
@@ -3700,7 +3813,34 @@ $(function() {
     },
 
     showManage: function() {
-      this.$('.manage-tab').toggle();
+      this.closeAllTabs();
+      this.$('.manage-tab').show();
+    },
+
+    closeAllTabs: function() {
+      this.$('.store-tab').hide();
+    },
+
+    showCollaborators: function() {
+      var me = this;
+      me.closeAllTabs();
+      me.$('.collab-tab').show();
+      if (!me.options.collabView) {
+        var collabs = new CollabCollection;
+        collabs.url = '/store/collaborators/' + me.model.get('name');
+        var collabView = me.options.collabView = new CollabView({
+          collection: collabs,
+        });
+        collabView.options.store = me.model;
+        collabs.fetch({
+          success: function (col, res) {
+            me.$('.collab-tab').empty().append(collabView.render().el);
+          },
+          error: function (col, res) {
+            alert('Unable to get collaborators from the server.');
+          }
+        });
+      }
     },
 
     render: function() {
@@ -3904,7 +4044,6 @@ $(function() {
             $('#main-area').empty().append(sinView.render().el);
           },
           error: function (col, res) {
-            alert('Unable to get stores from the server.');
           }
         });
       });

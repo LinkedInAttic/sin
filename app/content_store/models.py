@@ -1,5 +1,6 @@
 import logging, urllib2, json
 import django.utils.log
+from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Max
 from django.utils.translation import ugettext_lazy as _
@@ -76,6 +77,8 @@ class ContentStore(models.Model):
   group = models.ForeignKey(Group, related_name="stores", default=1)
 
   nodes = models.ManyToManyField(Node, through="cluster.Membership")
+
+  collaborators = models.ManyToManyField(User, related_name="my_stores")
 
   objects = ContentStoreManager()
 

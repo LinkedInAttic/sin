@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load url from future %}
+
+{% block content %}
+
+{{ form.non_field_errors }}
+
+<form method="post" action="{% url 'register' %}">
+<table>
+<tr>
+    <td>{{ form.username.label_tag }}</td>
+    <td>{{ form.username }} {{ form.username.errors }}</td>
+</tr>
+<tr>
+    <td>{{ form.password1.label_tag }}</td>
+    <td>{{ form.password1 }} {{ form.password1.errors }}</td>
+</tr>
+<tr>
+    <td>{{ form.password2.label_tag }}</td>
+    <td>{{ form.password2 }} {{ form.password2.errors }}</td>
+</tr>
+</table>
+<input type="submit" value="register" />
+<input type="hidden" name="next" value="{{ next }}" />
+</form>
+
+{% endblock %}
+

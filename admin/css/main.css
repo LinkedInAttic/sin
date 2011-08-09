@@ -12,6 +12,12 @@
   display: table;
 }
 
+.user-ops {
+  float: right;
+  position: relative;
+  top: -40px
+}
+
 .cell {
   display: table-cell;
 }

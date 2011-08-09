@@ -1,0 +1,47 @@
+{% load url from future %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml"> 
+  <head> 
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+    <title>{% block title %}Sin{% endblock %}</title> 
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/main.css" type="text/css" media="screen" title="no title" charset="utf-8"> 
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/baseline.css" type="text/css" media="screen" title="no title" charset="utf-8"> 
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/styles.css" type="text/css" media="screen" title="no title" charset="utf-8"> 
+    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+    // <![CDATA[
+    google.load("jquery", "1.6.1");
+    google.load("jqueryui", "1.8.13");
+    // ]]>
+    </script>
+    <script type="text/javascript" src="{{ STATIC_URL }}js/core.js" ></script>
+    {% block blockbots %}{% endblock %}{% block extrahead %}{% endblock %}{% block extrastyle %}{% endblock %}{% block extrascript %}{% endblock %}
+  </head> 
+  <body> 
+  <div class="header"> 
+    <div class="user-ops">
+      {% if user.is_authenticated %}
+      <span>{{ user.username }}</span> | <a href="{% url 'logout' %}">Logout</a>
+      {% else %}
+      <a href="{% url 'login' %}">Login</a> | <a href="{% url 'register' %}">Register</a>
+      {% endif %}
+    </div>
+    <img src="{{ STATIC_URL }}images/sin-small.png" /> 
+    <h1>Welcome to Sin</h1> 
+  </div> 
+  <table border="1" align="center" width="70%" class="nav"> 
+    <tr> 
+      <td><a href="{% url 'home' %}">Home</a></td> 
+      <td><a href="{% url 'dashboard' %}">Dashboard</a></td> 
+      <td><a href="{% url 'downloads' %}">Downloads</a></td> 
+      <td><a href="{% url 'get_started' %}">Get Started</a></td> 
+      <td><a href="{% url 'documentation' %}">Documentation</a></td> 
+      <td><a href="{% url 'developers' %}">Developers</a></td> 
+      <td><a href="{% url 'team' %}">Team</a></td> 
+    </tr> 
+  </table> 
+  <hr/> 
+  {% block content %}
+  {% endblock %}
+  </body> 
+</html> 

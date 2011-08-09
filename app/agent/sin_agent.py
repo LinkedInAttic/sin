@@ -275,8 +275,18 @@ def doStopStore(name):
     if pid:
       log.msg("Stopping existing process %d for store %s" % (pid, name))
       os.kill(pid, 15)
-      psOutput = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
-                                  shell=True, stdout=subprocess.PIPE).stdout.read()
+      psOutput = ''
+      ps = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
+                                  shell=True, stdout=subprocess.PIPE)
+      while True:
+        try:
+          psOutput += ps.stdout.read()
+          break
+        except IOError as ioe:
+          if ioe.errno == errno.EINTR:
+            pass
+          else:
+            raise
 
       if len(psOutput) > 0:
         print "Waiting for process %d to die" % pid

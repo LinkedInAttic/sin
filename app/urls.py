@@ -12,6 +12,16 @@ urlpatterns = patterns('views',
   url(r'^admin/', include(admin.site.urls)),
 
   url(r'^$', 'home', name='home'),
+  url(r'^dashboard/?$', 'dashboard', name='dashboard'),
+  url(r'^downloads/?$', 'downloads', name='downloads'),
+  url(r'^get-started/?$', 'get_started', name='get_started'),
+  url(r'^documentation/?$', 'documentation', name='documentation'),
+  url(r'^developers/?$', 'developers', name='developers'),
+  url(r'^team/?$', 'team', name='team'),
+
+  url(r'^login/?$', 'login', name='login'),
+  url(r'^register/?$', 'register', name='register'),
+  url(r'^logout/?$', 'logout', name='logout'),
 
   url(r'^cluster/', include('cluster.urls')),
   url(r'^store/', include('content_store.urls')),

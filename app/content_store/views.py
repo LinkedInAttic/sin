@@ -1,6 +1,7 @@
-import random, os, subprocess, socket, json
+import logging, random, os, subprocess, socket, json, shutil, urllib, urllib2
 from django.db import connection
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.serializers.json import DateTimeAwareJSONEncoder
 from django.http import HttpResponse
 from django.template import loader
@@ -11,16 +12,14 @@ from django.http import HttpResponseNotAllowed
 from django.http import HttpResponseServerError
 import kafka
 
-from content_store.models import ContentStore
-from cluster.models import Group, Node, Membership
-import logging
+from decorators import login_required
 from utils import enum
 from utils import ClusterLayout
 from utils.ClusterLayout import Rectangle, Label, SvgPlotter
 from utils import validator
 
-import shutil
-import urllib, urllib2
+from content_store.models import ContentStore
+from cluster.models import Group, Node, Membership
 
 from senseiClient import SenseiClient
 from senseiClient import SenseiRequest
@@ -34,9 +33,10 @@ kafkaPort = int(settings.KAFKA_PORT)
 kafkaProducer = kafka.KafkaProducer(kafkaHost, kafkaPort)
 validators = {}
 
+@login_required
 def storeExists(request,store_name):
   resp = {
-    'exists' : ContentStore.objects.filter(name=store_name).exists()
+    'exists' : request.user.my_stores.filter(name=store_name).exists()
   }
   return HttpResponse(json.dumps(resp))
 
@@ -60,13 +60,14 @@ def openStore(request,store_name):
   })
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
+@login_required
 def newStore(request,store_name):
   if ContentStore.objects.filter(name=store_name).exists():
     resp = {
       'ok' : False,
-      'error' : 'store: %s already exists.' % store_name
+      'error' : 'store: %s already exists, please choose another name.' % store_name
     }
-    return HttpResponseNotAllowed(json.dumps(resp))
+    return HttpResponse(json.dumps(resp))
 
   replica = int(request.POST.get('replica','2'))
   partitions = int(request.POST.get('partitions','2'))
@@ -94,7 +95,7 @@ def newStore(request,store_name):
 
   if replica > num_nodes:
     resp = {'ok': False, 'error':'Num of replicas is too big'}
-    return HttpResponseBadRequest(json.dumps(resp))
+    return HttpResponse(json.dumps(resp))
 
   store = ContentStore(
     name=store_name,
@@ -103,6 +104,7 @@ def newStore(request,store_name):
     description=desc
   )
   store.save()
+  store.collaborators.add(request.user)
 
   setupCluster(store)
 
@@ -114,24 +116,17 @@ def newStore(request,store_name):
   })
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
+@login_required
 def deleteStore(request,store_name):
-  password = request.REQUEST.get('password', '')
-  if password != getattr(settings, 'DELETE_PASSWORD', ''):
-    resp = {
-      'ok' : False,
-      'msg' : 'Invalid password.',
-    }
-    return HttpResponse(json.dumps(resp))
   try:
-    store = None
     try:
-      store = ContentStore.objects.get(name=store_name)
+      store = request.user.my_stores.get(name=store_name)
     except ContentStore.DoesNotExist:
       resp = {
         'ok' : False,
-        'msg' : 'store: %s does not exist.' % store_name
+        'msg' : 'You do not own a store with the name "%s".' % store_name
       }
-      return HttpResponseNotFound(json.dumps(resp))
+      return HttpResponse(json.dumps(resp))
     params = {}
     params["name"] = store_name
 
@@ -154,6 +149,7 @@ def deleteStore(request,store_name):
     }
   return HttpResponse(json.dumps(resp))
 
+@login_required
 def updateConfig(request, store_name):
   config = request.POST.get('config');
   resp = {
@@ -161,11 +157,10 @@ def updateConfig(request, store_name):
   }
   
   if config:
-    store = None
     try:
-      store = ContentStore.objects.get(name=store_name)
+      store = request.user.my_stores.get(name=store_name)
     except ContentStore.DoesNotExist:
-      resp['error'] = "store %s does not exist." % store_name
+      resp['error'] = 'You do not own a store with the name "%s".' % store_name
       return HttpResponse(json.dumps(resp))
 
     store.config = config
@@ -283,17 +278,18 @@ def updateDoc(request,store_name):
     resp = {'ok':False,'error':e.message}
   return HttpResponseServerError(json.dumps(resp))
 
+@login_required
 def startStore(request, store_name, restart=False):
   try:
     store = None
     try:
-      store = ContentStore.objects.get(name=store_name)
+      store = request.user.my_stores.get(name=store_name)
     except ContentStore.DoesNotExist:
       resp = {
         'ok' : False,
-        'msg' : 'store: %s does not exist.' % store_name
+        'msg' : 'You do not own a store with the name "%s".' % store_name
       }
-      return HttpResponseNotFound(json.dumps(resp))
+      return HttpResponse(json.dumps(resp))
 
     webapp = os.path.join(settings.SENSEI_HOME,'src/main/webapp')
     store_home = os.path.join(settings.STORE_HOME, store_name)
@@ -349,17 +345,17 @@ def startStore(request, store_name, restart=False):
     logging.exception(e)   
     return HttpResponseServerError(json.dumps({'ok':False,'error':e.message}))
 
+@login_required
 def stopStore(request, store_name):
   try:
-    store = None
     try:
-      store = ContentStore.objects.get(name=store_name)
+      store = request.user.my_stores.get(name=store_name)
     except ContentStore.DoesNotExist:
       resp = {
         'ok' : False,
-        'msg' : 'store: %s does not exist.' % store_name
+        'msg' : 'You do not own a store with the name "%s".' % store_name
       }
-      return HttpResponseNotFound(json.dumps(resp))
+      return HttpResponse(json.dumps(resp))
     params = {}
     params["name"] = store_name
 
@@ -380,6 +376,7 @@ def stopStore(request, store_name):
   except Exception as e:
     return HttpResponseServerError(json.dumps({'ok':False,'error':e.message}))
 
+@login_required
 def restartStore(request, store_name):
   return startStore(request, store_name, restart=True)
 
@@ -468,10 +465,92 @@ def available(request,store_name):
     resp = {'ok':False,'error':'store: %s does not exist.' % store_name}
   return HttpResponse(json.dumps(resp))
 
+@login_required
 def stores(request):
-  objs = ContentStore.objects.order_by('-created')
+  objs = request.user.my_stores.order_by('-created')
   resp = objs.to_map_list()
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
+
+@login_required
+def collaborators(request, store_name):
+  try:
+    store = ContentStore.objects.get(name=store_name)
+  except ContentStore.DoesNotExist:
+    resp = {
+      'ok' : False,
+      'error' : 'store: %s does not exist.' % store_name
+    }
+    return HttpResponseNotFound(json.dumps(resp))
+  resp = [{
+      'id': c.id,
+      'username': c.username,
+    } for c in store.collaborators.all()]
+  return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
+
+@login_required
+def add_collab(request, store_name):
+  try:
+    store = request.user.my_stores.get(name=store_name)
+  except ContentStore.DoesNotExist:
+    resp = {
+      'ok' : False,
+      'error' : 'You do not own a store with the name "%s".' % store_name
+    }
+    return HttpResponse(json.dumps(resp))
+
+  username = request.REQUEST.get('username', '')
+  try:
+    user = User.objects.get(username=username)
+  except User.DoesNotExist:
+    resp = {
+      'ok' : False,
+      'error' : 'Unknown user: "%s".' % username
+    }
+    return HttpResponse(json.dumps(resp))
+
+  # Not checking if user alread in collabs, just adding
+  store.collaborators.add(user)
+  resp = {
+    'ok' : True,
+    'id': user.id,
+    'username': user.username,
+  }
+  return HttpResponse(json.dumps(resp))
+
+@login_required
+def remove_collab(request, store_name):
+  try:
+    store = request.user.my_stores.get(name=store_name)
+  except ContentStore.DoesNotExist:
+    resp = {
+      'ok' : False,
+      'error' : 'You do not own a store with the name "%s".' % store_name
+    }
+    return HttpResponse(json.dumps(resp))
+
+  username = request.REQUEST.get('username', '')
+  try:
+    user = store.collaborators.get(username=username)
+  except User.DoesNotExist:
+    resp = {
+      'ok' : False,
+      'error' : 'User "%s" is not a collaborator of store "%s".' % (username, store_name)
+    }
+    return HttpResponse(json.dumps(resp))
+  if request.user == user:
+    resp = {
+      'ok' : False,
+      'error' : 'You cannot remove your self.'
+    }
+    return HttpResponse(json.dumps(resp))
+
+  store.collaborators.remove(user)
+  resp = {
+    'ok' : True,
+    'id': user.id,
+    'username': user.username,
+  }
+  return HttpResponse(json.dumps(resp))
 
 def setupCluster(store):
   """
