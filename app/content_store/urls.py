@@ -2,6 +2,7 @@ from django.conf.urls.defaults import patterns, include, url
 
 urlpatterns = patterns('content_store.views',
   (r'^new-store/(?P<store_name>[^/]+)/?$','newStore'),
+  (r'^regenerate-api-key/(?P<store_name>[^/]+)/?$','regenerate_api_key'),
   (r'^open-store/(?P<store_name>[^/]+)/?$','openStore'),
   (r'^delete-store/(?P<store_name>[^/]+)/?$','deleteStore'),
   (r'^exists/(?P<store_name>[^/]+)/?$','storeExists'),

@@ -3585,6 +3585,7 @@ $(function() {
 
     events:{
       'click .deleteStore': 'deleteStore',
+      'click .regenerate-api-key': 'regenerateApiKey',
       'click .stopStore': 'stopStore',
       'click .add-column': 'addColumn',
       'click .add-facet': 'addFacet',
@@ -3641,8 +3642,24 @@ $(function() {
     },
 
     initialize: function() {
-      _.bindAll(this, 'showManage', 'closeAllTabs', 'showCollaborators', 'showRaw', 'restart', 'render', 'updateConfig', 'saveStoreRaw', 'saveStore', 'stopStore', 'deleteStore', 'addColumn', 'addFacet');
+      _.bindAll(this, 'showManage', 'closeAllTabs', 'showCollaborators', 'showRaw', 'restart', 'render', 'updateConfig', 'saveStoreRaw', 'saveStore', 'stopStore', 'regenerateApiKey', 'deleteStore', 'addColumn', 'addFacet');
       this.model.view = this;
+    },
+
+    regenerateApiKey: function() {
+      var me = this;
+      var really = confirm("After the new key is generated, you have to reconfig ALL your client to use the new key. Do you really want to continue?");
+      if (!really)
+        return false;
+
+      $.getJSON('/store/regenerate-api-key/' + me.model.get('name'), function(resp) {
+        if (resp["ok"]) {
+          me.$('.api-key').text(resp.api_key);
+        }
+        else {
+          alert(resp["msg"]);
+        }
+      });
     },
 
     showRaw: function() {

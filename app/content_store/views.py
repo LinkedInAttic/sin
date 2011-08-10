@@ -13,7 +13,7 @@ from django.http import HttpResponseServerError
 import kafka
 
 from decorators import login_required
-from utils import enum
+from utils import enum, generate_api_key
 from utils import ClusterLayout
 from utils.ClusterLayout import Rectangle, Label, SvgPlotter
 from utils import validator
@@ -99,6 +99,7 @@ def newStore(request,store_name):
 
   store = ContentStore(
     name=store_name,
+    api_key=generate_api_key(),
     replica=replica,
     partitions=partitions,
     description=desc
@@ -108,13 +109,31 @@ def newStore(request,store_name):
 
   setupCluster(store)
 
-  resp = store.to_map()
+  resp = store.to_map(True)
   resp.update({
     'ok' : True,
     'kafkaHost' : kafkaHost,
     'kafkaPort' : kafkaPort,
   })
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
+
+@login_required
+def regenerate_api_key(request, store_name):
+  try:
+    store = request.user.my_stores.get(name=store_name)
+  except ContentStore.DoesNotExist:
+    resp = {
+      'ok' : False,
+      'msg' : 'You do not own a store with the name "%s".' % store_name
+    }
+    return HttpResponse(json.dumps(resp))
+  store.api_key = generate_api_key()
+  store.save()
+  resp = {
+    'ok': True,
+    'api_key': store.api_key,
+  }
+  return HttpResponse(json.dumps(resp))
 
 @login_required
 def deleteStore(request,store_name):
@@ -468,7 +487,7 @@ def available(request,store_name):
 @login_required
 def stores(request):
   objs = request.user.my_stores.order_by('-created')
-  resp = objs.to_map_list()
+  resp = objs.to_map_list(True)
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
 @login_required

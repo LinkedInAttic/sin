@@ -39,13 +39,13 @@ default_schema = {
 }
 
 class ContentStoreQuerySet(models.query.QuerySet):
-  def to_map_list(self):
+  def to_map_list(self, with_api_key=False):
     objs = list(self)
     nodes = Node.objects.filter(group__in=[o.group_id for o in objs]).values('group_id').annotate(host=Max('host'))
     node_map = dict([(o['group_id'], o['host']) for o in nodes])
     for obj in objs:
       obj.broker_host = node_map[obj.group_id]
-    return [store.to_map() for store in objs]
+    return [store.to_map(with_api_key) for store in objs]
 
 class ContentStoreManager(models.Manager):
   def get_query_set(self):
@@ -62,7 +62,8 @@ class ContentStore(models.Model):
   broker_port_base = 15000
 
   name = models.CharField(max_length=20, unique=True)
-  description = models.CharField(max_length=1024,unique=False)
+  api_key = models.CharField(max_length=40)
+  description = models.CharField(max_length=1024)
 
   replica = models.IntegerField(default=2)
   partitions = models.IntegerField(default=2)
@@ -177,7 +178,7 @@ class ContentStore(models.Model):
 
     return (True, None)
 
-  def to_map(self):
+  def to_map(self, with_api_key=False):
     """
     Do not use this method if you are getting a list of maps of this,
     use ContentStoreQuerySet.to_map_list instead.
@@ -197,5 +198,7 @@ class ContentStore(models.Model):
       'status_display': unicode(enum.STORE_STATUS_DISPLAY[self.status]),
       'description' : self.description,
     }
+    if with_api_key:
+      obj['api_key'] = self.api_key
     return obj
 
