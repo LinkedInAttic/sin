@@ -22,15 +22,15 @@ class Sindex:
   description = None
   status = None
   
-  def __init__(self,id,name,description,created,url,config,senseiClient,status):
+  def __init__(self, id, name, api_key, description, created, url, config, senseiClient, status):
     self.id = id
     self.name = name
+    self.api_key = api_key
     self.created = created
     self.description = description
     self.senseiClient = senseiClient
     self.opener = urllib2.build_opener()
-    self.opener.addheaders = [('User-agent', 'Python-urllib/2.5')]
-    self.opener.addheaders = [('User-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_7) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.91 Safari/534.30')]
+    self.opener.addheaders = [('X-Sin-Api-Key', api_key)]
     self.baseurl = url
     self.config = config
     self.status = status
@@ -175,17 +175,16 @@ class SinClient:
   opener = None
   path = 'store'
   
-  def __init__(self,host='localhost',port=8000):
+  def __init__(self, host='localhost', port=8000):
     self.host = host
     self.port = port
     self.opener = urllib2.build_opener()
-    self.opener.addheaders = [('User-agent', 'Python-urllib/2.5')]
-    self.opener.addheaders = [('User-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_7) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.91 Safari/534.30')]
   
-  def openStore(self,name):
+  def openStore(self, name, api_key):
     baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
     url = '%s/%s/%s' % (baseurl,'open-store',name)
     urlReq = urllib2.Request(url)
+    self.opener.addheaders = [('X-Sin-Api-Key', api_key)]
     res = self.opener.open(urlReq)
     jsonObj = dict(json.loads(res.read()))
     
@@ -203,55 +202,55 @@ class SinClient:
     status = jsonObj['status_display']
     
     senseiClient = SenseiClient(self.host,brokerPort)
-    sindex = Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,status)
+    sindex = Sindex(storeId,name,api_key,description,storeCreated,baseurl,storeConfig,senseiClient,status)
     while not sindex.available():
       time.sleep(0.5)
     
     return sindex
 
-  def newStore(self,name,rep=1,parts=10,description=""):
-    baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
-    url = '%s/%s/%s' % (baseurl,'new-store',name)
-    params = urllib.urlencode(dict(replica=rep,partitions=parts,desc=description))
-    urlReq = urllib2.Request(url)
-    res = self.opener.open(urlReq,params)
-    jsonObj = dict(json.loads(res.read()))
+  #def newStore(self,name,rep=1,parts=10,description=""):
+    #baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
+    #url = '%s/%s/%s' % (baseurl,'new-store',name)
+    #params = urllib.urlencode(dict(replica=rep,partitions=parts,desc=description))
+    #urlReq = urllib2.Request(url)
+    #res = self.opener.open(urlReq,params)
+    #jsonObj = dict(json.loads(res.read()))
     
-    if not jsonObj['ok']:
-      errorMsg = "error: %s" % jsonObj.get('error','unknown error')
-      raise Exception(errorMsg)
+    #if not jsonObj['ok']:
+      #errorMsg = "error: %s" % jsonObj.get('error','unknown error')
+      #raise Exception(errorMsg)
     
-    brokerPort = jsonObj['broker_port']
-    senseiPort = jsonObj['sensei_port']
-    storeId = jsonObj['id']
-    storeConfig = jsonObj.get('config')
-    storeCreated = jsonObj['created']
-    storeStatus = jsonObj['status']
-    kafkaHost = jsonObj['kafkaHost']
-    kafkaPort = jsonObj['kafkaPort']
-    description = jsonObj.get('description',None)
-    status = jsonObj['status_display']
+    #brokerPort = jsonObj['broker_port']
+    #senseiPort = jsonObj['sensei_port']
+    #storeId = jsonObj['id']
+    #storeConfig = jsonObj.get('config')
+    #storeCreated = jsonObj['created']
+    #storeStatus = jsonObj['status']
+    #kafkaHost = jsonObj['kafkaHost']
+    #kafkaPort = jsonObj['kafkaPort']
+    #description = jsonObj.get('description',None)
+    #status = jsonObj['status_display']
     
-    senseiClient = SenseiClient(self.host,brokerPort)
-    return Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,status)
+    #senseiClient = SenseiClient(self.host,brokerPort)
+    #return Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,status)
 
-  def storeExists(self,name):
-    baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
-    url = '%s/%s/%s' % (baseurl,'exists',name)
-    urlReq = urllib2.Request(url)
-    res = self.opener.open(urlReq)
-    jsonObj = dict(json.loads(res.read()))
-    return jsonObj['exists']
+  #def storeExists(self,name):
+    #baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
+    #url = '%s/%s/%s' % (baseurl,'exists',name)
+    #urlReq = urllib2.Request(url)
+    #res = self.opener.open(urlReq)
+    #jsonObj = dict(json.loads(res.read()))
+    #return jsonObj['exists']
     
-  def deleteStore(self,name):
-    baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
-    url = '%s/%s/%s' % (baseurl,'delete-store',name)
-    urlReq = urllib2.Request(url)
-    res = self.opener.open(urlReq)
-    jsonObj = dict(json.loads(res.read()))
-    if not jsonObj['ok']:
-      errorMsg = "error: %s" % jsonObj.get('msg','unknown error')
-      raise Exception(errorMsg)
+  #def deleteStore(self,name):
+    #baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
+    #url = '%s/%s/%s' % (baseurl,'delete-store',name)
+    #urlReq = urllib2.Request(url)
+    #res = self.opener.open(urlReq)
+    #jsonObj = dict(json.loads(res.read()))
+    #if not jsonObj['ok']:
+      #errorMsg = "error: %s" % jsonObj.get('msg','unknown error')
+      #raise Exception(errorMsg)
 
 """
 if __name__ == '__main__':

@@ -12,7 +12,7 @@ from django.http import HttpResponseNotAllowed
 from django.http import HttpResponseServerError
 import kafka
 
-from decorators import login_required
+from decorators import login_required, api_key_required
 from utils import enum, generate_api_key
 from utils import ClusterLayout
 from utils.ClusterLayout import Rectangle, Label, SvgPlotter
@@ -40,8 +40,8 @@ def storeExists(request,store_name):
   }
   return HttpResponse(json.dumps(resp))
 
+@api_key_required
 def openStore(request,store_name):
-  store = None
   try:
     store = ContentStore.objects.get(name=store_name)
   except ContentStore.DoesNotExist:
@@ -195,8 +195,10 @@ def updateConfig(request, store_name):
 
   return HttpResponse(json.dumps(resp))
 
+@api_key_required
 def addDocs(request,store_name):
   """Add a list of documents."""
+  import pdb; pdb.set_trace()
   try:
     store = ContentStore.objects.get(name=store_name)
   except ContentStore.DoesNotExist:
@@ -241,6 +243,7 @@ def addDocs(request,store_name):
       resp = {'ok':False,'error':e.message}
       return HttpResponseServerError(json.dumps(resp))
 
+@api_key_required
 def updateDoc(request,store_name):
   try:
     store = None
@@ -399,6 +402,7 @@ def stopStore(request, store_name):
 def restartStore(request, store_name):
   return startStore(request, store_name, restart=True)
 
+@api_key_required
 def getSize(request,store_name):
   store = None
   try:
@@ -433,6 +437,7 @@ def findDoc(store,id):
       doc = hit.srcData
   return doc
 
+@api_key_required
 def getDoc(request,store_name,id):
   uid = long(id)
   if uid<0:
@@ -451,6 +456,7 @@ def getDoc(request,store_name,id):
     resp = {'ok':False,'error':e.message}
     return HttpResponseServerError(json.dumps(resp))
 
+@api_key_required
 def delDocs(request, store_name):
   ids = request.POST.get('ids')
 
@@ -477,6 +483,7 @@ def delDocs(request, store_name):
     resp = {'ok':False,'error':e.message}
     return HttpResponseServerError(json.dumps(resp))
 
+@api_key_required
 def available(request,store_name):
   if ContentStore.objects.filter(name=store_name).exists():
     resp = {'ok':True,'store':store_name,"available":True}

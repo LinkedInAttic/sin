@@ -1,8 +1,11 @@
 import logging, urllib2, json
 import django.utils.log
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.db import models
 from django.db.models import Max
+from django.db.models.signals import post_delete, post_save
+from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 
 from utils import enum, totimestamp
@@ -38,6 +41,9 @@ default_schema = {
   }
 }
 
+def get_store_name_cache_key(name):
+  return 'store_%s' % name
+
 class ContentStoreQuerySet(models.query.QuerySet):
   def to_map_list(self, with_api_key=False):
     objs = list(self)
@@ -46,6 +52,16 @@ class ContentStoreQuerySet(models.query.QuerySet):
     for obj in objs:
       obj.broker_host = node_map[obj.group_id]
     return [store.to_map(with_api_key) for store in objs]
+
+  def get(self, *args, **kwargs):
+    if (not args) and len(kwargs) == 1 and 'name' in kwargs:
+      cache_key = get_store_name_cache_key(kwargs['name'])
+      obj = cache.get(cache_key)
+      if not obj:
+        obj = super(ContentStoreQuerySet, self).get(*args, **kwargs)
+        cache.set(cache_key, obj)
+      return obj
+    return super(ContentStoreQuerySet, self).get(*args, **kwargs)
 
 class ContentStoreManager(models.Manager):
   def get_query_set(self):
@@ -201,4 +217,14 @@ class ContentStore(models.Model):
     if with_api_key:
       obj['api_key'] = self.api_key
     return obj
+
+@receiver(post_delete, sender=ContentStore)
+def post_store_delete_handler(sender, **kwargs):
+  instance = kwargs['instance']
+  cache.delete(get_store_name_cache_key(instance.name))
+
+@receiver(post_save, sender=ContentStore)
+def post_store_save_handler(sender, **kwargs):
+  instance = kwargs['instance']
+  cache.delete(get_store_name_cache_key(instance.name))
 
