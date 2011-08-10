@@ -198,7 +198,6 @@ def updateConfig(request, store_name):
 @api_key_required
 def addDocs(request,store_name):
   """Add a list of documents."""
-  import pdb; pdb.set_trace()
   try:
     store = ContentStore.objects.get(name=store_name)
   except ContentStore.DoesNotExist:
