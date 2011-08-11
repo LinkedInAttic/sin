@@ -129,8 +129,8 @@ def doStartStore(name, sensei_port, broker_port,
   """
   Do the real work to get a Sensei server started for a store.
   """
-  classpath1 = os.path.join(SENSEI_HOME, 'target/*')
-  classpath2 = os.path.join(SENSEI_HOME, 'target/lib/*')
+  classpath1 = os.path.join(SENSEI_HOME, 'sensei-core/target/*')
+  classpath2 = os.path.join(SENSEI_HOME, 'sensei-core/target/lib/*')
   log4jclasspath = os.path.join(SENSEI_HOME,'resources')
 
   classpath = "%s:%s:%s" % (classpath1,classpath2,log4jclasspath)
