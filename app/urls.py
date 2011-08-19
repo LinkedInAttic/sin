@@ -25,4 +25,5 @@ urlpatterns = patterns('views',
 
   url(r'^cluster/', include('cluster.urls')),
   url(r'^store/', include('content_store.urls')),
+  url(r'^files/', include('files.urls')),
 )

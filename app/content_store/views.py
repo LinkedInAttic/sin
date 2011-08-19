@@ -1,10 +1,10 @@
-import logging, random, os, subprocess, socket, json, shutil, urllib, urllib2
+import logging, random, os, subprocess, json, shutil, urllib, urllib2, datetime
 from django.db import connection
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.serializers.json import DateTimeAwareJSONEncoder
 from django.http import HttpResponse
-from django.template import loader
+from django.template import loader, RequestContext
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseNotFound
 from django.http import HttpResponseGone
@@ -13,12 +13,12 @@ from django.http import HttpResponseServerError
 import kafka
 
 from decorators import login_required, api_key_required
-from utils import enum, generate_api_key
+from utils import enum, generate_api_key, get_local_pub_ip
 from utils import ClusterLayout
 from utils.ClusterLayout import Rectangle, Label, SvgPlotter
 from utils import validator
 
-from content_store.models import ContentStore
+from content_store.models import ContentStore, StoreConfig
 from cluster.models import Group, Node, Membership
 
 from senseiClient import SenseiClient
@@ -77,20 +77,7 @@ def newStore(request,store_name):
 
   # Check for nodes:
   if num_nodes == 0:
-    def _get_local_pub_ip():
-      """Get local public ip address.
-
-      By creating a udp socket and assigning a DUMMY public ip address and a
-      DUMMY port, and getting the local sock name.
-      """
-      skt = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-      try:
-        skt.connect(('74.125.224.0', 80))
-        return skt.getsockname()[0]
-      finally:
-        skt.close()
-
-    n = Node.objects.create(host=_get_local_pub_ip(), group=Group(pk=1))
+    n = Node.objects.create(host=get_local_pub_ip(), group=Group(pk=1))
     num_nodes = 1
 
   if replica > num_nodes:
@@ -169,31 +156,174 @@ def deleteStore(request,store_name):
   return HttpResponse(json.dumps(resp))
 
 @login_required
-def updateConfig(request, store_name):
-  config = request.POST.get('config');
+def updateSchema(request, store_name, config_id):
+  schema = request.POST.get('schema');
   resp = {
     'ok': False,
   }
   
-  if config:
+  if schema:
     try:
-      store = request.user.my_stores.get(name=store_name)
-    except ContentStore.DoesNotExist:
-      resp['error'] = 'You do not own a store with the name "%s".' % store_name
+      config = StoreConfig.objects.filter(
+        store=ContentStore.objects.filter(name=store_name, collaborators=request.user)).get(id=config_id)
+    except StoreConfig.DoesNotExist:
+      resp['error'] = 'You do not own a config with the store name "%s" and config id "%s".' % (store_name, config_id)
       return HttpResponse(json.dumps(resp))
 
-    store.config = config
-    valid, error = store.validate_config()
+    config.schema = schema
+    valid, error = config.validate_schema()
     if valid:
-      store.save()
+      config.updated()
       validator.erase_validator(store_name)
       resp['ok'] = True
+      resp.update(config.to_map())
     else:
       resp['error'] = error
   else:
-    resp['error'] = 'No config provided.'
+    resp['error'] = 'No schema provided.'
 
-  return HttpResponse(json.dumps(resp))
+  return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
+
+@login_required
+def updateProperties(request, store_name, config_id):
+  properties = request.POST.get('properties');
+  resp = {
+    'ok': False,
+  }
+  
+  if properties:
+    try:
+      config = StoreConfig.objects.filter(
+        store=ContentStore.objects.filter(name=store_name, collaborators=request.user)).get(id=config_id)
+    except StoreConfig.DoesNotExist:
+      resp['error'] = 'You do not own a config with the store name "%s" and config id "%s".' % (store_name, config_id)
+      return HttpResponse(json.dumps(resp))
+
+    config.properties = properties
+    valid, error = config.validate_properties()
+    if valid:
+      config.updated()
+      resp['ok'] = True
+      resp.update(config.to_map())
+    else:
+      resp['error'] = error
+  else:
+    resp['error'] = 'No properties provided.'
+
+  return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
+
+@login_required
+def updateCustomFacets(request, store_name, config_id):
+  custom_facets = request.POST.get('custom_facets');
+  resp = {
+    'ok': False,
+  }
+  
+  if custom_facets:
+    try:
+      config = StoreConfig.objects.filter(
+        store=ContentStore.objects.filter(name=store_name, collaborators=request.user)).get(id=config_id)
+    except StoreConfig.DoesNotExist:
+      resp['error'] = 'You do not own a config with the store name "%s" and config id "%s".' % (store_name, config_id)
+      return HttpResponse(json.dumps(resp))
+
+    config.custom_facets = custom_facets
+    valid, error = config.validate_custom_facets()
+    if valid:
+      config.updated()
+      resp['ok'] = True
+      resp.update(config.to_map())
+    else:
+      resp['error'] = error
+  else:
+    resp['error'] = 'No custom_facets provided.'
+
+  return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
+
+@login_required
+def updatePlugins(request, store_name, config_id):
+  plugins = request.POST.get('plugins');
+  resp = {
+    'ok': False,
+  }
+  
+  if plugins:
+    try:
+      config = StoreConfig.objects.filter(
+        store=ContentStore.objects.filter(name=store_name, collaborators=request.user)).get(id=config_id)
+    except StoreConfig.DoesNotExist:
+      resp['error'] = 'You do not own a config with the store name "%s" and config id "%s".' % (store_name, config_id)
+      return HttpResponse(json.dumps(resp))
+
+    config.plugins = plugins
+    valid, error = config.validate_plugins()
+    if valid:
+      config.updated()
+      resp['ok'] = True
+      resp.update(config.to_map())
+    else:
+      resp['error'] = error
+  else:
+    resp['error'] = 'No plugins provided.'
+
+  return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
+
+@login_required
+def configExtensions(request, store_name, config_id):
+  try:
+    config = StoreConfig.objects.filter(
+      store=ContentStore.objects.filter(name=store_name, collaborators=request.user)).get(id=config_id)
+  except StoreConfig.DoesNotExist:
+    resp['error'] = 'You do not own a config with the store name "%s" and config id "%s".' % (store_name, config_id)
+    return HttpResponse(json.dumps(resp))
+
+  resp = [f.to_map() for f in config.extensions.all()]
+  return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
+
+@login_required
+def updateExtensions(request, store_name, config_id):
+  extensions = request.POST.get('extensions');
+  resp = {
+    'ok': False,
+  }
+  
+  if extensions:
+    extensions = json.loads(extensions.encode('utf-8'))
+    try:
+      config = StoreConfig.objects.filter(
+        store=ContentStore.objects.filter(name=store_name, collaborators=request.user)).get(id=config_id)
+    except StoreConfig.DoesNotExist:
+      resp['error'] = 'You do not own a config with the store name "%s" and config id "%s".' % (store_name, config_id)
+      return HttpResponse(json.dumps(resp))
+
+    config.updated()
+    config.extensions = extensions
+    resp['ok'] = True
+    resp.update(config.to_map())
+  else:
+    resp['error'] = 'No extensions provided.'
+
+  return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
+
+@login_required
+def deleteConfig(request, store_name, config_id):
+  resp = {
+    'ok': False,
+  }
+  try:
+    config = StoreConfig.objects.filter(
+      store=ContentStore.objects.filter(name=store_name, collaborators=request.user)).get(id=config_id)
+  except StoreConfig.DoesNotExist:
+    resp['error'] = 'You do not own a config with the store name "%s" and config id "%s".' % (store_name, config_id)
+    return HttpResponse(json.dumps(resp))
+
+  if config.last_activated <= datetime.datetime.now():
+    resp['error'] = 'Active config cannot be deleted.'
+  else:
+    config.delete()
+    resp['ok'] = True
+
+  return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
 @api_key_required
 def addDocs(request,store_name):
@@ -300,9 +430,8 @@ def updateDoc(request,store_name):
   return HttpResponseServerError(json.dumps(resp))
 
 @login_required
-def startStore(request, store_name, restart=False):
+def startStore(request, store_name, config_id=None, restart=False):
   try:
-    store = None
     try:
       store = request.user.my_stores.get(name=store_name)
     except ContentStore.DoesNotExist:
@@ -312,31 +441,34 @@ def startStore(request, store_name, restart=False):
       }
       return HttpResponse(json.dumps(resp))
 
+    if config_id:
+      current_config = store.configs.get(id=config_id)
+    else:
+      current_config = store.current_config
+
     webapp = os.path.join(settings.SENSEI_HOME,'src/main/webapp')
     store_home = os.path.join(settings.STORE_HOME, store_name)
     index = os.path.join(store_home, 'index')
+    extensions = []
+    for ext in current_config.extensions.all():
+      url = ext.the_file.url
+      if not url.startswith('http:'):
+        url = request.build_absolute_uri(url)
+      extensions.append(url)
 
-    sensei_custom_facets = loader.render_to_string(
-      'sensei-conf/custom-facets.xml', {
-        })
-    sensei_plugins = loader.render_to_string(
-      'sensei-conf/plugins.xml', {
-        })
-
-    params = {}
-    params["name"] = store_name
-    params["sensei_port"] = store.sensei_port
-    params["broker_host"] = store.broker_host
-    params["broker_port"] = store.broker_port
-    params["sensei_custom_facets"] = sensei_custom_facets
-    params["sensei_plugins"] = sensei_plugins
-    params["schema"] = store.config
+    params = {
+      'name': store_name,
+      'sensei_port': store.sensei_port,
+      'broker_host': store.broker_host,
+      'broker_port': store.broker_port,
+      'extensions': json.dumps(extensions),
+      'schema': store.current_config.schema,
+    }
   
     members = store.membership_set.order_by("sensei_node_id")
     for member in members:
-      sensei_properties = loader.render_to_string(
-        'sensei-conf/sensei.properties',
-        {'node_id': member.sensei_node_id,
+      context = RequestContext(request, {
+         'node_id': member.sensei_node_id,
          'node_partitions': member.parts[1:len(member.parts)-1],
          'max_partition_id': store.partitions - 1,
          'store': store,
@@ -345,8 +477,16 @@ def startStore(request, store_name, restart=False):
          'kafka_host': kafkaHost,
          'kafka_port': kafkaPort,
          'zookeeper_url': settings.ZOOKEEPER_URL,
-         })
-      params["sensei_properties"] = sensei_properties
+        })
+
+      sensei_custom_facets = loader.get_template_from_string(current_config.custom_facets)
+      params["sensei_custom_facets"] = sensei_custom_facets.render(context)
+
+      sensei_plugins = loader.get_template_from_string(current_config.plugins)
+      params["sensei_plugins"] = sensei_plugins.render(context)
+
+      sensei_properties = loader.get_template_from_string(current_config.properties)
+      params["sensei_properties"] = sensei_properties.render(context)
 
       logger.info("Sending request: http://%s:%d/%s" % (member.node.host, member.node.agent_port,
                                                 not restart and "start-store" or "restart-store"))
@@ -355,6 +495,10 @@ def startStore(request, store_name, restart=False):
                                   not restart and "start-store" or "restart-store"),
                                urllib.urlencode(params))
 
+    store.configs.filter(active=True).update(active=False)
+    current_config.active = True
+    current_config.last_activated = datetime.datetime.now();
+    current_config.save()
     store.status = enum.STORE_STATUS['running']
     store.save()
     resp = store.to_map()
@@ -398,8 +542,8 @@ def stopStore(request, store_name):
     return HttpResponseServerError(json.dumps({'ok':False,'error':e.message}))
 
 @login_required
-def restartStore(request, store_name):
-  return startStore(request, store_name, restart=True)
+def restartStore(request, store_name, config_id=None):
+  return startStore(request, store_name, config_id, restart=True)
 
 @api_key_required
 def getSize(request,store_name):
@@ -470,6 +614,7 @@ def delDocs(request, store_name):
     return HttpResponseNotFound(json.dumps(resp))
 
   try:
+    ids = json.loads(ids.encode('utf-8'))
     delObjs = []
     for id in ids:
       delDoc = {'id':id,'isDeleted':True}
@@ -510,6 +655,21 @@ def collaborators(request, store_name):
       'id': c.id,
       'username': c.username,
     } for c in store.collaborators.all()]
+  return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
+
+@login_required
+def configs(request, store_name):
+  try:
+    store = ContentStore.objects.get(name=store_name)
+  except ContentStore.DoesNotExist:
+    resp = {
+      'ok' : False,
+      'error' : 'store: %s does not exist.' % store_name
+    }
+    return HttpResponseNotFound(json.dumps(resp))
+  resp = [c.to_map() for c in store.configs.all()]
+  if not resp:
+    resp = [store.current_config.to_map()]
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
 @login_required

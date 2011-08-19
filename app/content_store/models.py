@@ -1,4 +1,4 @@
-import logging, urllib2, json
+import logging, urllib2, json, datetime
 import django.utils.log
 from django.contrib.auth.models import User
 from django.core.cache import cache
@@ -10,8 +10,10 @@ from django.utils.translation import ugettext_lazy as _
 
 from utils import enum, totimestamp
 from utils.enum import to_choices
+from utils.template import load_template_source
 
 from cluster.models import Group, Node, Membership
+from files.models import File
 import time
 import socket
 
@@ -69,7 +71,7 @@ class ContentStoreManager(models.Manager):
 
 SUPPORTED_COLUMN_TYPES = set([
   'int', 'short', 'char', 'long', 'float', 'double', 'string', 'date', 'text'])
-SUPPORTED_FACET_TYPES = set(['simple', 'path', 'range', 'multi', 'compact-multi'])
+SUPPORTED_FACET_TYPES = set(['simple', 'path', 'range', 'multi', 'compact-multi', 'custom'])
 
 class ContentStore(models.Model):
   _broker_host_cache = None
@@ -84,7 +86,7 @@ class ContentStore(models.Model):
   replica = models.IntegerField(default=2)
   partitions = models.IntegerField(default=2)
 
-  config = models.TextField(default=json.dumps(default_schema))
+  # config = models.TextField(default=json.dumps(default_schema))
 
   created = models.DateTimeField(auto_now_add=True)
 
@@ -98,6 +100,19 @@ class ContentStore(models.Model):
   collaborators = models.ManyToManyField(User, related_name="my_stores")
 
   objects = ContentStoreManager()
+
+  def get_current_config(self):
+    try:
+      try:
+        config = self.configs.get(active=True)
+      except StoreConfig.DoesNotExist:
+        config = self.configs.order_by('-id', '-last_activated')[:1].get()
+    except StoreConfig.DoesNotExist:
+      config = self.configs.create()
+
+    return config
+
+  current_config = property(get_current_config)
 
   def get_unique_name(self):
     return "%s_%s" % (self.name, long(totimestamp(self.created)*1000))
@@ -151,7 +166,73 @@ class ContentStore(models.Model):
 
   running_info = property(get_running_info)
 
-  def validate_config(self):  #TODO: do more validation.
+  def to_map(self, with_api_key=False):
+    """
+    Do not use this method if you are getting a list of maps of this,
+    use ContentStoreQuerySet.to_map_list instead.
+    """
+    obj = {
+      'id': self.id,
+      'name': self.name,
+      'replica': self.replica,
+      'partitions': self.partitions,
+      'sensei_port': self.sensei_port,
+      'broker_host': self.broker_host,
+      'broker_port': self.broker_port,
+      'current_config': self.current_config.to_map(),
+      'created': self.created,
+      'running_info': self.running_info,
+      'status': self.status,
+      'status_display': unicode(enum.STORE_STATUS_DISPLAY[self.status]),
+      'description' : self.description,
+    }
+    if with_api_key:
+      obj['api_key'] = self.api_key
+    return obj
+
+@receiver(post_delete, sender=ContentStore)
+def post_store_delete_handler(sender, **kwargs):
+  instance = kwargs['instance']
+  cache.delete(get_store_name_cache_key(instance.name))
+
+@receiver(post_save, sender=ContentStore)
+def post_store_save_handler(sender, **kwargs):
+  instance = kwargs['instance']
+  cache.delete(get_store_name_cache_key(instance.name))
+
+
+class StoreConfig(models.Model):
+  class Meta:
+    ordering = ['-id', '-last_activated']
+
+  name = models.CharField(max_length=20, blank=True)
+
+  active = models.BooleanField(default=False)
+
+  created = models.DateTimeField(auto_now_add=True)
+  last_activated = models.DateTimeField(default=datetime.datetime.max)
+
+  schema = models.TextField(default=json.dumps(default_schema))
+  properties = models.TextField(default=load_template_source(
+      'sensei-conf/sensei.properties')[0])
+  custom_facets = models.TextField(default=load_template_source(
+      'sensei-conf/custom-facets.xml')[0])
+  plugins = models.TextField(default=load_template_source(
+      'sensei-conf/plugins.xml')[0])
+
+  extensions = models.ManyToManyField(File)
+
+  store = models.ForeignKey(ContentStore, related_name='configs')
+
+  def updated(self):
+    if self.last_activated <= datetime.datetime.now():
+      self.pk = None
+      self.active = False
+      self.last_activated = datetime.datetime.max
+      # self.created = datetime.datetime.now()
+    self.save()
+
+  def validate_schema(self):  #TODO: do more validation.
     def validate_facet(obj):
       if not obj.get('name'):
         return (False, 'Facet name is required.')
@@ -178,53 +259,43 @@ class ContentStore(models.Model):
       return (True, None)
 
     try:
-      config = json.loads(self.config)
-      for facet in config['facets']:
+      schema = json.loads(self.schema)
+      for facet in schema['facets']:
         valid, error = validate_facet(facet)
         if not valid:
           return (valid, error)
-      valid, error = validate_table(config['table'])
+      valid, error = validate_table(schema['table'])
       if not valid:
         return (valid, error)
 
-      self.config = json.dumps(config)
+      self.schema = json.dumps(schema)
     except Exception as e:
       logging.exception(e)
       return (False, 'Configuration is not valid.')
 
     return (True, None)
 
-  def to_map(self, with_api_key=False):
-    """
-    Do not use this method if you are getting a list of maps of this,
-    use ContentStoreQuerySet.to_map_list instead.
-    """
+  def validate_properties(self):  #TODO: do more validation.
+    return (True, None)
+
+  def validate_custom_facets(self):  #TODO: do more validation.
+    return (True, None)
+
+  def validate_plugins(self):  #TODO: do more validation.
+    return (True, None)
+
+  def to_map(self):
     obj = {
       'id': self.id,
       'name': self.name,
-      'replica': self.replica,
-      'partitions': self.partitions,
-      'sensei_port': self.sensei_port,
-      'broker_host': self.broker_host,
-      'broker_port': self.broker_port,
-      'config': self.config,
+      'active': self.active,
       'created': self.created,
-      'running_info': self.running_info,
-      'status': self.status,
-      'status_display': unicode(enum.STORE_STATUS_DISPLAY[self.status]),
-      'description' : self.description,
+      'last_activated': self.last_activated,
+      'schema': self.schema,
+      'properties': self.properties,
+      'custom_facets': self.custom_facets,
+      'plugins': self.plugins,
+      # 'extensions': [f.to_map() for f in self.extensions.all()],
     }
-    if with_api_key:
-      obj['api_key'] = self.api_key
     return obj
-
-@receiver(post_delete, sender=ContentStore)
-def post_store_delete_handler(sender, **kwargs):
-  instance = kwargs['instance']
-  cache.delete(get_store_name_cache_key(instance.name))
-
-@receiver(post_save, sender=ContentStore)
-def post_store_save_handler(sender, **kwargs):
-  instance = kwargs['instance']
-  cache.delete(get_store_name_cache_key(instance.name))
 

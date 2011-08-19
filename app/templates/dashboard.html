@@ -84,6 +84,7 @@
             <option value="range">range</option>
             <option value="multi">multi</option>
             <option value="compact-multi">compact-multi</option>
+            <option value="custom">custom</option>
           </select></span>
           <span class="name-container" style="display: none;">Depends: <input class="depends" type="text" value="{% templatetag openvariable %} depends {% templatetag closevariable %}" /></span>
           <span class="name-container" style="display: none;">Dynamic:
@@ -118,7 +119,7 @@
     </script>
     <script id="content-store-tmpl" type="text/x-mustache-tmpl">
       <div class="store-container">
-        <div><a target="_blank" href="http://{% templatetag openvariable %} broker_host {% templatetag closevariable %}:{% templatetag openvariable %} broker_port {% templatetag closevariable %}/demo.html">Search</a> | <a class="manage" href="javascript:_void();">Schema</a> | <a class="collaborators" href="javascript:_void();">Collaborators</a> | <a class="admin" target="_blank" href="http://{% templatetag openvariable %} broker_host {% templatetag closevariable %}:{% templatetag openvariable %} broker_port {% templatetag closevariable %}/admin.html">Admin</a> | <a href="javascript:_void();" class="deleteStore">Delete</a> | <a class="restart" href="javascript:_void();">(Re-)Start</a> | <a class="stopStore" href="javascript:_void();">Stop</a> | <span>Status:</span> <span class="status">{% templatetag openvariable %} status_display {% templatetag closevariable %}</span></div>
+        <div><a target="_blank" href="http://{% templatetag openvariable %} broker_host {% templatetag closevariable %}:{% templatetag openvariable %} broker_port {% templatetag closevariable %}/demo.html">Search</a> | <a class="manage" href="javascript:_void();">Config</a> | <a class="collaborators" href="javascript:_void();">Collaborators</a> | <a class="admin" target="_blank" href="http://{% templatetag openvariable %} broker_host {% templatetag closevariable %}:{% templatetag openvariable %} broker_port {% templatetag closevariable %}/admin.html">Admin</a> | <a href="javascript:_void();" class="deleteStore">Delete</a> | <a class="restart" href="javascript:_void();">(Re-)Start</a> | <a class="stopStore" href="javascript:_void();">Stop</a> | <span>Status:</span> <span class="status">{% templatetag openvariable %} status_display {% templatetag closevariable %}</span></div>
         <h2>{% templatetag openvariable %} name {% templatetag closevariable %}</h2>
         <div>
           <p>
@@ -135,46 +136,145 @@
         <div class="collab-tab store-tab" style="display: none;">
         </div>
         <div class="manage-tab store-tab" style="display: none;">
-          <div>
-            <h3>Columns</h3>
-            <div class="table display-row header">
-              <div class="cell">Name</div> <div class="cell">Type</div>
-              <div class="cell display-op">&nbsp;</div>
-            </div>
-            <div class="columns">
-            </div>
-            <div class="add-new-column">
-            </div>
-          </div>
-          <div>
-            <h3>Facets</h3>
-            <div class="table display-row header">
-              <div class="cell">Name</div> <div class="cell">Type</div>
-              <div class="cell display-op">&nbsp;</div>
-            </div>
-            <div class="facets">
-            </div>
-            <div class="add-new-facet">
-            </div>
-          </div>
-          <br />
-          <div>
-            <input class="save-store" type="button" value="Save" />
-            <input class="close-all-tabs" type="button" value="Cancel" />
-          </div>
-          <div>
-            <a class="show-raw" href="javascript:_void()">Raw</a><br />
-            <div class="raw-container" style="display: none">
-              <textarea class="raw" style="width: 500px; height: 300px;"></textarea>
-            </div>
-          </div>
-          <div>
-            <input class="save-store-raw" type="button" value="Save Raw" />
-            <input class="close-all-tabs" type="button" value="Cancel" />
-          </div>
         </div>
       </div>
       <hr />
+    </script>
+    <script id="store-config-item-tmpl" type="text/x-mustache-tmpl">
+      <hr />
+      <div class="table-row store-row store-table">
+        <div class="cell">{% templatetag openvariable %} name {% templatetag closevariable %}</div>
+        <div class="cell">{% templatetag openvariable %}#active{% templatetag closevariable %}Active{% templatetag openvariable %}/active{% templatetag closevariable %}</div>
+        <div class="cell">{% templatetag openvariable %} last_activated {% templatetag closevariable %}</div>
+        <div class="cell">{% templatetag openvariable %} created {% templatetag closevariable %}</div>
+        <div class="cell">
+          <div class="op">
+            <input class="schema" type="button" value="Schema" />
+            <input class="properties" type="button" value="Properties" />
+            <input class="custom_facets" type="button" value="Custom Facets" />
+            <input class="plugins" type="button" value="Plugins" />
+            <input class="extensions" type="button" value="Extensions" />
+            <input class="activate" type="button" value="Activate" />
+            <input class="delete" type="button" value="Delete" />
+          </div>
+        </div>
+      </div>
+      <div class="schema-tab store-sub-tab">
+        <div>
+          <h3>Columns</h3>
+          <div class="table display-row header">
+            <div class="cell">Name</div> <div class="cell">Type</div>
+            <div class="cell display-op">&nbsp;</div>
+          </div>
+          <div class="columns">
+          </div>
+          <div class="add-new-column">
+          </div>
+        </div>
+        <div>
+          <h3>Facets</h3>
+          <div class="table display-row header">
+            <div class="cell">Name</div> <div class="cell">Type</div>
+            <div class="cell display-op">&nbsp;</div>
+          </div>
+          <div class="facets">
+          </div>
+          <div class="add-new-facet">
+          </div>
+        </div>
+        <br />
+        <div>
+          <input class="save-store" type="button" value="Save" />
+          <input class="close-all-sub-tabs" type="button" value="Cancel" />
+        </div>
+        <div>
+          <a class="show-raw" href="javascript:_void()">Raw</a><br />
+          <div class="raw-container" style="display: none">
+            <textarea class="raw" style="width: 500px; height: 300px;"></textarea>
+          </div>
+        </div>
+        <div>
+          <input class="save-schema-raw" type="button" value="Save Raw" />
+          <input class="close-all-sub-tabs" type="button" value="Cancel" />
+        </div>
+      </div>
+      <div class="properties-tab store-sub-tab">
+        <div>
+          <textarea class="properties" style="width: 500px; height: 300px;">{% templatetag openvariable %} properties {% templatetag closevariable %}</textarea>
+        </div>
+        <div>
+          <input class="save-properties" type="button" value="Save" />
+          <input class="close-all-sub-tabs" type="button" value="Cancel" />
+        </div>
+      </div>
+      <div class="custom_facets-tab store-sub-tab">
+        <div>
+          <textarea class="custom_facets" style="width: 500px; height: 300px;">{% templatetag openvariable %} custom_facets {% templatetag closevariable %}</textarea>
+        </div>
+        <div>
+          <input class="save-custom-facets" type="button" value="Save" />
+          <input class="close-all-sub-tabs" type="button" value="Cancel" />
+        </div>
+      </div>
+      <div class="plugins-tab store-sub-tab">
+        <div>
+          <textarea class="plugins" style="width: 500px; height: 300px;">{% templatetag openvariable %} plugins {% templatetag closevariable %}</textarea>
+        </div>
+        <div>
+          <input class="save-plugins" type="button" value="Save" />
+          <input class="close-all-sub-tabs" type="button" value="Cancel" />
+        </div>
+      </div>
+      <div class="extensions-tab store-sub-tab">
+        <div class="extensions-container">
+        </div>
+        <div>
+          <input id="upload-extensions-{% templatetag openvariable %}id{% templatetag closevariable %}" class="upload-extensions" type="file" />
+          <input class="do-upload-extensions" type="button" value="Upload" style="display: none;" />
+        </div>
+        <div>
+          <input class="save-extensions" type="button" value="Save" />
+          <input class="close-all-sub-tabs" type="button" value="Cancel" />
+        </div>
+      </div>
+    </script>
+    <script id="store-config-tmpl" type="text/x-mustache-tmpl">
+      <div class="table-row store-row store-table" style="height: 20px;">
+        <div class="cell">Name</div>
+        <div class="cell">Status</div>
+        <div class="cell">Last Activated</div>
+        <div class="cell">Created</div>
+        <div class="cell">
+        </div>
+      </div>
+      <div class="item-container">
+      </div>
+      <div>
+        <input class="close-all-tabs" type="button" value="Cancel" />
+      </div>
+    </script>
+    <script id="file-tmpl" type="text/x-mustache-tmpl">
+      <div class="table-row extension-row">
+        <div class="cell">{% templatetag openvariable %} name {% templatetag closevariable %}</div>
+        <div class="cell">{% templatetag openvariable %} size {% templatetag closevariable %}</div>
+        <div class="cell">{% templatetag openvariable %} created {% templatetag closevariable %}</div>
+        <div class="cell">
+          <div class="op">
+            <input class="remove" type="button" value="Remove" />
+          </div>
+        </div>
+      </div>
+    </script>
+    <script id="files-tmpl" type="text/x-mustache-tmpl">
+      <div class="table-row extension-row">
+        <div class="cell">Name</div>
+        <div class="cell">Size</div>
+        <div class="cell">Uploaded</div>
+        <div class="cell">
+        </div>
+      </div>
+      <div class="files-container">
+      </div>
     </script>
     <script id="sin-tmpl" type="text/x-mustache-tmpl">
       <h3><a class="show-create-new" href="javascript:_void()">Create New Store</a></h3>

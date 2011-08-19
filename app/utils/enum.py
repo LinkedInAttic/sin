@@ -16,3 +16,11 @@ STORE_STATUS_BASE = (
 STORE_STATUS = dict([(x[0], x[1]) for x in STORE_STATUS_BASE])
 STORE_STATUS_DISPLAY = dict([(x[1], x[2]) for x in STORE_STATUS_BASE])
 
+FILE_SRC_TYPES_BASE = (
+  ('upload', 0, _(u'Direct Upload')),
+  ('url', 5, _(u'From Url')),
+  ('mvn', 10, _(u'From Maven')),
+)
+FILE_SRC_TYPES = dict([(x[0], x[1]) for x in FILE_SRC_TYPES_BASE])
+FILE_SRC_TYPES_DISPLAY = dict([(x[1], x[2]) for x in FILE_SRC_TYPES_BASE])
+

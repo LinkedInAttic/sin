@@ -1,7 +1,8 @@
 import sys, json, shutil, errno
 import random, os, subprocess
-from twisted.internet import reactor
+from twisted.internet import defer, reactor
 from twisted.web import server, resource
+from twisted.web.client import downloadPage
 from twisted.web.resource import Resource
 from twisted.web.static import File
 from twisted.python import log
@@ -66,13 +67,23 @@ class StartStore(Resource):
       sensei_custom_facets = request.args["sensei_custom_facets"][0]
       sensei_plugins = request.args["sensei_plugins"][0]
       schema = request.args["schema"][0]
+      extensions = json.loads(request.args["extensions"][0].encode('utf-8'))
       log.msg("Starting store %s" % name)
-      return doStartStore(name, sensei_port, broker_port,
-                          sensei_properties, sensei_custom_facets,
-                          sensei_plugins, schema)
-    except:
+      d = doStartStore(name, sensei_port, broker_port,
+                       sensei_properties, sensei_custom_facets,
+                       sensei_plugins, schema, extensions)
+
+      def cbStartFinished(res):
+        request.write(res)
+        request.finish()
+      d.addCallback(cbStartFinished)
+      return NOT_DONE_YET
+    except Exception as e:
       log.err()
-      return "Error"
+      return json.dumps({
+        'ok': False,
+        'msg': str(e),
+      })
 
   def render_POST(self, request):
     return self.render_GET(request)
@@ -97,13 +108,18 @@ class RestartStore(Resource):
       sensei_custom_facets = request.args["sensei_custom_facets"][0]
       sensei_plugins = request.args["sensei_plugins"][0]
       schema = request.args["schema"][0]
+      extensions = json.loads(request.args["extensions"][0].encode('utf-8'))
 
       if res:
         log.msg("Restarting store %s" % name)
-        request.write(doStartStore(name, sensei_port, broker_port,
-                                   sensei_properties, sensei_custom_facets,
-                                   sensei_plugins, schema))
-        res, msg = True, None
+        d = doStartStore(name, sensei_port, broker_port,
+                         sensei_properties, sensei_custom_facets,
+                         sensei_plugins, schema, extensions)
+        def cbStartFinished(res):
+          request.write(res)
+          request.finish()
+        d.addCallback(cbStartFinished)
+        return NOT_DONE_YET
 
       resp = {
         'ok': res,
@@ -114,10 +130,17 @@ class RestartStore(Resource):
         request.finish()
       else:
         return json.dumps(resp)
-    except:
+    except Exception as e:
       log.err()
-      request.write("Error")
-      request.finish()
+      resp = {
+        'ok': False,
+        'msg': str(e),
+      }
+      if isCallback:
+        request.write(json.dumps(resp))
+        request.finish()
+      else:
+        return json.dumps(resp)
 
   def render_POST(self, request):
     return self.render_GET(request)
@@ -125,7 +148,7 @@ class RestartStore(Resource):
 
 def doStartStore(name, sensei_port, broker_port,
                  sensei_properties, sensei_custom_facets,
-                 sensei_plugins, schema):
+                 sensei_plugins, schema, extensions):
   """
   Do the real work to get a Sensei server started for a store.
   """
@@ -145,6 +168,16 @@ def doStartStore(name, sensei_port, broker_port,
   conf = os.path.join(store_home, 'conf')
   try:
     os.makedirs(conf)
+  except:
+    pass
+
+  ext_dir = os.path.join(conf, 'ext')
+  try:
+    shutil.rmtree(ext_dir)
+  except:
+    pass
+  try:
+    os.makedirs(ext_dir)
   except:
     pass
 
@@ -182,14 +215,43 @@ def doStartStore(name, sensei_port, broker_port,
   finally:
     out_file.close()
 
-  outFile = open(os.path.join(logs, "std-output"), "w+")
-  errFile = open(os.path.join(logs, "std-error"), "w+")
+  def start_sensei():
+    outFile = open(os.path.join(logs, "std-output"), "w+")
+    errFile = open(os.path.join(logs, "std-error"), "w+")
 
-  cmd = ["nohup", "java", "-server", "-d64", "-Xmx1g", "-Xms1g", "-XX:NewSize=256m", "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf, "&"]
-  print ' '.join(cmd)
-  p = subprocess.Popen(cmd, cwd=SENSEI_HOME, stdout=outFile, stderr=errFile)
-  running[name] = p.pid
-  return "Ok"
+    cmd = ["nohup", "java", "-server", "-d64", "-Xmx1g", "-Xms1g", "-XX:NewSize=256m", "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf, "&"]
+    print ' '.join(cmd)
+    p = subprocess.Popen(cmd, cwd=SENSEI_HOME, stdout=outFile, stderr=errFile)
+    running[name] = p.pid
+
+  if extensions:
+    d = defer.Deferred()
+    ext_set = set(extensions)
+
+    def cbDownloaded(res, ext):
+      print "%s downloaded" % ext
+      ext_set.remove(ext)
+      if not ext_set: # The last one.
+        start_sensei()
+        d.callback(json.dumps({
+          'ok': True,
+        }))
+
+    def cbErrorDownload(res, ext):
+      print "Error download '%s': %s" % (ext, res)
+      d.callback(json.dumps({
+        'ok': False,
+        'msg': "Error download '%s': %s" % (ext, res),
+      }))
+
+    for ext in extensions:
+      downloadPage(ext.encode('utf-8'), os.path.join(ext_dir, os.path.basename(ext))).addCallbacks(
+          cbDownloaded, cbErrorDownload, callbackArgs=[ext], errbackArgs=[ext])
+
+    return d
+
+  start_sensei()
+  return defer.succeed(json.dumps({'ok': True}))
 
 class DeleteStore(Resource):
   def render_GET(self, request, isCallback=False):
