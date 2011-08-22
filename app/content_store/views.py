@@ -446,7 +446,7 @@ def startStore(request, store_name, config_id=None, restart=False):
     else:
       current_config = store.current_config
 
-    webapp = os.path.join(settings.SENSEI_HOME,'src/main/webapp')
+    webapp = os.path.join(settings.SENSEI_HOME,'sensei-core/src/main/webapp')
     store_home = os.path.join(settings.STORE_HOME, store_name)
     index = os.path.join(store_home, 'index')
     extensions = []
