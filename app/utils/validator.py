@@ -152,7 +152,7 @@ def get_validator(store_name):
     except ContentStore.DoesNotExist:
       return None, "store %s does not exist" % store_name
     try:
-      validator = DocValidator(store.config)
+      validator = DocValidator(store.current_config.schema)
     except Exception as e:
       logging.exception(e);
       return None, str(e)
