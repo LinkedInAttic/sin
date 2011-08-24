@@ -231,8 +231,10 @@ class StoreConfig(models.Model):
       self.active = False
       self.last_activated = datetime.datetime.max
       # self.created = datetime.datetime.now()
+      self.save()
       self.extensions = extensions
-    self.save()
+    else:
+      self.save()
 
   def validate_schema(self):  #TODO: do more validation.
     def validate_facet(obj):
