@@ -226,10 +226,12 @@ class StoreConfig(models.Model):
 
   def updated(self):
     if self.last_activated <= datetime.datetime.now():
+      extensions = list(self.extensions.all())
       self.pk = None
       self.active = False
       self.last_activated = datetime.datetime.max
       # self.created = datetime.datetime.now()
+      self.extensions = extensions
     self.save()
 
   def validate_schema(self):  #TODO: do more validation.
