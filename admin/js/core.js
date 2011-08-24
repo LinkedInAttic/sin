@@ -4234,7 +4234,7 @@ $(function() {
       this.model.set({custom_facets: this.$('.store-sub-tab .custom_facets').val()});
 
       var me = this;
-      $.post('/store/'+me.options.parentView.options.store.get('name')+'/update-custom_facets/' + me.model.id + '/', {custom_facets: this.model.get('custom_facets')}, function(res) {
+      $.post('/store/'+me.options.parentView.options.store.get('name')+'/update-custom-facets/' + me.model.id + '/', {custom_facets: this.model.get('custom_facets')}, function(res) {
         if (!res.ok)
           alert(res.error);
         else {
