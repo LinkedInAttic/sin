@@ -4125,17 +4125,9 @@ $(function() {
     },
 
     updateConfig: function() {
-      var schema = {
-        "facets": [],
-        "table": {
-          "columns": [],
-          "uid": "id",
-          "src-data-store": "lucene",
-          "src-data-field": "src_data",
-          "compress-src-data": true,
-          "delete-field": "isDeleted"
-        }
-      };
+      var schema = eval('('+this.model.get('schema')+')');
+      schema.table.columns = [];
+      schema.facets = [];
       this.model.get('columns').each(function(obj) {
         var col = obj.toJSON();
         col.parentModel = {};
