@@ -3982,6 +3982,7 @@ $(function() {
                 'cancelImg': '/static/images/cancel.png',
                 'fileExt': '*.jar',
                 'fileDesc': 'Jar Files',
+                'multi': true,
                 'onComplete': function (event, ID, fileObj, resText, data) {
                   var res = eval('('+resText+')');
                   extensions.add(res);
