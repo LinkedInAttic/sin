@@ -152,12 +152,6 @@ def doStartStore(name, sensei_port, broker_port,
   """
   Do the real work to get a Sensei server started for a store.
   """
-  classpath1 = os.path.join(SENSEI_HOME, 'sensei-core/target/*')
-  classpath2 = os.path.join(SENSEI_HOME, 'sensei-core/target/lib/*')
-  log4jclasspath = os.path.join(SENSEI_HOME,'resources')
-
-  classpath = "%s:%s:%s" % (classpath1,classpath2,log4jclasspath)
-
   store_home = os.path.join(STORE_HOME, name)
   index = os.path.join(store_home, 'index')
   try:
@@ -171,7 +165,7 @@ def doStartStore(name, sensei_port, broker_port,
   except:
     pass
 
-  ext_dir = os.path.join(conf, 'ext')
+  ext_dir = os.path.join(store_home, 'ext')
   try:
     shutil.rmtree(ext_dir)
   except:
@@ -186,6 +180,13 @@ def doStartStore(name, sensei_port, broker_port,
     os.makedirs(logs)
   except:
     pass
+
+  classpath1 = os.path.join(SENSEI_HOME, 'sensei-core/target/*')
+  classpath2 = os.path.join(SENSEI_HOME, 'sensei-core/target/lib/*')
+  log4jclasspath = os.path.join(SENSEI_HOME,'resources')
+  extension_classpath = os.path.join(ext_dir, '*')
+
+  classpath = "%s:%s:%s:%s" % (classpath1,classpath2,log4jclasspath,extension_classpath)
 
   out_file = open(os.path.join(conf, 'sensei.properties'), 'w+')
   try:
