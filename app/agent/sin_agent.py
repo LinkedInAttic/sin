@@ -1,4 +1,4 @@
-import sys, json, shutil, errno
+import re, sys, json, shutil, errno
 import random, os, subprocess
 from twisted.internet import defer, reactor
 from twisted.web import server, resource
@@ -181,13 +181,6 @@ def doStartStore(name, sensei_port, broker_port,
   except:
     pass
 
-  classpath1 = os.path.join(SENSEI_HOME, 'sensei-core/target/*')
-  classpath2 = os.path.join(SENSEI_HOME, 'sensei-core/target/lib/*')
-  log4jclasspath = os.path.join(SENSEI_HOME,'resources')
-  extension_classpath = os.path.join(ext_dir, '*')
-
-  classpath = "%s:%s:%s:%s" % (classpath1,classpath2,log4jclasspath,extension_classpath)
-
   out_file = open(os.path.join(conf, 'sensei.properties'), 'w+')
   try:
     out_file.write(sensei_properties)
@@ -216,9 +209,24 @@ def doStartStore(name, sensei_port, broker_port,
   finally:
     out_file.close()
 
+  custom_sensei = False
+
   def start_sensei():
     outFile = open(os.path.join(logs, "std-output"), "w+")
     errFile = open(os.path.join(logs, "std-error"), "w+")
+
+    if custom_sensei:
+      log4jclasspath = os.path.join(SENSEI_HOME,'resources')
+      extension_classpath = os.path.join(ext_dir, '*')
+
+      classpath = "%s:%s" % (log4jclasspath,extension_classpath)
+    else:
+      classpath1 = os.path.join(SENSEI_HOME, 'sensei-core/target/*')
+      classpath2 = os.path.join(SENSEI_HOME, 'sensei-core/target/lib/*')
+      log4jclasspath = os.path.join(SENSEI_HOME,'resources')
+      extension_classpath = os.path.join(ext_dir, '*')
+
+      classpath = "%s:%s:%s:%s" % (classpath1,classpath2,log4jclasspath,extension_classpath)
 
     cmd = ["nohup", "java", "-server", "-d64", "-Xmx1g", "-Xms1g", "-XX:NewSize=256m", "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf, "&"]
     print ' '.join(cmd)
@@ -246,6 +254,8 @@ def doStartStore(name, sensei_port, broker_port,
       }))
 
     for ext in extensions:
+      if re.match(r'[^\.]+\.sensei-.*\.jar', ext):
+        custom_sensei = True
       downloadPage(ext.encode('utf-8'), os.path.join(ext_dir, os.path.basename(ext))).addCallbacks(
           cbDownloaded, cbErrorDownload, callbackArgs=[ext], errbackArgs=[ext])
 
