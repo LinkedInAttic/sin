@@ -1,4 +1,4 @@
-import re, sys, json, shutil, errno
+import re, sys, json, shutil, errno, platform
 import random, os, subprocess
 from twisted.internet import defer, reactor
 from twisted.web import server, resource
@@ -228,7 +228,9 @@ def doStartStore(name, sensei_port, broker_port,
 
       classpath = "%s:%s:%s:%s" % (classpath1,classpath2,log4jclasspath,extension_classpath)
 
-    cmd = ["nohup", "java", "-server", "-d64", "-Xmx1g", "-Xms1g", "-XX:NewSize=256m", "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf, "&"]
+    architecture = "-d%s" % platform.architecture()[0][:2]
+
+    cmd = ["nohup", "java", "-server", architecture, "-Xmx1g", "-Xms1g", "-XX:NewSize=256m", "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf, "&"]
     print ' '.join(cmd)
     p = subprocess.Popen(cmd, cwd=SENSEI_HOME, stdout=outFile, stderr=errFile)
     running[name] = p.pid
