@@ -269,6 +269,34 @@ def updatePlugins(request, store_name, config_id):
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
 @login_required
+def updateVMArgs(request, store_name, config_id):
+  vm_args = request.POST.get('vm_args');
+  resp = {
+    'ok': False,
+  }
+  
+  if vm_args:
+    try:
+      config = StoreConfig.objects.filter(
+        store=ContentStore.objects.filter(name=store_name, collaborators=request.user)).get(id=config_id)
+    except StoreConfig.DoesNotExist:
+      resp['error'] = 'You do not own a config with the store name "%s" and config id "%s".' % (store_name, config_id)
+      return HttpResponse(json.dumps(resp))
+
+    config.vm_args = vm_args
+    valid, error = config.validate_vm_args()
+    if valid:
+      config.updated()
+      resp['ok'] = True
+      resp.update(config.to_map())
+    else:
+      resp['error'] = error
+  else:
+    resp['error'] = 'No vm_args provided.'
+
+  return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
+
+@login_required
 def configExtensions(request, store_name, config_id):
   try:
     config = StoreConfig.objects.filter(
@@ -458,6 +486,7 @@ def startStore(request, store_name, config_id=None, restart=False):
 
     params = {
       'name': store_name,
+      'vm_args': current_config.vm_args,
       'sensei_port': store.sensei_port,
       'broker_host': store.broker_host,
       'broker_port': store.broker_port,

@@ -154,6 +154,7 @@
             <input class="custom_facets" type="button" value="Custom Facets" />
             <input class="plugins" type="button" value="Plugins" />
             <input class="extensions" type="button" value="Extensions" />
+            <input class="vm_args" type="button" value="VM Args" />
             <input class="activate" type="button" value="Activate" />
             <input class="delete" type="button" value="Delete" />
           </div>
@@ -234,6 +235,15 @@
         </div>
         <div>
           <input class="save-extensions" type="button" value="Save" />
+          <input class="close-all-sub-tabs" type="button" value="Cancel" />
+        </div>
+      </div>
+      <div class="vm_args-tab store-sub-tab">
+        <div>
+          <textarea class="vm_args" style="width: 500px; height: 300px;">{% templatetag openvariable %} vm_args {% templatetag closevariable %}</textarea>
+        </div>
+        <div>
+          <input class="save-vm-args" type="button" value="Save" />
           <input class="close-all-sub-tabs" type="button" value="Cancel" />
         </div>
       </div>

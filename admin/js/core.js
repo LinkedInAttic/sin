@@ -3912,11 +3912,13 @@ $(function() {
       'click .save-custom-facets': 'saveCustomFacets',
       'click .save-plugins': 'savePlugins',
       'click .save-extensions': 'saveExtensions',
+      'click .save-vm-args': 'saveVMArgs',
       'click .schema': 'showSchema',
       'click .properties': 'showProperties',
       'click .custom_facets': 'showCustomFacets',
       'click .plugins': 'showPlugins',
       'click .extensions': 'showExtensions',
+      'click .vm_args': 'showVMArgs',
       'click .do-upload-extensions': 'doUploadExtensions',
       'click .activate': 'activateConfig',
       'click .delete': 'deleteConfig',
@@ -3926,7 +3928,7 @@ $(function() {
     },
 
     initialize: function() {
-      _.bindAll(this, 'addColumn', 'addFacet', 'closeAllSubTabs', 'mouseOut', 'mouseOver', 'render', 'saveSchemaRaw', 'saveSchema', 'saveProperties', 'saveCustomFacets', 'savePlugins', 'saveExtensions', 'updateConfig', 'showSchema', 'showProperties', 'showCustomFacets', 'showPlugins', 'showExtensions', 'activateConfig', 'deleteConfig', 'doUploadExtensions', 'showRaw');
+      _.bindAll(this, 'addColumn', 'addFacet', 'closeAllSubTabs', 'mouseOut', 'mouseOver', 'render', 'saveSchemaRaw', 'saveSchema', 'saveProperties', 'saveCustomFacets', 'savePlugins', 'saveExtensions', 'saveVMArgs', 'updateConfig', 'showSchema', 'showProperties', 'showCustomFacets', 'showPlugins', 'showExtensions', 'showVMArgs', 'activateConfig', 'deleteConfig', 'doUploadExtensions', 'showRaw');
       this.model.view = this;
     },
 
@@ -3997,6 +3999,11 @@ $(function() {
           }
         });
       }
+    },
+
+    showVMArgs: function() {
+      this.$('.store-sub-tab').hide();
+      this.$('.vm_args-tab').show();
     },
 
     activateConfig: function() {
@@ -4288,6 +4295,27 @@ $(function() {
             me.$('.extensions-tab').hide();
           }
         }, 'json');
+    },
+
+    saveVMArgs: function() {
+      this.model.set({vm_args: this.$('.store-sub-tab .vm_args').val()});
+
+      var me = this;
+      $.post('/store/'+me.options.parentView.options.store.get('name')+'/update-vm-args/' + me.model.id + '/', {vm_args: this.model.get('vm_args')}, function(res) {
+        if (!res.ok)
+          alert(res.error);
+        else {
+          var config = me.options.parentView.collection.get(res.id);
+          if (!config) {  // New config
+            config = new StoreConfigModel(res);
+            me.options.parentView.collection.add(config, {at: 0});
+            me.options.parentView.render();
+          }
+          else {
+          }
+          me.$('.vm_args-tab').hide();
+        }
+      }, 'json');
     },
 
     render: function() {

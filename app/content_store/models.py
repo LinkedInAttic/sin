@@ -206,6 +206,7 @@ class StoreConfig(models.Model):
     ordering = ['-id', '-last_activated']
 
   name = models.CharField(max_length=20, blank=True)
+  vm_args = models.CharField(max_length=1024, default='-Xmx1g -Xms1g -XX:NewSize=256m')
 
   active = models.BooleanField(default=False)
 
@@ -225,7 +226,7 @@ class StoreConfig(models.Model):
   store = models.ForeignKey(ContentStore, related_name='configs')
 
   def updated(self):
-    if self.last_activated <= datetime.datetime.now():
+    if self.name:
       extensions = list(self.extensions.all())
       self.pk = None
       self.active = False
@@ -288,10 +289,14 @@ class StoreConfig(models.Model):
   def validate_plugins(self):  #TODO: do more validation.
     return (True, None)
 
+  def validate_vm_args(self):  #TODO: do more validation.
+    return (True, None)
+
   def to_map(self):
     obj = {
       'id': self.id,
       'name': self.name,
+      'vm_args': self.vm_args,
       'active': self.active,
       'created': self.created,
       'last_activated': self.last_activated,

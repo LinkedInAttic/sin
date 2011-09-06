@@ -61,6 +61,7 @@ class StartStore(Resource):
     """
     try:
       name = request.args["name"][0]
+      vm_args = request.args["vm_args"][0]
       sensei_port = request.args["sensei_port"][0]
       broker_port = request.args["broker_port"][0]
       sensei_properties = request.args["sensei_properties"][0]
@@ -69,7 +70,7 @@ class StartStore(Resource):
       schema = request.args["schema"][0]
       extensions = json.loads(request.args["extensions"][0].encode('utf-8'))
       log.msg("Starting store %s" % name)
-      d = doStartStore(name, sensei_port, broker_port,
+      d = doStartStore(name, vm_args, sensei_port, broker_port,
                        sensei_properties, sensei_custom_facets,
                        sensei_plugins, schema, extensions)
 
@@ -97,6 +98,7 @@ class RestartStore(Resource):
     """
     try:
       name = request.args["name"][0]
+      vm_args = request.args["vm_args"][0]
       res, msg = doStopStore(name)
       if msg == CALL_BACK_LATER:
         reactor.callLater(1, self.render_GET, request, True)
@@ -112,7 +114,7 @@ class RestartStore(Resource):
 
       if res:
         log.msg("Restarting store %s" % name)
-        d = doStartStore(name, sensei_port, broker_port,
+        d = doStartStore(name, vm_args, sensei_port, broker_port,
                          sensei_properties, sensei_custom_facets,
                          sensei_plugins, schema, extensions)
         def cbStartFinished(res):
@@ -146,7 +148,7 @@ class RestartStore(Resource):
     return self.render_GET(request)
 
 
-def doStartStore(name, sensei_port, broker_port,
+def doStartStore(name, vm_args, sensei_port, broker_port,
                  sensei_properties, sensei_custom_facets,
                  sensei_plugins, schema, extensions):
   """
@@ -211,6 +213,9 @@ def doStartStore(name, sensei_port, broker_port,
 
   custom_sensei = False
 
+  if not vm_args:
+    vm_args = '-Xmx1g -Xms1g -XX:NewSize=256m'
+
   def start_sensei():
     outFile = open(os.path.join(logs, "std-output"), "w+")
     errFile = open(os.path.join(logs, "std-error"), "w+")
@@ -230,7 +235,7 @@ def doStartStore(name, sensei_port, broker_port,
 
     architecture = "-d%s" % platform.architecture()[0][:2]
 
-    cmd = ["nohup", "java", "-server", architecture, "-Xmx1g", "-Xms1g", "-XX:NewSize=256m", "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf, "&"]
+    cmd = ["nohup", "java", "-server", architecture, vm_args, "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf, "&"]
     print ' '.join(cmd)
     p = subprocess.Popen(cmd, cwd=SENSEI_HOME, stdout=outFile, stderr=errFile)
     running[name] = p.pid
