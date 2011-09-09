@@ -8,6 +8,10 @@
   margin-left: 10px;
 }
 
+.display-none {
+  display: none;
+}
+
 .store-sub-tab {
   display: none;
 }

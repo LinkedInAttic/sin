@@ -143,7 +143,23 @@
     <script id="store-config-item-tmpl" type="text/x-mustache-tmpl">
       <hr />
       <div class="table-row store-row store-table">
-        <div class="cell">{% templatetag openvariable %} name {% templatetag closevariable %}</div>
+        <div class="cell">
+          <span class="name-display">
+            <span class="config-name">
+              {% templatetag openvariable %}#name{% templatetag closevariable %}
+              {% templatetag openvariable %} name {% templatetag closevariable %}
+              {% templatetag openvariable %}/name{% templatetag closevariable %}
+              {% templatetag openvariable %}^name{% templatetag closevariable %}
+              NA
+              {% templatetag openvariable %}/name{% templatetag closevariable %}
+            </span>
+            <input class="show-name-editor op" type="button" value="Edit" />
+          </span>
+          <span class="name-editor display-none">
+            <input class="config-name" style="width: 50px;" type="text" value="{% templatetag openvariable %} name {% templatetag closevariable %}" />
+            <input class="save-name" type="button" value="Save" />
+          </span>
+        </div>
         <div class="cell">{% templatetag openvariable %}#active{% templatetag closevariable %}Active{% templatetag openvariable %}/active{% templatetag closevariable %}</div>
         <div class="cell">{% templatetag openvariable %} last_activated {% templatetag closevariable %}</div>
         <div class="cell">{% templatetag openvariable %} created {% templatetag closevariable %}</div>

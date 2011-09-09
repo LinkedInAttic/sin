@@ -297,6 +297,30 @@ def updateVMArgs(request, store_name, config_id):
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
 @login_required
+def updateName(request, store_name, config_id):
+  name = request.POST.get('name');
+  resp = {
+    'ok': False,
+  }
+  
+  if name is not None:
+    try:
+      config = StoreConfig.objects.filter(
+        store=ContentStore.objects.filter(name=store_name, collaborators=request.user)).get(id=config_id)
+    except StoreConfig.DoesNotExist:
+      resp['error'] = 'You do not own a config with the store name "%s" and config id "%s".' % (store_name, config_id)
+      return HttpResponse(json.dumps(resp))
+
+    config.name = name
+    config.save()
+    resp['ok'] = True
+    resp.update(config.to_map())
+  else:
+    resp['error'] = 'No vm_args provided.'
+
+  return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
+
+@login_required
 def configExtensions(request, store_name, config_id):
   try:
     config = StoreConfig.objects.filter(

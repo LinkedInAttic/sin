@@ -3923,17 +3923,42 @@ $(function() {
       'click .activate': 'activateConfig',
       'click .delete': 'deleteConfig',
       'click .show-raw': 'showRaw',
+      'click .show-name-editor': 'showNameEditor',
+      'click .save-name': 'saveName',
       'mouseout': 'mouseOut',
       'mouseover': 'mouseOver'
     },
 
     initialize: function() {
-      _.bindAll(this, 'addColumn', 'addFacet', 'closeAllSubTabs', 'mouseOut', 'mouseOver', 'render', 'saveSchemaRaw', 'saveSchema', 'saveProperties', 'saveCustomFacets', 'savePlugins', 'saveExtensions', 'saveVMArgs', 'updateConfig', 'showSchema', 'showProperties', 'showCustomFacets', 'showPlugins', 'showExtensions', 'showVMArgs', 'activateConfig', 'deleteConfig', 'doUploadExtensions', 'showRaw');
+      _.bindAll(this, 'addColumn', 'addFacet', 'closeAllSubTabs', 'mouseOut', 'mouseOver', 'render', 'saveSchemaRaw', 'saveSchema', 'saveProperties', 'saveCustomFacets', 'savePlugins', 'saveExtensions', 'saveVMArgs', 'updateConfig', 'showSchema', 'showProperties', 'showCustomFacets', 'showPlugins', 'showExtensions', 'showVMArgs', 'activateConfig', 'deleteConfig', 'doUploadExtensions', 'showRaw', 'showNameEditor', 'saveName');
       this.model.view = this;
     },
 
     closeAllSubTabs: function() {
       this.$('.store-sub-tab').hide();
+    },
+
+    showNameEditor: function() {
+      this.$('.name-display').hide();
+      this.$('.name-editor').show();
+    },
+
+    saveName: function() {
+      var me = this;
+      this.model.set({name: this.$('input.config-name').val()});
+      $.post('/store/'+me.options.parentView.options.store.get('name')+'/update-name/' + me.model.id + '/', {name: this.model.get('name')}, function(res) {
+        if (!res.ok)
+          alert(res.error);
+        else {
+          if (res.name == '')
+            me.$('span.config-name').text('NA');
+          else
+            me.$('span.config-name').text(res.name);
+
+          me.$('.name-display').show();
+          me.$('.name-editor').hide();
+        }
+      }, 'json');
     },
 
     showSchema: function() {

@@ -226,7 +226,7 @@ class StoreConfig(models.Model):
   store = models.ForeignKey(ContentStore, related_name='configs')
 
   def updated(self):
-    if self.name:
+    if self.name and self.last_activated <= datetime.datetime.now():
       extensions = list(self.extensions.all())
       self.pk = None
       self.active = False
