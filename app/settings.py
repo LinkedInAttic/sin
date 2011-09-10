@@ -8,6 +8,8 @@ SIN_HOME = os.path.normpath(os.path.join(os.path.normpath(__file__), '../..'))
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
+SIN_LISTEN = 8666
+
 ADMINS = (
   # ('Your Name', 'your_email@example.com'),
 )

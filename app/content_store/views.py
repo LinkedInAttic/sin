@@ -316,7 +316,7 @@ def updateName(request, store_name, config_id):
     resp['ok'] = True
     resp.update(config.to_map())
   else:
-    resp['error'] = 'No vm_args provided.'
+    resp['error'] = 'No name provided.'
 
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
