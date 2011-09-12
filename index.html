@@ -1,14 +1,71 @@
-<!DOCTYPE html>
-<html>
+<html xmlns:og="http://ogp.me/ns#">
 <head>
-  <meta charset='utf-8'>
-
-  <title>Sin</title>
+	<title>Sin - search as service</title>
+	<link rel="icon" type="image/png" href="images/sin-small.png"/>
+	<meta name="description" content="sin is a service for you to build sophisticated search applications"/>
+	<meta name="keywords" content="search,realtime,sin,indexing,opensource,zoie,bobo,sensei,lucene" />
+	<meta http-equiv='Content-Type' content='text/html;charset=utf-8' />
+	<meta property="og:title" value="sin" />
+	<meta property="og:image" value="images/sin_logo.png" />
+	<meta property="og:description" value="sin is a service for you to build sophisticated search applications" />
+	<meta property="og:site_name" value="github" />
+	<meta property="og:type" value="website" />
+	
+	<link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap-1.2.0.min.css"/>
+	<link rel="stylesheet" href="styles/prettify.css" type="text/css" media="screen"/>
+	<link rel="stylesheet" href="styles/style.css" type="text/css" media="screen"/>
+	<script src="http://code.jquery.com/jquery-1.5.2.min.js"></script>
+	<script src="scripts/app.js" type="text/javascript" charset="utf-8"></script>
+	
+	<script type="text/javascript" charset="utf-8">
+		function renderSnippet(page,src){
+			$("#content-frame").attr("src",page);
+			$('.active').removeClass('active');
+			$(src).parent('li').addClass('active');
+		};
+		
+	</script>
 </head>
 
-<body>
-	<p align="center">
-  <img src="images/sin_logo.png"/>
-</p>
+<body style="background-color:#d9ecf5">
+	<a href="http://github.com/wonlay/sin"><img style="position: absolute; top: 40; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+	<img style="position: absolute; top: 40; left: 20; border: 0;" src="images/sin_logo.png" width="149" height="149"/>
+        <div class="topbar-wrapper"> 
+            <div class="topbar"> 
+              <div class="topbar-inner"> 
+                <div class="container"> 
+                  <h3><a href="#">Sin</a></h3> 
+                  <ul class="nav"> 
+                    <li class="active"><a href="#" onclick="renderSnippet('home.html',this)">Home</a></li> 
+                    <li><a href="#" onclick="renderSnippet('downloads.html',this)">Downloads</a></li> 
+                    <li><a href="#" onclick="renderSnippet('getstarted.html',this)">Get Started</a></li>
+                    <li><a href="#" onclick="renderSnippet('api.html',this)">API</a></li>
+                    <li><a href="#" onclick="renderSnippet('docs.html',this)">Documentation</a></li> 
+                    <li><a href="#" onclick="renderSnippet('developer.html',this)">Developers</a></li>
+                    <li><a href="#" onclick="renderSnippet('team.html',this)">Team</a></li>
+                  </ul> 
+                  <ul class="nav secondary-nav"> 
+                    <li class="dropdown"> 
+                      <a href="#" class="dropdown-toggle">Resources</a> 
+                      <ul class="dropdown-menu"> 
+                        <li><a href="http://github.com/wonlay/sin">Source</a></li> 
+                        <li><a href="http://linkedin.jira.com/wiki/display/SIN">Wiki Space</a></li>
+                        <li class="divider"></li> 
+                        <li><a href="http://linkedin.jira.com/browse/SIN">Bugs</a></li>
+                        <li><a href="http://groups.google.com/group/sin-users">Mailing List</a></li> 
+						<li><a href="http://www.apache.org/licenses/LICENSE-2.0.html">License (APL v2.0)</a></li>
+                      </ul> 
+                    </li> 
+                  </ul> 
+                </div> 
+              </div><!-- /topbar-inner --> 
+            </div><!-- /topbar --> 
+          </div><!-- /topbar-wrapper -->
+
+			<iframe class="well" id="content-frame" src="home.html" width="800" height="600" frameborder="0" scrolling="no" style="position: absolute; top: 70; left: 200; right:200; border: 0;">
+			  <p>Your browser does not support iframes.</p>
+			</iframe>
+		</div>
+		
 </body>
 </html>

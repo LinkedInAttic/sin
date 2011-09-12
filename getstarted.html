@@ -1,0 +1,34 @@
+<html xmlns:og="http://ogp.me/ns#">
+<head>
+	<link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap-1.2.0.min.css"/>
+	<link rel="stylesheet" href="styles/prettify.css" type="text/css" media="screen"/>
+	<script src="http://code.jquery.com/jquery-1.5.2.min.js"></script>
+	<script src="scripts/app.js" type="text/javascript" charset="utf-8"></script>
+</head>
+
+<body>
+	<div class="container-fluid" style="margin-top:20">
+		<div class="row">
+			<div class="span4 columns">
+				<h2>Quick Start:</h2>
+			</div>
+			
+		    <div class="span8 columns">
+				<ol>
+					<li>Create a new store from the <strong>Dashboard</strong>, with a name, say <code>myidx</code></li>
+					<li>Start the store</li>
+					<li>Submit a doc to it by:
+						<blockquote>
+					    <pre class="prettyprint">curl -X POST 'http://sinHost:sinPort/store/add-docs/myidx' -d 'docs=[{"id":1,"contents":"sin is awesome"}]' -i</pre></blockquote>
+					</li>
+					 <li>Refresh the <strong>Dashboard</strong>, you should see store size increased</li>
+					 <li>Now you can search using the Search Endpoint, e.g.
+					 	<blockquote>
+					    <pre class="prettyprint">curl -X GET 'http://searchHost:searchPort/sensei?q=awesome&amp;start=0&amp;rows=10&amp;fetchstored=true' -i
+					     </pre></blockquote>
+					        </li>
+				</ol>
+			</div>
+		</div> <!--row -->
+	</div>
+</body>

@@ -1,0 +1,12 @@
+#logo{float:left;}
+#logo a{text-indent:-9999px;background:transparent url(../images/sin-small.png) no-repeat 20px 9px;display:block;color:#fff;height:40px;width:70px;margin-right:5px;outline:none;}
+
+body
+{
+background-color:#d9ecf5;
+}
+
+.spacer {margin-top:70px;}
+
+
+
