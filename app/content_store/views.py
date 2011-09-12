@@ -77,7 +77,7 @@ def newStore(request,store_name):
 
   # Check for nodes:
   if num_nodes == 0:
-    n = Node.objects.create(host=get_local_pub_ip(), group=Group(pk=1))
+    n = Node.objects.create(host=get_local_pub_ip(), online=True, group=Group(pk=1))
     num_nodes = 1
 
   if replica > num_nodes:
@@ -791,12 +791,13 @@ def remove_collab(request, store_name):
   return HttpResponse(json.dumps(resp))
 
 def setupCluster(store):
-  """
-  Set up the cluster for a given store based on currently available
+  """Set up the cluster for a given store.
+
+  Set up the cluster for a store based on currently available
   Sensei nodes.  The cluster layout is determined by the store's number
   of replicas and number of partitions.
   """
-  nodes = store.group.nodes.all()
+  nodes = store.group.nodes.filter(online=True)
   totalNodes = len(nodes)
   numNodesPerReplica = totalNodes / store.replica
   remainingNodes = totalNodes % store.replica
@@ -810,25 +811,26 @@ def setupCluster(store):
       # The replica row for extra nodes
       numNodes = remainingNodes
     for j in range(numNodes):
-      nodeId = i * numNodesPerReplica + j + 1
+      nodeId = i * numNodesPerReplica + j
       parts = []
       for k in range(numPartsPerNode):
         parts.append(j * numPartsPerNode + k)
       if remainingParts > 0 and j < remainingParts:
         parts.append(store.partitions - remainingParts + j)
-      Membership.objects.create(node = nodes[nodeId - 1],
+      Membership.objects.create(node = nodes[nodeId],
                                 store = store,
                                 replica = i,
                                 sensei_node_id = nodeId,
                                 parts = parts)
 
 def buildClusterSVG(store, stream, xml_header=True):
-  """
-  Given a store, generate the SVG for its cluster layout.
+  """Given a store, generate the SVG for its cluster layout.
+  
   The output is written to a file-like stream.  If ``xml_header'' is
   True, the XML file header will be included in the output (this is
   useful for generating an SVG file).
   """
+
   layout = ClusterLayout.ClusterLayout()
 
   xOffset = 80
@@ -853,16 +855,13 @@ def buildClusterSVG(store, stream, xml_header=True):
       # The replica row for extra nodes
       numNodes = remainingNodes
     for j in range(numNodes):
+      current_node = members[i * numNodesPerReplica + j].node
       x1 = xOffset + j * ClusterLayout.NODE_DISTANCE_X
-      layout.addShape(Rectangle(x1, y1, x1 + ClusterLayout.NODE_WIDTH, y1 + ClusterLayout.NODE_HEIGHT))
-      layout.addShape(Label(x1 + ClusterLayout.NODE_WIDTH/2, y1 + ClusterLayout.NODE_HEIGHT + 15,
-                            "Node %s" % str(i * numNodesPerReplica + j + 1),
-                            bold=True,
-                            alignment="middle"))
-      layout.addShape(Label(x1 + ClusterLayout.NODE_WIDTH/2,
-                            y1 + ClusterLayout.NODE_HEIGHT + 15 + ClusterLayout.DEFAULT_LABEL_SIZE + 1,
-                            "Parts: %s" % members[i * numNodesPerReplica + j].parts,
-                            alignment="middle"))
+      layout.addNode(x1, y1,
+                     node_id = i * numNodesPerReplica + j,
+                     online = current_node.online,
+                     host = current_node.host,
+                     parts = members[i * numNodesPerReplica + j].parts)
 
   layout.setSize(xOffset + numNodesPerReplica * ClusterLayout.NODE_DISTANCE_X,
                  yOffset + (store.replica + extraRow) * ClusterLayout.NODE_DISTANCE_Y)
@@ -873,27 +872,21 @@ def buildClusterSVG(store, stream, xml_header=True):
 
 
 def testSetupCluster():
+  """Testing cluster setup for stores."""
 
   # Create some nodes
 
-  n1 = Node.objects.create(host="node-1", group=Group(pk=1))
-  n2 = Node.objects.create(host="node-2", group=Group(pk=1))
-  n3 = Node.objects.create(host="node-3", group=Group(pk=1))
-  n4 = Node.objects.create(host="node-4", group=Group(pk=1))
-  n5 = Node.objects.create(host="node-5", group=Group(pk=1))
-  n6 = Node.objects.create(host="node-6", group=Group(pk=1))
-  n7 = Node.objects.create(host="node-7", group=Group(pk=1))
-  n8 = Node.objects.create(host="node-8", group=Group(pk=1))
-  n9 = Node.objects.create(host="node-9", group=Group(pk=1))
-  n10 = Node.objects.create(host="node-10", group=Group(pk=1))
+  nodes = []
+  for i in range(10):
+    nodes.append(Node.objects.create(host="ela4-be80%d" % i, online=True, group=Group(pk=1)))
 
   # Create test store 1
 
   print "==== [ Test Store 1] ======================================"
   store1 = ContentStore(name = "test-store1",
-                       replica = 3,
-                       partitions = 10,
-                       description = "This is test store one")
+                        replica = 3,
+                        partitions = 10,
+                        description = "This is test store one")
   store1.save()
   setupCluster(store1)
 
@@ -905,14 +898,18 @@ def testSetupCluster():
 
   buildClusterSVG(store1, file("/tmp/%s.svg" % store1.name, "w+"), True)
 
+  # Remove one node, and redraw cluster layout for store 1
+  nodes[4].online = False
+  nodes[4].save()
+  buildClusterSVG(store1, file("/tmp/%s.svg" % store1.name, "w+"), True)
 
   # Create test store 2
 
   print "==== [ Test Store 2] ======================================"
   store2 = ContentStore(name = "test-store2",
-                       replica = 2,
-                       partitions = 5,
-                       description = "This is test store two")
+                        replica = 2,
+                        partitions = 5,
+                        description = "This is test store two")
   store2.save()
   setupCluster(store2)
 
@@ -924,3 +921,8 @@ def testSetupCluster():
 
   buildClusterSVG(store2, file("/tmp/%s.svg" % store2.name, "w+"), True)
 
+  # Delete all the testing nodes and stores
+  for node in nodes:
+    node.delete()
+  store1.delete()
+  store2.delete()

@@ -1,0 +1,14 @@
+{
+    "nodes":[
+	{"node_id":0, "host":"ela4-be800", "port":9000},
+	{"node_id":1, "host":"ela4-be801", "port":9001},
+	{"node_id":2, "host":"ela4-be802", "port":9002},
+	{"node_id":3, "host":"ela4-be803", "port":9003},
+	{"node_id":4, "host":"ela4-be804", "port":9004},
+	{"node_id":5, "host":"ela4-be805", "port":9005},
+	{"node_id":6, "host":"ela4-be806", "port":9006},
+	{"node_id":7, "host":"ela4-be807", "port":9007},
+	{"node_id":8, "host":"ela4-be808", "port":9008},
+	{"node_id":9, "host":"ela4-be809", "port":9009}
+    ]
+}

@@ -3,7 +3,7 @@
 from xml.sax.saxutils import escape
 import os, io
 
-DEFAULT_LABEL_SIZE = 11
+DEFAULT_LABEL_SIZE = 10
 
 NODE_WIDTH  = 80
 NODE_HEIGHT = 80
@@ -16,13 +16,39 @@ class ClusterLayout:
   a cluster layout for a Sin store.  It can be used by a SvgPlotter to
   convert the cluster layout to SVG format.
   """
-  def __init__(self, width=640, height=400):
+  def __init__(self, width=640, height=400, online_color="lightblue", offline_color="red"):
     self.shapes = []
     self.width = width
     self.height = height
+    self.online_color = online_color
+    self.offline_color = offline_color
 
   def addShape(self, shape):
     self.shapes.append(shape)
+
+  def addNode(self, x, y, node_id, online, host, parts):
+    """Add a Sensei node in the layout."""
+
+    node_color = self.online_color
+    if not online:
+      node_color = self.offline_color
+
+    self.addShape(Rectangle(x, y, x + NODE_WIDTH, y + NODE_HEIGHT,
+                            fillcolor=node_color))
+    self.addShape(Label(x + NODE_WIDTH / 2, y + NODE_HEIGHT / 2,
+                        "Node %d" % node_id,
+                        fontSize=DEFAULT_LABEL_SIZE + 2,
+                        bold=True,
+                        alignment="middle"))
+    new_y = y + NODE_HEIGHT + 15
+
+    self.addShape(Label(x + NODE_WIDTH / 2, new_y,
+                        host, alignment="middle"))
+    new_y += DEFAULT_LABEL_SIZE + 2
+
+    self.addShape(Label(x + NODE_WIDTH / 2, new_y,
+                        "Parts: %s" % parts,
+                        alignment="middle"))
 
   def setSize(self, width, height):
     self.width = width

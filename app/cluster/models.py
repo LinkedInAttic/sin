@@ -14,8 +14,11 @@ class Node(models.Model):
 
   host = models.CharField(max_length=40)
   agent_port = models.IntegerField(default=6664)
-
   group = models.ForeignKey(Group, related_name="nodes", null=True)
+  online = models.BooleanField(default=False)
+
+  def __unicode__(self):
+    return u"%s:%s:%s" % (self.group.name, self.host, self.agent_port)
 
 class Membership(models.Model):
   node = models.ForeignKey(Node)
