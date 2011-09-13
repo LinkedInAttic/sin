@@ -8,12 +8,44 @@
 	
 	<link rel="stylesheet" href="codemirror/codemirror.css">
 	<script src="codemirror/codemirror.js"></script>
-	<script src="codemirror/python.js"></script>
+	<script src="codemirror/javascript.js"></script>
 	<link rel="stylesheet" href="codemirror/default.css">
 </head>
 
 <body>
 	<div class="container-fluid" style="margin-top:20">
-		Coming soon...
+		<table class="zebra-striped">
+			<thead>
+				<tr>
+					<th>HTTP REQUEST / DESCRIPTION</th>
+					<th>HTTP RESPONSE CODES / BODY</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td valign="top">
+						<h4>POST /store/new-store/mystore</h4><br/>
+						Parameters:
+						<ul>
+						  <li>replica - # of replications, default = 2</li>
+						  <li>partitions - # of partitions, default = 10</li>
+						  <li>desc - description, default = empty string</li>
+						</ul>
+					</td>
+					<td valign="top"><h4>200 OK</h4><br/>
+						Example JSON response:<br/>
+						<div id="js">
+						{ sensei_port: 10002, status: 0, ok: true, description: ""}
+						</div>
+					</td>
+				</tr>
+			</tbody>
+		</table>
 	</div>
+	<script>
+	var node=document.getElementById('js');
+	  var myCodeMirror = CodeMirror(function(elt) {
+	    node.parentNode.replaceChild(elt, node);
+	  }, {value: node.innerText});
+	</script>
 </body>
