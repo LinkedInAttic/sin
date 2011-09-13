@@ -4,10 +4,33 @@
 	<link rel="stylesheet" href="styles/prettify.css" type="text/css" media="screen"/>
 	<script src="http://code.jquery.com/jquery-1.5.2.min.js"></script>
 	<script src="scripts/app.js" type="text/javascript" charset="utf-8"></script>
+	
+	<script type="text/javascript" charset="utf-8">
+		function renderCode(page,src){
+			$("#codeframe").attr("src",page);
+			$('#langSel').children('.active').removeClass('active');
+			$(src).parent('li').addClass('active');
+		};
+		
+	</script>
 </head>
 
 <body>
 	<div class="container-fluid" style="margin-top:20">
-		api
+		API references:
+		<div id="warning_box"  class="alert-message warning"> 
+		        <a class="close" href="#" onclick="$('#warning_box').hide()">&times;</a> 
+		        <p>API is still under active development. Please expect changes.</p> 
+		 </div>
+		
+		<ul id="langSel" class="pills">
+			<li class="active"><a href="#" onclick="renderCode('api-python.html',this)">Python</a></li>
+			<li><a href="#" onclick="renderCode('api-rest.html',this)">Rest</a></li>
+			<li><a href="#"  onclick="renderCode('api-java.html',this)">Java</a></li>
+			<li><a href="#" onclick="renderCode('api-ruby.html',this)">Ruby</a></li>
+		</ul>
+		
+		<iframe id="codeframe" src="api-python.html" width="100%" height="300">
+		</iframe>
 	</div>
 </body>
