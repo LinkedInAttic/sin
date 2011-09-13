@@ -156,6 +156,39 @@ def deleteStore(request,store_name):
   return HttpResponse(json.dumps(resp))
 
 @login_required
+def purgeStore(request, store_name):
+  try:
+    try:
+      store = request.user.my_stores.get(name=store_name)
+    except ContentStore.DoesNotExist:
+      resp = {
+        'ok' : False,
+        'msg' : 'You do not own a store with the name "%s".' % store_name
+      }
+      return HttpResponse(json.dumps(resp))
+    params = {}
+    params["name"] = store_name
+
+    members = store.membership_set.order_by("sensei_node_id")
+    for member in members:
+      output = urllib2.urlopen("http://%s:%d/%s" % (member.node.host,
+                                                    member.node.agent_port,
+                                                    "delete-store"),
+                               urllib.urlencode(params))
+
+    store.created = store.created + datetime.timedelta(milliseconds=1)
+    store.save()
+
+    return startStore(request, store_name)
+  except Exception as e:
+    logging.exception(e)
+    resp = {
+      'ok': False,
+      'msg': str(e),
+    }
+  return HttpResponse(json.dumps(resp))
+
+@login_required
 def updateSchema(request, store_name, config_id):
   schema = request.POST.get('schema');
   resp = {

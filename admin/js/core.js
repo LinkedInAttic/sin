@@ -4476,6 +4476,7 @@ $(function() {
 
     events:{
       'click .deleteStore': 'deleteStore',
+      'click .purgeStore': 'purgeStore',
       'click .regenerate-api-key': 'regenerateApiKey',
       'click .stopStore': 'stopStore',
       'click .manage': 'showManage',
@@ -4527,8 +4528,32 @@ $(function() {
       });
     },
 
+    purgeStore: function(){
+      var me = this;
+      var model = this.model;
+      var really = confirm("This will delete ALL documents from your store '" + model.get('name')
+        + "', do you really want to continue?");
+      if (!really)
+        return false;
+
+      $.blockUI({ message: '<h1><img class="indicator" src="/static/images/indicator.gif" /> Purging ' + model.get('name') + ' ...</h1>' });
+      $.getJSON('/store/purge-store/'+model.get('name'), function(res){
+        if (res["ok"]){
+          me.$('.numdocs').text('0');
+          if (res.status_display)
+            me.$('.status').text(res.status_display);
+          if (res.status == 15)
+            me.$('.endpoint').show();
+        }
+        else{
+          alert(res["msg"]);
+        }  
+        $.unblockUI();
+      });
+    },
+
     initialize: function() {
-      _.bindAll(this, 'showManage', 'closeAllTabs', 'showCollaborators', 'restart', 'render', 'stopStore', 'regenerateApiKey', 'deleteStore');
+      _.bindAll(this, 'showManage', 'closeAllTabs', 'showCollaborators', 'restart', 'render', 'stopStore', 'regenerateApiKey', 'deleteStore', 'purgeStore');
       this.model.view = this;
     },
 
