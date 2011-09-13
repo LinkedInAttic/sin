@@ -4481,6 +4481,7 @@ $(function() {
       'click .stopStore': 'stopStore',
       'click .manage': 'showManage',
       'click .collaborators': 'showCollaborators',
+      'click .cluster': 'showCluster',
       'click .close-all-tabs': 'closeAllTabs',
       'click .restart': 'restart'
     },
@@ -4553,7 +4554,7 @@ $(function() {
     },
 
     initialize: function() {
-      _.bindAll(this, 'showManage', 'closeAllTabs', 'showCollaborators', 'restart', 'render', 'stopStore', 'regenerateApiKey', 'deleteStore', 'purgeStore');
+      _.bindAll(this, 'showManage', 'closeAllTabs', 'showCollaborators', 'showCluster', 'restart', 'render', 'stopStore', 'regenerateApiKey', 'deleteStore', 'purgeStore');
       this.model.view = this;
     },
 
@@ -4635,6 +4636,20 @@ $(function() {
           }
         });
       }
+    },
+
+    showCluster: function() {
+      var me = this;
+      me.closeAllTabs();
+      me.$('.cluster-tab').show();
+      $.getJSON('/store/'+me.model.get('name') + '/cluster-svg/', function(res) {
+        if (res.ok) {
+          me.$('.cluster-display').html(res.cluster);
+        }
+        else {
+          alert(res.error);
+        }
+      });
     },
 
     render: function() {

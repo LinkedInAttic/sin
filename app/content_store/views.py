@@ -1,4 +1,9 @@
 import logging, random, os, subprocess, json, shutil, urllib, urllib2, datetime
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+
 from django.db import connection
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -821,6 +826,26 @@ def remove_collab(request, store_name):
     'id': user.id,
     'username': user.username,
   }
+  return HttpResponse(json.dumps(resp))
+
+@login_required
+def cluster_svg(request, store_name):
+  resp = {
+    'ok' : True,
+  }
+  try:
+    store = request.user.my_stores.get(name=store_name)
+  except ContentStore.DoesNotExist:
+    resp = {
+      'ok' : False,
+      'error' : 'You do not own a store with the name "%s".' % store_name
+    }
+    return HttpResponse(json.dumps(resp))
+
+  s = StringIO()
+  buildClusterSVG(store, s, False)
+  resp['cluster'] = s.getvalue()
+  s.close()
   return HttpResponse(json.dumps(resp))
 
 def setupCluster(store):
