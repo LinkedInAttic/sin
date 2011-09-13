@@ -13,6 +13,19 @@ import zookeeper
 import threading
 from sincc import SinClusterClient
 from optparse import OptionParser
+import socket
+
+appsettings = 'settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = appsettings
+
+SIN_HOME = os.path.normpath(os.path.join(os.path.normpath(__file__), '../../..'))
+APP_HOME = os.path.join(SIN_HOME, 'app')
+apppath = APP_HOME
+
+if apppath:
+  sys.path.insert(0, apppath)
+
+from django.conf import settings
 
 SENSEI_HOME = '/tmp/sensei/'
 STORE_HOME = '/tmp/store/'
@@ -394,21 +407,12 @@ VIEWS = {
 
 class SinClusterListener(object):
 
-  def __init__(self):
-    self.mutex = threading.Lock()
-
   def __call__(self, nodes):
-    self.mutex.acquire()
     log.msg("Current nodes = ", nodes)
-    self.mutex.release()
 
 if __name__ == '__main__':
   usage = "usage: %prog [options]"
   parser = OptionParser(usage=usage)
-  parser.add_option("", "--connect-string", dest="servers",
-                    default="localhost:2181", help="comma separated list of host:port (default localhost:2181)")
-  parser.add_option("", "--timeout", dest="timeout", type="int",
-                    default=5000, help="session timeout in milliseconds (default 5000)")
   parser.add_option("", "--node", dest="node",
                     help="node id")
   (options, args) = parser.parse_args()
@@ -420,11 +424,11 @@ if __name__ == '__main__':
   log.startLogging(sys.stdout)
   log.msg("Starting server: %s" % str(datetime.now()))
 
-  cc = SinClusterClient("sin", options.servers, options.timeout)
+  cc = SinClusterClient(settings.SIN_SERVICE_NAME, settings.ZOOKEEPER_URL, settings.ZOOKEEPER_TIMEOUT)
   cc.add_listener(SinClusterListener())
   # XXX add validation here
   cc.add_node(options.node); time.sleep(1)
-  cc.mark_node_available(options.node, "node_%s" % options.node); time.sleep(1)
+  cc.mark_node_available(options.node, socket.gethostname()); time.sleep(1)
 
   server = server.Site(root)
   reactor.listenTCP(SIN_AGENT_PORT, server)

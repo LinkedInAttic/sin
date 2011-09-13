@@ -32,6 +32,14 @@ SENSEI_HOME = '/tmp/sensei/'
 STORE_HOME = '/tmp/store/'
 
 ZOOKEEPER_URL = 'localhost:2181'
+ZOOKEEPER_TIMEOUT = 30000
+SIN_SERVICE_NAME = 'sin'
+
+SENSEI_NODES = {
+  "nodes":[
+#    {"node_id":0, "host":"localhost", "port":6664},
+    ]
+}
 
 KAFKA_HOST = 'localhost'
 

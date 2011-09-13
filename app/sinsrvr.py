@@ -9,8 +9,8 @@ os.environ['DJANGO_SETTINGS_MODULE'] = appsettings
 from optparse import OptionParser
 from cluster.models import Group, Node
 import zookeeper
-import threading
 from sincc import SinClusterClient
+from django.conf import settings
 
 SIN_HOME = os.path.normpath(os.path.join(os.path.normpath(__file__), '../..'))
 APP_HOME = os.path.join(SIN_HOME, 'app')
@@ -22,39 +22,32 @@ if apppath:
 
 class SinClusterListener(object):
 
-  def __init__(self):
-    self.mutex = threading.Lock()
-
   def __call__(self, nodes):
-    self.mutex.acquire()
-    print "===== Current nodes = ", nodes
     for node in Node.objects.all():
       if nodes.get(node.id) == node.host:
         node.online = True
       else:
         node.online = False
       node.save()
-    self.mutex.release()
 
 if __name__ == '__main__':
   usage = "usage: %prog [options]"
   parser = OptionParser(usage=usage)
-  parser.add_option("", "--connect-string", dest="servers",
-                    default="localhost:2181", help="comma separated list of host:port (default localhost:2181)")
-  parser.add_option("", "--timeout", dest="timeout", type="int",
-                    default=5000, help="session timeout in milliseconds (default 5000)")
-  parser.add_option("", "--nodes", dest="nodes",
-                    help="JSON file contains all the nodes")
+  parser.add_option("-f", action="store_true", dest="force", help="Overwrite Sensei node info in database")
   (options, args) = parser.parse_args()
-  
+
   zookeeper.set_log_stream(open("/dev/null"))
-  cc = SinClusterClient("sin", options.servers, options.timeout)
+  cc = SinClusterClient(settings.SIN_SERVICE_NAME, settings.ZOOKEEPER_URL, settings.ZOOKEEPER_TIMEOUT)
   cc.add_listener(SinClusterListener())
 
-  nodes = json.load(open(options.nodes))
-  for node in nodes["nodes"]:
-    Node.objects.create(id=node["node_id"]+100000, host=node["host"], agent_port=node["port"],
-                        online=True, group=Group(pk=1))
+  if options.force:
+    for node in Node.objects.all():
+      node.delete()
+
+  for node in settings.SENSEI_NODES["nodes"]:
+    if not Node.objects.filter(id=node["node_id"]).exists():
+      Node.objects.create(id=node["node_id"], host=node["host"], agent_port=node["port"],
+                          online=False, group=Group(pk=1))
 
   while True:
     time.sleep(1)
