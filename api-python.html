@@ -5,10 +5,67 @@
 	<link rel="stylesheet" href="styles/prettify.css" type="text/css" media="screen"/>
 	<script src="http://code.jquery.com/jquery-1.5.2.min.js"></script>
 	<script src="scripts/app.js" type="text/javascript" charset="utf-8"></script>
+	<link rel="stylesheet" href="codemirror/codemirror.css">
+	<script src="codemirror/codemirror.js"></script>
+	<script src="codemirror/python.js"></script>
+	<link rel="stylesheet" href="codemirror/default.css">
 </head>
 
 <body>
 	<div class="container-fluid" style="margin-top:20">
-		python code goes there
+		
+		<textarea id="code" name="code" readonly="yes" wrap="soft" style="width:100%;height=100%">
+# connect to a Sin end-point
+client = SinClient(sinHost,sinPort)
+
+# create a store with 3 replications, 5 partitions and with a description
+store = client.newStore('newStore',3,5,'my new store')
+
+# alternatively, open an existing store
+store = client.openStore('oldStore')
+
+# add a new doc to the store
+doc = {'id': 7, 'color': 'red', 'price': 8000, 
+       'tags': 'cool,hybrid,leather', 'contents' : 'this is an awesome car' } 
+
+store.updateDoc(doc) 
+
+# or add a batch of docs to the store
+store.addDocs([doc,doc])
+
+# or updating an existing doc
+store.updateDoc(doc)
+
+# retrieving a doc from a store
+id = 7
+doc = store.getDoc(7)
+
+# search the store
+searcher = store.getSenseiClient() 
+req = SenseiRequest() 
+
+# filter: color = red
+sel = SenseiSelection("color") 
+sel.addSelection("red") 
+req.selections = [sel] 
+
+# perform query
+res = searcher.doQuery(req) 
+
+# print out number of hits
+print res.numHits
+
+		</textarea>
 	</div>
+	<script>
+	      var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+	        mode: {name: "python",
+	               version: 2,
+	               singleLineStringErrors: false},
+	        lineNumbers: true,
+	        indentUnit: 4,
+	        tabMode: "shift",
+	        matchBrackets: true
+	      });
+	    </script>
 </body>
