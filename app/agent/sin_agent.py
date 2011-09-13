@@ -294,7 +294,7 @@ class DeleteStore(Resource):
     log.msg("in DeleteStore...")
     try:
       name = request.args["name"][0]
-      res, msg = doStopStore(name)
+      res, msg = doStopStore(name, 9)
       if msg == CALL_BACK_LATER:
         reactor.callLater(1, self.render_GET, request, True)
         return NOT_DONE_YET
@@ -364,14 +364,14 @@ class StopStore(Resource):
     return self.render_GET(request)
 
 
-def doStopStore(name):
+def doStopStore(name, sig=15):
   """Stop a Sensei store."""
   global running
   try:
     pid = running.get(name)
     if pid:
       log.msg("Stopping existing process %d for store %s" % (pid, name))
-      os.kill(pid, 15)
+      os.kill(pid, sig)
       psOutput = ''
       ps = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
                                   shell=True, stdout=subprocess.PIPE)
