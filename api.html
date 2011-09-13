@@ -1,6 +1,7 @@
 <html xmlns:og="http://ogp.me/ns#">
 <head>
-	<link rel="stylesheet" href="http://twitter.github.com/bootstrap/assets/css/bootstrap-1.2.0.min.css"/>
+	
+	<link rel="stylesheet" href="styles/twitter-bootstrap.css"/>
 	<link rel="stylesheet" href="styles/prettify.css" type="text/css" media="screen"/>
 	<script src="http://code.jquery.com/jquery-1.5.2.min.js"></script>
 	<script src="scripts/app.js" type="text/javascript" charset="utf-8"></script>
@@ -17,7 +18,7 @@
 
 <body>
 	<div class="container-fluid" style="margin-top:20">
-		API references:
+		<h3>API references:</h3>
 		<div id="warning_box"  class="alert-message warning"> 
 		        <a class="close" href="#" onclick="$('#warning_box').hide()">&times;</a> 
 		        <p>API is still under active development. Please expect changes.</p> 
@@ -30,7 +31,7 @@
 			<li><a href="#" onclick="renderCode('api-ruby.html',this)">Ruby</a></li>
 		</ul>
 		
-		<iframe id="codeframe" src="api-python.html" width="100%" height="300">
+		<iframe id="codeframe" src="api-python.html" width="100%" height="600">
 		</iframe>
 	</div>
 </body>
