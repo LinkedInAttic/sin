@@ -414,7 +414,7 @@ if __name__ == '__main__':
   usage = "usage: %prog [options]"
   parser = OptionParser(usage=usage)
   parser.add_option("", "--node-id", dest="node", type="int",
-                    default=-1, help="node id (default -1)")
+                    default=0, help="node id (default 0)")
   parser.add_option("", "--host", dest="host",
                     default="", help="host name of this node")
   (options, args) = parser.parse_args()
@@ -426,7 +426,7 @@ if __name__ == '__main__':
   log.startLogging(sys.stdout)
   log.msg("Starting server: %s" % str(datetime.now()))
 
-  if options.node >= 0:
+  if options.node > 0:
     cc = SinClusterClient(settings.SIN_SERVICE_NAME, settings.ZOOKEEPER_URL, settings.ZOOKEEPER_TIMEOUT)
     cc.add_listener(SinClusterListener())
     # XXX add validation here
