@@ -14,7 +14,7 @@
 <body>
 	<div class="container-fluid" style="margin-top:20">
 		
-		<textarea id="code" name="code" readonly="yes" wrap="soft" style="width:100%;height=100%">
+		<textarea id="code" name="code">
 # connect to a Sin end-point
 client = SinClient(sinHost,sinPort)
 
@@ -28,7 +28,7 @@ store = client.openStore('oldStore')
 doc = {'id': 7, 'color': 'red', 'price': 8000, 
        'tags': 'cool,hybrid,leather', 'contents' : 'this is an awesome car' } 
 
-store.updateDoc(doc) 
+store.addDoc(doc) 
 
 # or add a batch of docs to the store
 store.addDocs([doc,doc])
@@ -65,7 +65,8 @@ print res.numHits
 	        lineNumbers: true,
 	        indentUnit: 4,
 	        tabMode: "shift",
-	        matchBrackets: true
+	        matchBrackets: true,
+			readOnly: true
 	      });
 	    </script>
 </body>
