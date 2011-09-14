@@ -886,16 +886,16 @@ def setupCluster(store):
       # The replica row for extra nodes
       numNodes = remainingNodes
     for j in range(numNodes):
-      nodeId = i * numNodesPerReplica + j
+      node_id = i * numNodesPerReplica + j + 1
       parts = []
       for k in range(numPartsPerNode):
         parts.append(j * numPartsPerNode + k)
       if remainingParts > 0 and j < remainingParts:
         parts.append(store.partitions - remainingParts + j)
-      Membership.objects.create(node = nodes[nodeId],
+      Membership.objects.create(node = nodes[node_id - 1],
                                 store = store,
                                 replica = i,
-                                sensei_node_id = nodeId,
+                                sensei_node_id = node_id,
                                 parts = parts)
 
 def buildClusterSVG(store, stream, xml_header=True):
@@ -930,13 +930,14 @@ def buildClusterSVG(store, stream, xml_header=True):
       # The replica row for extra nodes
       numNodes = remainingNodes
     for j in range(numNodes):
-      current_node = members[i * numNodesPerReplica + j].node
+      node_id = i * numNodesPerReplica + j + 1
+      current_node = members[node_id - 1].node
       x1 = xOffset + j * ClusterLayout.NODE_DISTANCE_X
       layout.addNode(x1, y1,
-                     node_id = i * numNodesPerReplica + j,
+                     node_id = node_id,
                      online = current_node.online,
                      host = current_node.host,
-                     parts = members[i * numNodesPerReplica + j].parts)
+                     parts = members[node_id - 1].parts)
 
   layout.setSize(xOffset + numNodesPerReplica * ClusterLayout.NODE_DISTANCE_X,
                  yOffset + (store.replica + extraRow) * ClusterLayout.NODE_DISTANCE_Y)
