@@ -47,9 +47,9 @@ signal.signal(signal.SIGTERM, handle_signal)
 def main(argv):
   logging.basicConfig(format='[%(asctime)s]%(levelname)-8s"%(message)s"', datefmt='%Y-%m-%d %a %H:%M:%S')
   
-  verbose = True
-  if '-q' in sys.argv:
-    verbose = False
+  verbose = False
+  if '-v' in sys.argv:
+    verbose = True
   
   if verbose:
     logging.getLogger().setLevel(logging.NOTSET)

@@ -4498,8 +4498,10 @@ $(function() {
       $.getJSON('/store/stop-store/'+model.get('name'),function(resp){
         if (resp.status_display)
           me.$('.status').text(resp.status_display);
-        if (resp.status < 15)
+        if (resp.status < 15) {
+          me.$('.running-info').hide();
           me.$('.endpoint').hide();
+        }
 
         $.unblockUI();
 
@@ -4578,6 +4580,11 @@ $(function() {
       var me = this;
       $.blockUI({ message: '<h1><img class="indicator" src="/static/images/indicator.gif" /> Restarting ' + me.model.get('name') + ' ...</h1>' });
       $.getJSON('/store/restart-store/'+this.model.get('name') + '/', function(res) {
+        var running_info = res.running_info;
+        if (running_info && running_info.numdocs >=0) {
+          me.$('.numdocs').text(running_info.numdocs);
+          me.$('.running-info').show();
+        }
         if (res.status_display)
           me.$('.status').text(res.status_display);
         if (res.status == 15)
@@ -4653,11 +4660,12 @@ $(function() {
     },
 
     render: function() {
+      var me = this;
       var obj = this.model.toJSON();
       obj.sin_host = location.hostname;
       obj.sin_port = location.port;
       obj.is_running = obj.status == 15;
-      obj.has_running_info = obj.running_info.numdocs >= 0;
+      obj.has_running_info = obj.running_info && obj.running_info.numdocs >= 0;
 
       obj.dateToLocaleString = function(text) {
         return function(text, render) {
@@ -4675,6 +4683,25 @@ $(function() {
         timeago = $(timeago);
         timeago.text($.timeago(timeago.text()));
       });
+
+      if (obj.status >= 15) {
+        $.getJSON('/store/'+me.model.get('name') + '/with-running-info/', function(res) {
+          if (res.ok) {
+            me.model.set(res);
+            var running_info = me.model.get('running_info');
+            if (running_info && running_info.numdocs >=0) {
+              me.$('.numdocs').text(me.model.get('running_info').numdocs);
+              me.$('.running-info').show();
+            }
+            else {
+              me.$('.status').text("Error");
+            }
+          }
+          else {
+            alert(res.error);
+          }
+        });
+      }
 
       return this;
     }

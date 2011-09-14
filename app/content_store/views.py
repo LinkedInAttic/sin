@@ -592,7 +592,7 @@ def startStore(request, store_name, config_id=None, restart=False):
     current_config.save()
     store.status = enum.STORE_STATUS['running']
     store.save()
-    resp = store.to_map()
+    resp = store.to_map(True, True)
     resp.update({
       "ok":True,
     })
@@ -847,6 +847,23 @@ def cluster_svg(request, store_name):
   resp['cluster'] = s.getvalue()
   s.close()
   return HttpResponse(json.dumps(resp))
+
+@login_required
+def with_running_info(request, store_name):
+  resp = {
+    'ok' : True,
+  }
+  try:
+    store = request.user.my_stores.get(name=store_name)
+  except ContentStore.DoesNotExist:
+    resp = {
+      'ok' : False,
+      'error' : 'You do not own a store with the name "%s".' % store_name
+    }
+    return HttpResponse(json.dumps(resp))
+
+  resp.update(store.to_map(True, True))
+  return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
 def setupCluster(store):
   """Set up the cluster for a given store.

@@ -166,7 +166,7 @@ class ContentStore(models.Model):
 
   running_info = property(get_running_info)
 
-  def to_map(self, with_api_key=False):
+  def to_map(self, with_api_key=False, with_running_info=False):
     """
     Do not use this method if you are getting a list of maps of this,
     use ContentStoreQuerySet.to_map_list instead.
@@ -181,13 +181,14 @@ class ContentStore(models.Model):
       'broker_port': self.broker_port,
       'current_config': self.current_config.to_map(),
       'created': self.created,
-      'running_info': self.running_info,
       'status': self.status,
       'status_display': unicode(enum.STORE_STATUS_DISPLAY[self.status]),
       'description' : self.description,
     }
     if with_api_key:
       obj['api_key'] = self.api_key
+    if with_running_info:
+      obj['running_info'] = self.running_info
     return obj
 
 @receiver(post_delete, sender=ContentStore)
