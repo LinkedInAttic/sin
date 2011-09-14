@@ -11,6 +11,11 @@ from decorators import login_required
 from utils import enum
 
 
+def mydash(request):
+  return render_to_response('mydash.html', {
+  }, context_instance=template.RequestContext(request))
+
+
 def index(request):
   return render_to_response('index.html', {
   }, context_instance=template.RequestContext(request))

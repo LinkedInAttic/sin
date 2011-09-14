@@ -12,6 +12,7 @@ urlpatterns = patterns('views',
   url(r'^admin/', include(admin.site.urls)),
 
   url(r'^index/?$', 'index', name='index'),
+  url(r'^mydash/?$', 'mydash', name='mydash'),
   url(r'^$', 'home', name='home'),
   url(r'^dashboard/?$', 'dashboard', name='dashboard'),
   url(r'^downloads/?$', 'downloads', name='downloads'),
