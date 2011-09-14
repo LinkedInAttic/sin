@@ -10,6 +10,11 @@ from django.shortcuts import render_to_response
 from decorators import login_required
 from utils import enum
 
+
+def index(request):
+  return render_to_response('index.html', {
+  }, context_instance=template.RequestContext(request))
+  
 def home(request):
   return render_to_response('home.html', {
   }, context_instance=template.RequestContext(request))

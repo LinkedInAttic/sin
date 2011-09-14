@@ -11,6 +11,7 @@ urlpatterns = patterns('views',
   url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
   url(r'^admin/', include(admin.site.urls)),
 
+  url(r'^index/?$', 'index', name='index'),
   url(r'^$', 'home', name='home'),
   url(r'^dashboard/?$', 'dashboard', name='dashboard'),
   url(r'^downloads/?$', 'downloads', name='downloads'),
