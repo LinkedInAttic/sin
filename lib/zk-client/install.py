@@ -20,21 +20,21 @@ python_ver = "%d.%d" % (v1, v2)
 system = platform.system()
 arch = platform.architecture()[0][:2]
 site_pkg_path = None
-lib_dir = None
+src_lib_dir = None
 
 if system == "Darwin":
   site_pkg_path = "/Library/Python/%s/site-packages/" % python_ver
-  lib_dir = ZOOKEEPER_LIB_ROOT + "/mac-os"
-  os.system("cp -f %s/ZooKeeper-0.4-py2.6.egg-info %s" % (lib_dir, site_pkg_path))
+  src_lib_dir = ZOOKEEPER_LIB_ROOT + "/mac-os"
+  os.system("cp -f %s/ZooKeeper-0.4-py2.6.egg-info %s" % (src_lib_dir, site_pkg_path))
 elif system == "Linux":
   site_pkg_path = "/usr/lib%s/python%s/site-packages/" % (arch, python_ver)
   if arch == 64:
-    lib_dir = ZOOKEEPER_LIB_ROOT + "/linux-x86_64-2.6"
-  if arch == 32:
-    lib_dir = ZOOKEEPER_LIB_ROOT + "/linux-i686-2.6"
+    src_lib_dir = ZOOKEEPER_LIB_ROOT + "/linux-x86_64-2.6"
+  else:
+    src_lib_dir = ZOOKEEPER_LIB_ROOT + "/linux-i686-2.6"
 else:
   print "%s is not supported yet!" % system
   sys.exit()
 
-os.system("cp -fR %s/libzookeeper_* /usr/local/lib" % lib_dir)
-os.system("cp -f %s/zookeeper.so %s" % (lib_dir, site_pkg_path))
+os.system("cp -fR %s/libzookeeper_* /usr/local/lib" % src_lib_dir)
+os.system("cp -f %s/zookeeper.so %s" % (src_lib_dir, site_pkg_path))
