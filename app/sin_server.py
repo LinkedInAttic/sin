@@ -17,9 +17,21 @@ from twisted.python import log, threadpool
 from twisted.web import server, resource, wsgi, static
 
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.handlers.wsgi import WSGIHandler
 
 from content_store.models import ContentStore 
+from sin_site.models import SinSite
+
+def initialize():
+  current_site = Site.objects.get_current()
+  try:
+    sinsite = current_site.sinsite
+  except SinSite.DoesNotExist:
+    sinsite = SinSite.objects.create(name=current_site.name,
+                                     domain=current_site.domain,
+                                     site_ptr=current_site)
+  sinsite.initialize()
 
 class Root(resource.Resource):
   def __init__(self, WSGI):
@@ -53,6 +65,8 @@ def main(argv):
   
   if verbose:
     logging.getLogger().setLevel(logging.NOTSET)
+
+  initialize()
   
   static_files = static.File(os.path.join(os.path.join(SIN_HOME, 'admin')))
   WSGI = wsgi.WSGIResource(reactor, pool, WSGIHandler())

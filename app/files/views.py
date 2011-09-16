@@ -14,7 +14,7 @@ def upload(request):
   for f in request.FILES.values():
     name = os.path.basename(f.name)
     name_on_storage = '%s.%s' % (uuid.uuid1().hex, name)
-    file_model = File(name=name, size=f.size)
+    file_model = File(name=name, path='', size=f.size)
     file_model.the_file.save(name_on_storage, f)
     resp.append(file_model.to_map())
 

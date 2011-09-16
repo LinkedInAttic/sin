@@ -1,4 +1,4 @@
-import logging, random, os, subprocess, json, shutil, urllib, urllib2, datetime
+import logging, random, re, os, subprocess, json, shutil, urllib, urllib2, datetime
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -7,6 +7,7 @@ except ImportError:
 from django.db import connection
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.contrib.sites.models import Site
 from django.core.serializers.json import DateTimeAwareJSONEncoder
 from django.http import HttpResponse
 from django.template import loader, RequestContext
@@ -498,13 +499,12 @@ def updateDoc(request,store_name):
         return HttpResponseBadRequest(json.dumps(resp))
 
       uid = long(jsonDoc['id'])
-      existingDocString = findDoc(store,uid)
+      existingDoc = findDoc(store,uid)
 
-      if not existingDocString:
+      if not existingDoc:
         resp = {'ok':False,'error':'doc: %d does not exist' % uid}
         return HttpResponseBadRequest(json.dumps(resp))
 
-      existingDoc = json.loads(existingDocString)
       print existingDoc
       for k,v in jsonDoc.items():
         existingDoc[k]=v
@@ -536,38 +536,54 @@ def startStore(request, store_name, config_id=None, restart=False):
     else:
       current_config = store.current_config
 
-    webapp = os.path.join(settings.SENSEI_HOME,'sensei-core/src/main/webapp')
-    store_home = os.path.join(settings.STORE_HOME, store_name)
-    index = os.path.join(store_home, 'index')
-    extensions = []
-    for ext in current_config.extensions.all():
-      url = ext.the_file.url
-      if not url.startswith('http:'):
-        url = request.build_absolute_uri(url)
-      extensions.append(url)
+    webapp = 'webapp'
+    index = 'index'
+
+    current_site = Site.objects.get_current().sinsite
+
+    webapps_map     = dict([(os.path.join(f.path, f.name), f) for f in current_site.default_webapps.all()])
+    resources_map   = dict([(os.path.join(f.path, f.name), f) for f in current_site.default_resources.all()])
+    libs_map        = dict([(os.path.join(f.path, f.base_name), f) for f in current_site.default_libs.all()])
+
+    libs_map.update(dict([(os.path.join(f.path, f.base_name), f) for f in current_config.extensions.all()]))
+
+    webapps     = [f.to_map() for f in webapps_map.values()]
+    resources   = [f.to_map() for f in resources_map.values()]
+    libs        = [f.to_map() for f in libs_map.values()]
+
+    def _fix_url(files):
+      for f in files:
+        if not re.match(r'^https?://.*', f['url']):
+          f['url'] = request.build_absolute_uri(f['url'])
+
+    _fix_url(webapps)
+    _fix_url(resources)
+    _fix_url(libs)
 
     params = {
-      'name': store_name,
-      'vm_args': current_config.vm_args,
-      'sensei_port': store.sensei_port,
-      'broker_host': store.broker_host,
-      'broker_port': store.broker_port,
-      'extensions': json.dumps(extensions),
-      'schema': store.current_config.schema,
+      'name'          : store_name,
+      'vm_args'       : current_config.vm_args,
+      'sensei_port'   : store.sensei_port,
+      'broker_host'   : store.broker_host,
+      'broker_port'   : store.broker_port,
+      'webapps'       : json.dumps(webapps, ensure_ascii=False, cls=DateTimeAwareJSONEncoder),
+      'resources'     : json.dumps(resources, ensure_ascii=False, cls=DateTimeAwareJSONEncoder),
+      'libs'          : json.dumps(libs, ensure_ascii=False, cls=DateTimeAwareJSONEncoder),
+      'schema'        : store.current_config.schema,
     }
   
     members = store.membership_set.order_by("sensei_node_id")
     for member in members:
       context = RequestContext(request, {
-         'node_id': member.sensei_node_id,
-         'node_partitions': member.parts[1:len(member.parts)-1],
-         'max_partition_id': store.partitions - 1,
-         'store': store,
-         'index': index,
-         'webapp': webapp,
-         'kafka_host': kafkaHost,
-         'kafka_port': kafkaPort,
-         'zookeeper_url': settings.ZOOKEEPER_URL,
+         'node_id'            : member.sensei_node_id,
+         'node_partitions'    : member.parts[1:len(member.parts)-1],
+         'max_partition_id'   : store.partitions - 1,
+         'store'              : store,
+         'index'              : index,
+         'webapp'             : webapp,
+         'kafka_host'         : kafkaHost,
+         'kafka_port'         : kafkaPort,
+         'zookeeper_url'      : settings.ZOOKEEPER_URL,
         })
 
       sensei_custom_facets = loader.get_template_from_string(current_config.custom_facets)

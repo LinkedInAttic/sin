@@ -27,10 +27,6 @@ DATABASES = {
   }
 }
 
-SENSEI_HOME = '/tmp/sensei/'
-
-STORE_HOME = '/tmp/store/'
-
 ZOOKEEPER_URL = 'localhost:2181'
 ZOOKEEPER_TIMEOUT = 30000
 SIN_SERVICE_NAME = 'sin'
@@ -151,9 +147,11 @@ INSTALLED_APPS = (
   'django.contrib.staticfiles',
   'django.contrib.admin',
   'django.contrib.admindocs',
+  'django.contrib.sites',
   'content_store',
   'cluster',
   'files',
+  'sin_site',
 )
 
 # A sample logging configuration. The only tangible logging

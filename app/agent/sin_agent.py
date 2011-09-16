@@ -27,7 +27,6 @@ if apppath:
 
 from django.conf import settings
 
-SENSEI_HOME = '/tmp/sensei/'
 STORE_HOME = '/tmp/store/'
 CALL_BACK_LATER = 'CallBackLater'
 
@@ -77,19 +76,23 @@ class StartStore(Resource):
     Start a Sensei store.
     """
     try:
-      name = request.args["name"][0]
-      vm_args = request.args["vm_args"][0]
-      sensei_port = request.args["sensei_port"][0]
-      broker_port = request.args["broker_port"][0]
-      sensei_properties = request.args["sensei_properties"][0]
+      name                 = request.args["name"][0]
+      vm_args              = request.args["vm_args"][0]
+      sensei_port          = request.args["sensei_port"][0]
+      broker_port          = request.args["broker_port"][0]
+      sensei_properties    = request.args["sensei_properties"][0]
       sensei_custom_facets = request.args["sensei_custom_facets"][0]
-      sensei_plugins = request.args["sensei_plugins"][0]
-      schema = request.args["schema"][0]
-      extensions = json.loads(request.args["extensions"][0].encode('utf-8'))
+      sensei_plugins       = request.args["sensei_plugins"][0]
+      schema               = request.args["schema"][0]
+      webapps              = json.loads(request.args["webapps"][0].encode('utf-8'))
+      resources            = json.loads(request.args["resources"][0].encode('utf-8'))
+      libs                 = json.loads(request.args["libs"][0].encode('utf-8'))
+
       log.msg("Starting store %s" % name)
       d = doStartStore(name, vm_args, sensei_port, broker_port,
                        sensei_properties, sensei_custom_facets,
-                       sensei_plugins, schema, extensions)
+                       sensei_plugins, schema, webapps, resources,
+                       libs)
 
       def cbStartFinished(res):
         request.write(res)
@@ -114,26 +117,30 @@ class RestartStore(Resource):
     Restart a Sensei store.
     """
     try:
-      name = request.args["name"][0]
+      name    = request.args["name"][0]
       vm_args = request.args["vm_args"][0]
+
       res, msg = doStopStore(name)
       if msg == CALL_BACK_LATER:
         reactor.callLater(1, self.render_GET, request, True)
         return NOT_DONE_YET
 
-      sensei_port = request.args["sensei_port"][0]
-      broker_port = request.args["broker_port"][0]
-      sensei_properties = request.args["sensei_properties"][0]
+      sensei_port          = request.args["sensei_port"][0]
+      broker_port          = request.args["broker_port"][0]
+      sensei_properties    = request.args["sensei_properties"][0]
       sensei_custom_facets = request.args["sensei_custom_facets"][0]
-      sensei_plugins = request.args["sensei_plugins"][0]
-      schema = request.args["schema"][0]
-      extensions = json.loads(request.args["extensions"][0].encode('utf-8'))
+      sensei_plugins       = request.args["sensei_plugins"][0]
+      schema               = request.args["schema"][0]
+      webapps              = json.loads(request.args["webapps"][0].encode('utf-8'))
+      resources            = json.loads(request.args["resources"][0].encode('utf-8'))
+      libs                 = json.loads(request.args["libs"][0].encode('utf-8'))
 
       if res:
         log.msg("Restarting store %s" % name)
         d = doStartStore(name, vm_args, sensei_port, broker_port,
                          sensei_properties, sensei_custom_facets,
-                         sensei_plugins, schema, extensions)
+                         sensei_plugins, schema, webapps, resources,
+                         libs)
         def cbStartFinished(res):
           request.write(res)
           request.finish()
@@ -167,38 +174,42 @@ class RestartStore(Resource):
 
 def doStartStore(name, vm_args, sensei_port, broker_port,
                  sensei_properties, sensei_custom_facets,
-                 sensei_plugins, schema, extensions):
+                 sensei_plugins, schema, webapps, resources,
+                 libs):
   """
   Do the real work to get a Sensei server started for a store.
   """
   store_home = os.path.join(STORE_HOME, name)
+  def _ensure_dir(d):
+    try:
+      os.makedirs(d)
+    except:
+      pass
+
+  def _refresh_dir(d):
+    try:
+      shutil.rmtree(d)
+    except:
+      pass
+    _ensure_dir(d)
+
   index = os.path.join(store_home, 'index')
-  try:
-    os.makedirs(index)
-  except:
-    pass
+  _ensure_dir(index)
 
   conf = os.path.join(store_home, 'conf')
-  try:
-    os.makedirs(conf)
-  except:
-    pass
+  _ensure_dir(conf)
 
-  ext_dir = os.path.join(store_home, 'ext')
-  try:
-    shutil.rmtree(ext_dir)
-  except:
-    pass
-  try:
-    os.makedirs(ext_dir)
-  except:
-    pass
+  webapp_dir = os.path.join(store_home, 'webapp')
+  _refresh_dir(webapp_dir)
+
+  resource_dir = os.path.join(store_home, 'resource')
+  _refresh_dir(resource_dir)
+
+  lib_dir = os.path.join(store_home, 'lib')
+  _refresh_dir(lib_dir)
 
   logs = os.path.join(store_home, 'logs')
-  try:
-    os.makedirs(logs)
-  except:
-    pass
+  _ensure_dir(logs)
 
   out_file = open(os.path.join(conf, 'sensei.properties'), 'w+')
   try:
@@ -228,8 +239,6 @@ def doStartStore(name, vm_args, sensei_port, broker_port,
   finally:
     out_file.close()
 
-  custom_sensei = False
-
   if not vm_args:
     vm_args = '-Xmx1g -Xms1g -XX:NewSize=256m'
 
@@ -237,56 +246,61 @@ def doStartStore(name, vm_args, sensei_port, broker_port,
     outFile = open(os.path.join(logs, "std-output"), "w+")
     errFile = open(os.path.join(logs, "std-error"), "w+")
 
-    if custom_sensei:
-      log4jclasspath = os.path.join(SENSEI_HOME,'resources')
-      extension_classpath = os.path.join(ext_dir, '*')
-
-      classpath = "%s:%s" % (log4jclasspath,extension_classpath)
-    else:
-      classpath1 = os.path.join(SENSEI_HOME, 'sensei-core/target/*')
-      classpath2 = os.path.join(SENSEI_HOME, 'sensei-core/target/lib/*')
-      log4jclasspath = os.path.join(SENSEI_HOME,'resources')
-      extension_classpath = os.path.join(ext_dir, '*')
-
-      classpath = "%s:%s:%s:%s" % (classpath1,classpath2,log4jclasspath,extension_classpath)
+    classpath = "%s:%s" % (resource_dir, os.path.join(lib_dir, '*'))
 
     architecture = "-d%s" % platform.architecture()[0][:2]
 
     cmd = ["nohup", "java", "-server", architecture, vm_args, "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf, "&"]
     print ' '.join(cmd)
-    p = subprocess.Popen(cmd, cwd=SENSEI_HOME, stdout=outFile, stderr=errFile)
+    p = subprocess.Popen(cmd, cwd=store_home, stdout=outFile, stderr=errFile)
     running[name] = p.pid
 
-  if extensions:
-    d = defer.Deferred()
-    ext_set = set(extensions)
+  d = defer.Deferred()
+  ongoing_set = set([f['url'] for f in webapps])
+  ongoing_set.update([f['url'] for f in resources])
+  ongoing_set.update([f['url'] for f in libs])
 
-    def cbDownloaded(res, ext):
-      print "%s downloaded" % ext
-      ext_set.remove(ext)
-      if not ext_set: # The last one.
-        start_sensei()
-        d.callback(json.dumps({
-          'ok': True,
-        }))
-
-    def cbErrorDownload(res, ext):
-      print "Error download '%s': %s" % (ext, res)
+  def cbDownloaded(res, base, ongoing):
+    print "%s downloaded" % ongoing
+    ongoing_set.remove(ongoing['url'])
+    if not ongoing_set: # The last one.
+      start_sensei()
       d.callback(json.dumps({
-        'ok': False,
-        'msg': "Error download '%s': %s" % (ext, res),
+        'ok': True,
       }))
 
-    for ext in extensions:
-      if re.match(r'[^\.]+\.sensei-.*\.jar', ext):
-        custom_sensei = True
-      downloadPage(ext.encode('utf-8'), os.path.join(ext_dir, os.path.basename(ext))).addCallbacks(
-          cbDownloaded, cbErrorDownload, callbackArgs=[ext], errbackArgs=[ext])
+  def cbErrorDownload(res, base, ongoing):
+    retry = ongoing.get('retry', 0)
+    if retry < 20:
+      print "Error download '%s': %s (retring)" % (ongoing, res)
+      _download(base, ongoing)
+    else:
+      print "Error download '%s': %s" % (ongoing, res)
+      d.callback(json.dumps({
+        'ok': False,
+        'msg': "Error download '%s': %s" % (ongoing, res),
+      }))
 
-    return d
+  def _download(base, ongoing):
+    path = os.path.join(base, ongoing['path'])
+    _ensure_dir(path)
 
-  start_sensei()
-  return defer.succeed(json.dumps({'ok': True}))
+    fullname = os.path.join(path, ongoing['name']).encode('utf-8')
+    url      = ongoing['url'].encode('utf-8')
+
+    downloadPage(url, fullname).addCallbacks(
+        cbDownloaded, cbErrorDownload, callbackArgs=[base, ongoing], errbackArgs=[base, ongoing])
+
+  for ongoing in webapps:
+    _download(webapp_dir, ongoing)
+
+  for ongoing in resources:
+    _download(resource_dir, ongoing)
+
+  for ongoing in libs:
+    _download(lib_dir, ongoing)
+
+  return d
 
 class DeleteStore(Resource):
   def render_GET(self, request, isCallback=False):
