@@ -1,18 +1,22 @@
 <html>
 <head>
 
-	<link rel="stylesheet" href="http://wonlay.github.com/sin/styles/twitter-bootstrap.css"/>
+	<link rel="stylesheet" href="http://wonlay.github.com/sin/styles/twitter-bootstrap.css" type="text/css" media="screen"/>
 	<link rel="stylesheet" href="http://wonlay.github.com/sin/styles/prettify.css" type="text/css" media="screen"/>
-	<link rel="stylesheet" href="http://wonlay.github.com/sin/styles/style.css" type="text/css" media="screen"/>
 	<script src="http://code.jquery.com/jquery-1.5.2.min.js"></script>
 	<script src="http://wonlay.github.com/sin/scripts/app.js" type="text/javascript" charset="utf-8"></script>
 	
     <script type="text/javascript" src="{{ STATIC_URL }}js/core.js" ></script>
 
+	<style>
+	.close{float:right;margin-top:-2px;color:#000000;font-size:20px;font-weight:bold;text-shadow:0 1px 0 #ffffff;filter:alpha(opacity=20);-khtml-opacity:0.2;-moz-opacity:0.2;opacity:0.2;}.alert-message .close:hover{color:#000000;text-decoration:none;filter:alpha(opacity=40);-khtml-opacity:0.4;-moz-opacity:0.4;opacity:0.4;}
+	
+	</style>
+	
 </head>
 <body>
 	<script id="content-column-tmpl" type="text/x-mustache-tmpl">
-      <div>
+      <div class="container">
         {% templatetag openvariable %}^add{% templatetag closevariable %}
         <div class="table display-row">
         <div class="cell">{% templatetag openvariable %} name {% templatetag closevariable %}</div> <div class="cell">{% templatetag openvariable %} type {% templatetag closevariable %}</div>
@@ -22,7 +26,7 @@
         {% templatetag openvariable %}#delimiter{% templatetag closevariable %}Delimiter: {% templatetag openvariable %} delimiter {% templatetag closevariable %}; {% templatetag openvariable %}/delimiter{% templatetag closevariable %}
         {% templatetag openvariable %}#store{% templatetag closevariable %}Store: {% templatetag openvariable %} store {% templatetag closevariable %}; {% templatetag openvariable %}/store{% templatetag closevariable %}
         {% templatetag openvariable %}#termvector{% templatetag closevariable %}Term Vector: {% templatetag openvariable %} termvector {% templatetag closevariable %}; {% templatetag openvariable %}/termvector{% templatetag closevariable %}{% templatetag closevariable %}
-        <div class="cell display-op"><div class="op"><input class="edit" type="button" value="Edit" /> <input class="remove" type="button" value="Remove" /></div></div></div>
+        <div class="cell display-op"><div class="op"><input class="edit" type="button" value="Edit" /> <input class="btn danger" type="button" value="Remove" /></div></div></div>
         {% templatetag openvariable %}/add{% templatetag closevariable %}
       </div>
       <div class="editor" style="{% templatetag openvariable %}^add{% templatetag closevariable %}display: none;{% templatetag openvariable %}/add{% templatetag closevariable %}">
@@ -119,7 +123,7 @@
       </div>
     </script>
     <script id="collab-item-tmpl" type="text/x-mustache-tmpl">
-      <span>{% templatetag openvariable %} username {% templatetag closevariable %}</span> <span class="op" style="display: none;"><input class="remove" type="button" value="Revmoe" /></span>
+      <span>{% templatetag openvariable %} username {% templatetag closevariable %}</span> <span class="op" style="display: none;"><input class="remove" type="button" value="Remove" /></span>
     </script>
     <script id="collab-tmpl" type="text/x-mustache-tmpl">
       <ul class="item-container">
@@ -127,19 +131,70 @@
       <input class="new-collab" type="text" /> <input class="add" type="button" value="Add" /> <input class="close-all-tabs" type="button" value="Cancel" />
     </script>
     <script id="content-store-tmpl" type="text/x-mustache-tmpl">
-      <div class="store-container">
-        <div><a target="_blank" href="http://{% templatetag openvariable %} broker_host {% templatetag closevariable %}:{% templatetag openvariable %} broker_port {% templatetag closevariable %}/demo.html">Search</a> | <a class="manage" href="javascript:_void();">Config</a> | <a class="collaborators" href="javascript:_void();">Collaborators</a> | <a class="cluster" href="javascript:_void();">Cluster</a> | <a class="admin" target="_blank" href="http://{% templatetag openvariable %} broker_host {% templatetag closevariable %}:{% templatetag openvariable %} broker_port {% templatetag closevariable %}/admin.html">Admin</a> | <a href="javascript:_void();" class="deleteStore">Delete</a>  | <a href="javascript:_void();" class="purgeStore">Purge</a> | <a class="restart" href="javascript:_void();">(Re-)Start</a> | <a class="stopStore" href="javascript:_void();">Stop</a> | <span>Status:</span> <span class="status">{% templatetag openvariable %} status_display {% templatetag closevariable %}</span></div>
-        <h2>{% templatetag openvariable %} name {% templatetag closevariable %}</h2>
-        <div>
-          <p>
-          <p class="running-info {% templatetag openvariable %}^has_running_info{% templatetag closevariable %}display-none{% templatetag openvariable %}/has_running_info{% templatetag closevariable %}">Current Size: <span class="numdocs">{% templatetag openvariable %} running_info.numdocs {% templatetag closevariable %}</span> documents</p>
+<div class="container">
+
+        <ul class="pills">
+		<li><a target="_blank" href="http://{% templatetag openvariable %} broker_host {% templatetag closevariable %}:{% templatetag openvariable %} broker_port {% templatetag closevariable %}/demo.html">Search</a></li>
+		<li><a class="manage" href="javascript:_void();">Config</a> </li>
+		<li><a class="collaborators" href="javascript:_void();">Collaborators</a></li>
+		<li><a class="cluster" href="javascript:_void();">Cluster</a></li> 
+		<li><a class="admin" target="_blank" href="http://{% templatetag openvariable %} broker_host {% templatetag closevariable %}:{% templatetag openvariable %} broker_port {% templatetag closevariable %}/admin.html">Admin</a> </li>
+		</ul>
+
+			<table class="zebra-striped" style="width:75%">
+				<thead>
+					<tr>
+						<th colspan="2" style="text-align:center">
+						<a class="close deleteStore" href="javascript:_void();" style="color:red">&times;</a>
+				        <h2>{% templatetag openvariable %} name {% templatetag closevariable %}</h2>
+							<div style="text-align:right">
+							Status:<span class="status">{% templatetag openvariable %} status_display {% templatetag closevariable %}</span>&nbsp;/&nbsp;
+							
+							<span class="running-info {% templatetag openvariable %}^has_running_info{% templatetag closevariable %}display-none{% templatetag openvariable %}/has_running_info{% templatetag closevariable %}"><span class="numdocs">{% templatetag openvariable %} running_info.numdocs {% templatetag closevariable %}</span> documents</span>
+							</div>
+						</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td width="20%">Created:</td>
+						<td width="80%"><span class="timeago">{% templatetag openvariable %}created{% templatetag closevariable %}</span></td>
+					</tr>
+					<tr>
+						<td width="20%">API Key:</td>
+						<td width="80%"><span class="api-key"><strong>{% templatetag openvariable %} api_key {% templatetag closevariable %}</strong></span> <input style="text-align:right" class="regenerate-api-key btn primary" type="button" value="Regenerate" /></td>
+					</tr>
+					<tr>
+					</tr>
+					<tr class="endpoint" {% templatetag openvariable %}^is_running{% templatetag closevariable %}style="display: none;"{% templatetag openvariable %}/is_running{% templatetag closevariable %}>
+						<td width="20%">Search endpoint:</td>
+						<td width="80%"><a target="_blank" href="http://{% templatetag openvariable %} broker_host {% templatetag closevariable %}:{% templatetag openvariable %}broker_port{% templatetag closevariable %}/sensei">http://{% templatetag openvariable %}broker_host{% templatetag closevariable %}:{% templatetag openvariable %}broker_port{% templatetag closevariable %}/sensei</a></td>
+					</tr>
+					<tr class="endpoint" {% templatetag openvariable %}^is_running{% templatetag closevariable %}style="display: none;"{% templatetag openvariable %}/is_running{% templatetag closevariable %}>
+						<td width="20%">Add endpoint:</td>
+						<td width="80%"><a target="_blank" href="http://{% templatetag openvariable %}sin_host{% templatetag closevariable %}:{% templatetag openvariable %}sin_port{% templatetag closevariable %}/store/add-docs/{% templatetag openvariable %}name{% templatetag closevariable %}/">http://{% templatetag openvariable %}sin_host{% templatetag closevariable %}:{% templatetag openvariable %}sin_port{% templatetag closevariable %}/store/add-docs/{% templatetag openvariable %}name{% templatetag closevariable %}/</a></td>
+					</tr>
+					<tr class="endpoint" {% templatetag openvariable %}^is_running{% templatetag closevariable %}style="display: none;"{% templatetag openvariable %}/is_running{% templatetag closevariable %}>
+						<td width="20%">Update endpoint:</td>
+						<td width="80%"><a target="_blank" href="http://{% templatetag openvariable %}sin_host{% templatetag closevariable %}:{% templatetag openvariable %}sin_port{% templatetag closevariable %}/store/update-doc/{% templatetag openvariable %}name{% templatetag closevariable %}/">http://{% templatetag openvariable %}sin_host{% templatetag closevariable %}:{% templatetag openvariable %}sin_port{% templatetag closevariable %}/store/update-doc/{% templatetag openvariable %}name{% templatetag closevariable %}/</a></td>
+					</tr>
+					<tr>
+					   <td colspan="2" style="text-align:center">
+					
+						<input type="button" class="btn success" value="(Re-)Start"/>
+						<input type="button" class="btn danger" value="Stop"/>
+						
+						<input type="button" class="btn" value="Purge"/>
+					   </td>
+					</tr>
+				</tbody>
+			</table>
+</div>
+
+          
           {% templatetag openvariable %}#running_info.lastmodified{% templatetag closevariable %}<p>Last Modified: <span class="timeago">{% templatetag openvariable %}#dateToString{% templatetag closevariable %}{% templatetag openvariable %} running_info.lastmodified {% templatetag closevariable %}{% templatetag openvariable %}/dateToString{% templatetag closevariable %}</span></p>{% templatetag openvariable %}/running_info.lastmodified{% templatetag closevariable %}
           {% templatetag openvariable %}#description{% templatetag closevariable %}<p>Description: {% templatetag openvariable %}description{% templatetag closevariable %}</p>{% templatetag openvariable %}/description{% templatetag closevariable %}
-          <p>API Key: <span class="api-key">{% templatetag openvariable %} api_key {% templatetag closevariable %}</span> <input class="regenerate-api-key" type="button" value="Regenerate" /> </p>
-          <p>Created: <span class="timeago">{% templatetag openvariable %}created{% templatetag closevariable %}</span></p>
-          <p class="endpoint" {% templatetag openvariable %}^is_running{% templatetag closevariable %}style="display: none;"{% templatetag openvariable %}/is_running{% templatetag closevariable %}>Search endpoint: <a target="_blank" href="http://{% templatetag openvariable %} broker_host {% templatetag closevariable %}:{% templatetag openvariable %}broker_port{% templatetag closevariable %}/sensei">http://{% templatetag openvariable %}broker_host{% templatetag closevariable %}:{% templatetag openvariable %}broker_port{% templatetag closevariable %}/sensei</a></p>
-          <p class="endpoint" {% templatetag openvariable %}^is_running{% templatetag closevariable %}style="display: none;"{% templatetag openvariable %}/is_running{% templatetag closevariable %}>Add docs endpoint: <a target="_blank" href="http://{% templatetag openvariable %}sin_host{% templatetag closevariable %}:{% templatetag openvariable %}sin_port{% templatetag closevariable %}/store/add-docs/{% templatetag openvariable %}name{% templatetag closevariable %}/">http://{% templatetag openvariable %}sin_host{% templatetag closevariable %}:{% templatetag openvariable %}sin_port{% templatetag closevariable %}/store/add-docs/{% templatetag openvariable %}name{% templatetag closevariable %}/</a></p>
-          <p class="endpoint" {% templatetag openvariable %}^is_running{% templatetag closevariable %}style="display: none;"{% templatetag openvariable %}/is_running{% templatetag closevariable %}>Update doc endpoint: <a target="_blank" href="http://{% templatetag openvariable %}sin_host{% templatetag closevariable %}:{% templatetag openvariable %}sin_port{% templatetag closevariable %}/store/update-doc/{% templatetag openvariable %}name{% templatetag closevariable %}/">http://{% templatetag openvariable %}sin_host{% templatetag closevariable %}:{% templatetag openvariable %}sin_port{% templatetag closevariable %}/store/update-doc/{% templatetag openvariable %}name{% templatetag closevariable %}/</a></p>
+         
           </p>
         </div>
         <div class="collab-tab store-tab" style="display: none;">
@@ -150,7 +205,6 @@
           <input class="close-all-tabs" type="button" value="Cancel" />
         </div>
         <div class="manage-tab store-tab" style="display: none;">
-        </div>
       </div>
       <hr />
     </script>
@@ -330,9 +384,8 @@
       </div>
     </script>
 
-	<div>
       <div id="main-area">
       </div>
-    </div>
+
 </body>
 </html>
