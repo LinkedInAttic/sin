@@ -44,7 +44,7 @@ class Root(resource.Resource):
     request.content.seek(0, 0)
     return self.WSGI
 
-pool = threadpool.ThreadPool()
+pool = threadpool.ThreadPool(minthreads=settings.SIN_MIN_THREAD, maxthreads=settings.SIN_MAX_THREAD)
 
 def handle_signal(signum,stackframe):
   if signum in [signal.SIGINT, signal.SIGTERM]:

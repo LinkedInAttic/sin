@@ -27,7 +27,6 @@ if apppath:
 
 from django.conf import settings
 
-STORE_HOME = '/tmp/store/'
 CALL_BACK_LATER = 'CallBackLater'
 
 SIN_AGENT_PORT = 6664
@@ -179,7 +178,7 @@ def doStartStore(name, vm_args, sensei_port, broker_port,
   """
   Do the real work to get a Sensei server started for a store.
   """
-  store_home = os.path.join(STORE_HOME, name)
+  store_home = os.path.join(settings.STORE_HOME, name)
   def _ensure_dir(d):
     try:
       os.makedirs(d)
@@ -273,7 +272,7 @@ def doStartStore(name, vm_args, sensei_port, broker_port,
     retry = ongoing.get('retry', 0)
     if retry < 20:
       print "Error download '%s': %s (retring)" % (ongoing, res)
-      _download(base, ongoing)
+      reactor.callLater(1, _download, base, ongoing)
     else:
       print "Error download '%s': %s" % (ongoing, res)
       d.callback(json.dumps({
@@ -314,7 +313,7 @@ class DeleteStore(Resource):
         return NOT_DONE_YET
 
       if res:
-        store_home = os.path.join(STORE_HOME, name)
+        store_home = os.path.join(settings.STORE_HOME, name)
         try:
           shutil.rmtree(store_home)
         except OSError as ose:
