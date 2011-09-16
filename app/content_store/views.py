@@ -142,7 +142,7 @@ def deleteStore(request,store_name):
     params = {}
     params["name"] = store_name
 
-    members = store.membership_set.order_by("sensei_node_id")
+    members = store.membership_set.order_by("node")
     for member in members:
       output = urllib2.urlopen("http://%s:%d/%s" % (member.node.host,
                                                     member.node.agent_port,
@@ -175,7 +175,7 @@ def purgeStore(request, store_name):
     params = {}
     params["name"] = store_name
 
-    members = store.membership_set.order_by("sensei_node_id")
+    members = store.membership_set.order_by("node")
     for member in members:
       output = urllib2.urlopen("http://%s:%d/%s" % (member.node.host,
                                                     member.node.agent_port,
@@ -520,16 +520,17 @@ def updateDoc(request,store_name):
   return HttpResponseServerError(json.dumps(resp))
 
 @login_required
-def startStore(request, store_name, config_id=None, restart=False):
+def startStore(request, store, config_id=None, restart=False, node=None):
   try:
-    try:
-      store = request.user.my_stores.get(name=store_name)
-    except ContentStore.DoesNotExist:
-      resp = {
-        'ok' : False,
-        'msg' : 'You do not own a store with the name "%s".' % store_name
-      }
-      return HttpResponse(json.dumps(resp))
+    if not isinstance(store, ContentStore):
+      try:
+        store = request.user.my_stores.get(name=store)
+      except ContentStore.DoesNotExist:
+        resp = {
+          'ok' : False,
+          'msg' : 'You do not own a store with the name "%s".' % store
+        }
+        return HttpResponse(json.dumps(resp))
 
     if config_id:
       current_config = store.configs.get(id=config_id)
@@ -554,14 +555,17 @@ def startStore(request, store_name, config_id=None, restart=False):
     def _fix_url(files):
       for f in files:
         if not re.match(r'^https?://.*', f['url']):
-          f['url'] = request.build_absolute_uri(f['url'])
+          if request:
+            f['url'] = request.build_absolute_uri(f['url'])
+          else:
+            f['url'] = 'http://%s:%s%s' % (settings.LOCAL_PUB_IP, settings.SIN_LISTEN, f['url'])
 
     _fix_url(webapps)
     _fix_url(resources)
     _fix_url(libs)
 
     params = {
-      'name'          : store_name,
+      'name'          : store.name,
       'vm_args'       : current_config.vm_args,
       'sensei_port'   : store.sensei_port,
       'broker_host'   : store.broker_host,
@@ -571,11 +575,14 @@ def startStore(request, store_name, config_id=None, restart=False):
       'libs'          : json.dumps(libs, ensure_ascii=False, cls=DateTimeAwareJSONEncoder),
       'schema'        : store.current_config.schema,
     }
-  
-    members = store.membership_set.order_by("sensei_node_id")
+
+    if node is None:
+      members = store.membership_set.order_by("node")
+    else:
+      members = store.membership_set.filter(node=node)
     for member in members:
       context = RequestContext(request, {
-         'node_id'            : member.sensei_node_id,
+         'node_id'            : member.node_id,
          'node_partitions'    : member.parts[1:len(member.parts)-1],
          'max_partition_id'   : store.partitions - 1,
          'store'              : store,
@@ -631,7 +638,7 @@ def stopStore(request, store_name):
     params = {}
     params["name"] = store_name
 
-    members = store.membership_set.order_by("sensei_node_id")
+    members = store.membership_set.order_by("node")
     for member in members:
       output = urllib2.urlopen("http://%s:%d/%s" % (member.node.host,
                                                     member.node.agent_port,
@@ -902,16 +909,15 @@ def setupCluster(store):
       # The replica row for extra nodes
       numNodes = remainingNodes
     for j in range(numNodes):
-      node_id = i * numNodesPerReplica + j + 1
+      node_index = i * numNodesPerReplica + j
       parts = []
       for k in range(numPartsPerNode):
         parts.append(j * numPartsPerNode + k)
       if remainingParts > 0 and j < remainingParts:
         parts.append(store.partitions - remainingParts + j)
-      Membership.objects.create(node = nodes[node_id - 1],
+      Membership.objects.create(node = nodes[node_index],
                                 store = store,
                                 replica = i,
-                                sensei_node_id = node_id,
                                 parts = parts)
 
 def buildClusterSVG(store, stream, xml_header=True):
@@ -928,7 +934,7 @@ def buildClusterSVG(store, stream, xml_header=True):
   yOffset = 10
   legend = 40
   replicas = store.replica
-  members = store.membership_set.order_by("sensei_node_id")
+  members = store.membership_set.order_by("node")
   totalNodes = len(members)
   numNodesPerReplica = totalNodes / store.replica
   remainingNodes = totalNodes % store.replica
@@ -946,14 +952,14 @@ def buildClusterSVG(store, stream, xml_header=True):
       # The replica row for extra nodes
       numNodes = remainingNodes
     for j in range(numNodes):
-      node_id = i * numNodesPerReplica + j + 1
-      current_node = members[node_id - 1].node
+      node_index = i * numNodesPerReplica + j
+      current_node = members[node_index].node
       x1 = xOffset + j * ClusterLayout.NODE_DISTANCE_X
       layout.addNode(x1, y1,
-                     node_id = node_id,
+                     node_id = current_node.id,
                      online = current_node.online,
                      host = current_node.host,
-                     parts = members[node_id - 1].parts)
+                     parts = members[node_index].parts)
 
   layout.setSize(xOffset + numNodesPerReplica * ClusterLayout.NODE_DISTANCE_X,
                  yOffset + (store.replica + extraRow) * ClusterLayout.NODE_DISTANCE_Y)
@@ -985,7 +991,7 @@ def testSetupCluster():
   for node in store1.nodes.all():
     print node.host
 
-  for member in store1.membership_set.order_by("sensei_node_id"):
+  for member in store1.membership_set.order_by("node"):
     print member.node.host, member.replica, member.parts
 
   buildClusterSVG(store1, file("/tmp/%s.svg" % store1.name, "w+"), True)
@@ -1008,7 +1014,7 @@ def testSetupCluster():
   for node in store2.nodes.all():
     print node.host
 
-  for member in store2.membership_set.order_by("sensei_node_id"):
+  for member in store2.membership_set.order_by("node"):
     print member.node.host, member.replica, member.parts
 
   buildClusterSVG(store2, file("/tmp/%s.svg" % store2.name, "w+"), True)

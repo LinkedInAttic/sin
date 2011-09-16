@@ -74,8 +74,16 @@ class StartStore(Resource):
     """
     Start a Sensei store.
     """
+    global running
     try:
-      name                 = request.args["name"][0]
+      name = request.args["name"][0]
+      pid = running.get(name)
+      if pid:
+        return json.dumps({
+          'ok':  False,
+          'msg': 'store "%s" already started.' % name,
+        })
+
       vm_args              = request.args["vm_args"][0]
       sensei_port          = request.args["sensei_port"][0]
       broker_port          = request.args["broker_port"][0]
