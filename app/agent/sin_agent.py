@@ -15,15 +15,15 @@ from sincc import SinClusterClient
 from optparse import OptionParser
 import socket
 
-appsettings = 'settings'
-os.environ['DJANGO_SETTINGS_MODULE'] = appsettings
+app_settings = 'settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = app_settings
 
 SIN_HOME = os.path.normpath(os.path.join(os.path.normpath(__file__), '../../..'))
 APP_HOME = os.path.join(SIN_HOME, 'app')
-apppath = APP_HOME
+app_path = APP_HOME
 
-if apppath:
-  sys.path.insert(0, apppath)
+if app_path:
+  sys.path.insert(0, app_path)
 
 from django.conf import settings
 
@@ -429,15 +429,16 @@ VIEWS = {
 class SinClusterListener(object):
 
   def __call__(self, nodes):
-    log.msg("Current nodes = ", nodes)
+    log.msg("Current nodes =", [(key, node.get_url()) for key, node in nodes.iteritems()])
+
 
 if __name__ == '__main__':
   usage = "usage: %prog [options]"
   parser = OptionParser(usage=usage)
-  parser.add_option("", "--node-id", dest="node", type="int",
-                    default=0, help="node id (default 0)")
+  parser.add_option("", "--node-id", dest="node_id", type="int",
+                    default=-1, help="Node id for this host (default -1)")
   parser.add_option("", "--host", dest="host",
-                    default="", help="host name of this node")
+                    default="", help="Host name of this node (used for overriding default one)")
   (options, args) = parser.parse_args()
 
   root = Root()
@@ -447,17 +448,27 @@ if __name__ == '__main__':
   log.startLogging(sys.stdout)
   log.msg("Starting server: %s" % str(datetime.now()))
 
-  if options.node > 0:
-    cc = SinClusterClient(settings.SIN_SERVICE_NAME, settings.ZOOKEEPER_URL, settings.ZOOKEEPER_TIMEOUT)
-    cc.add_listener(SinClusterListener())
-    # XXX add validation here
-    cc.add_node(options.node); time.sleep(1)
-    host = options.host
-    if host == "":
-      host = socket.gethostname()
-    log.msg("Mark node %d: %s available" % (options.node, host))
-    cc.mark_node_available(options.node, host); time.sleep(1)
-
   server = server.Site(root)
   reactor.listenTCP(SIN_AGENT_PORT, server)
+  
+  if options.node_id >= 0:
+    cc = SinClusterClient(settings.SIN_SERVICE_NAME, settings.ZOOKEEPER_URL, settings.ZOOKEEPER_TIMEOUT)
+    cc.add_listener(SinClusterListener())
+
+    nodes = cc.get_registered_nodes()
+    if nodes.get(options.node_id):
+      node = nodes[options.node_id]
+      host = socket.gethostname()
+      if options.host != "":
+        host = options.host
+      if socket.gethostbyname(node.get_host()) == socket.gethostbyname(host):
+        log.msg("Mark %s available" % node.get_url())
+        cc.mark_node_available(options.node_id, node.get_url())
+      else:
+        log.err("Current hostname might not be registered %s!" % host)
+        sys.exit(1)
+    else:
+      log.err("Node id %d is not registered!" % options.node_id)
+      sys.exit(1)
+
   reactor.run()

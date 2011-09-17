@@ -17,14 +17,47 @@ class SinClusterClientError(Exception):
     return repr(self.value)
 
 
+class Node(object):
+
+  def __init__(self, node_id, host, port):
+    self.node_id = node_id
+    self.host = host
+    self.port = port
+
+  def __init__(self, node_id, url):
+    parts = url.split(":")
+    if len(parts) != 2:
+      raise SinClusterClientError("Url for a node is bad: %s" % url)
+    else:
+      self.node_id = int(node_id)
+      self.host = parts[0]
+      self.port = int(parts[1])
+
+  def __str__(self):
+    return "%d:%s:%d" % (self.node_id, self.host, self.port)
+
+  def get_id(self):
+    return self.node_id
+
+  def get_host(self):
+    return self.host
+
+  def get_port(self):
+    return self.port
+
+  def get_url(self):
+    return "%s:%s" % (self.host, self.port)
+
+
 class SinClusterClient(object):
 
-  def __init__(self, service_name, connect_string, timeout = DEFAULT_TIMEOUT):
+  def __init__(self, service_name, connect_string, timeout=DEFAULT_TIMEOUT, default_port=6664):
     self.SERVICE_NODE = "/" + service_name
     self.AVAILABILITY_NODE = self.SERVICE_NODE + "/available"
     self.MEMBERSHIP_NODE = self.SERVICE_NODE + "/members"
     self.connected = False
     self.timeout = timeout
+    self.default_port = default_port
     self.conn_cv = threading.Condition()
     self.conn_cv.acquire()
     self.handle = zookeeper.init(connect_string, self.connection_watcher, timeout)
@@ -36,7 +69,7 @@ class SinClusterClient(object):
       raise SinClusterClientError("Unable to connect to %s" % connect_string)
 
     for path in [self.SERVICE_NODE, self.AVAILABILITY_NODE, self.MEMBERSHIP_NODE]:
-      if (not zookeeper.exists(self.handle, path)):
+      if not zookeeper.exists(self.handle, path):
         zookeeper.create(self.handle, path, "", [ZOO_OPEN_ACL_UNSAFE], 0)
     self.listeners = []
     # Start to watch both /members and /available
@@ -44,7 +77,8 @@ class SinClusterClient(object):
     available = zookeeper.get_children(self.handle, self.AVAILABILITY_NODE, self.watcher)
     self.current_nodes = {}
     for node_id in available:
-      self.current_nodes[int(node_id)] = zookeeper.get(self.handle, self.AVAILABILITY_NODE + "/" + node_id)[0]
+      self.current_nodes[int(node_id)] = Node(int(node_id),
+                                              zookeeper.get(self.handle, self.AVAILABILITY_NODE + "/" + node_id)[0])
 
   def connection_watcher(self, handle, event, state, path):
     self.handle = handle
@@ -80,24 +114,28 @@ class SinClusterClient(object):
     # No need to watch /available here.
     available = zookeeper.get_children(self.handle, self.AVAILABILITY_NODE)
     self.current_nodes.clear()
-    for member in members:
-      if member in available:
-        self.current_nodes[int(member)] = zookeeper.get(self.handle, self.AVAILABILITY_NODE + "/" + member)[0]
+    for node_id in members:
+      if node_id in available:
+        self.current_nodes[int(node_id)] = Node(int(node_id),
+                                                zookeeper.get(self.handle, self.AVAILABILITY_NODE + "/" + node_id)[0])
     self.notify_all()
     
   def handle_availability_changed(self):
     available = zookeeper.get_children(self.handle, self.AVAILABILITY_NODE, self.watcher)
     self.current_nodes.clear()
     for node_id in available:
-      self.current_nodes[int(node_id)] = zookeeper.get(self.handle, self.AVAILABILITY_NODE + "/" + node_id)[0]
+      self.current_nodes[int(node_id)] = Node(int(node_id),
+                                              zookeeper.get(self.handle, self.AVAILABILITY_NODE + "/" + node_id)[0])
     self.notify_all()
 
-  def add_node(self, node_id, data=""):
-    """Add a node to the clusters."""
+  def register_node(self, node_id, host, port=0):
+    """Register a node to the cluster."""
 
     path = self.MEMBERSHIP_NODE + "/" + str(node_id)
+    if port <= 0:
+      port = self.default_port
     try:
-      zookeeper.create(self.handle, path, data, [ZOO_OPEN_ACL_UNSAFE], 0)
+      zookeeper.create(self.handle, path, host + ":" + str(port), [ZOO_OPEN_ACL_UNSAFE], 0)
     except zookeeper.NodeExistsException:
       logger.warn("%s already exists" % path)
 
@@ -109,6 +147,19 @@ class SinClusterClient(object):
       zookeeper.delete(self.handle, path)
     except zookeeper.NoNodeException:
       logger.warn("%s does not exist" % path)
+
+  def get_registered_nodes(self):
+    """Get all registered nodes."""
+
+    nodes = {}
+    try:
+      members = zookeeper.get_children(self.handle, self.MEMBERSHIP_NODE)
+      for node_id in members:
+        nodes[int(node_id)] = Node(int(node_id),
+                                   zookeeper.get(self.handle, self.MEMBERSHIP_NODE + "/" + node_id)[0])
+    except:
+      pass
+    return nodes
 
   def mark_node_available(self, node_id, data=""):
     """Mark a node available."""
@@ -127,6 +178,17 @@ class SinClusterClient(object):
       zookeeper.delete(self.handle, path)
     except zookeeper.NoNodeException:
       logger.warn("%s does not exist" % path)
+
+  def reset(self):
+    """Reset both MEMBERSHIP_NODE and AVAILABILITY_NODE to empty nodes."""
+
+    nodes = zookeeper.get_children(self.handle, self.MEMBERSHIP_NODE)
+    for node_id in nodes:
+      path = self.MEMBERSHIP_NODE + "/" + node_id
+      try:
+        zookeeper.delete(self.handle, path)
+      except zookeeper.NoNodeException:
+        logger.warn("%s does not exist" % path)
 
   def shutdown(self):
     """Shut down the cluster client."""
@@ -158,15 +220,15 @@ if __name__ == '__main__':
   cc.add_listener(SinClusterListener())
 
   if (options.test_node >= 0):
-    cc.add_node(options.test_node)
+    cc.register_node(options.test_node)
     cc.mark_node_available(options.test_node)
     time.sleep(10)
     sys.exit()
 
   # Watcher may not be called if there is no delay
-  cc.add_node(0); time.sleep(1)
-  cc.add_node(1); time.sleep(1)
-  cc.add_node(2); time.sleep(1)
+  cc.register_node(0); time.sleep(1)
+  cc.register_node(1); time.sleep(1)
+  cc.register_node(2); time.sleep(1)
 
   cc.mark_node_available(0); time.sleep(1)
   cc.mark_node_available(1); time.sleep(1)

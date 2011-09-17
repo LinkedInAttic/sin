@@ -37,7 +37,7 @@ SIN_SERVICE_NAME = 'sin'
 
 SENSEI_NODES = {
   "nodes":[
-#    {"node_id":0, "host":"localhost", "port":6664},
+    {"node_id":0, "host":LOCAL_PUB_IP, "port":6664},
     ]
 }
 

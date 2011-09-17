@@ -5,12 +5,12 @@ SIN_HOME = os.path.normpath(os.path.join(os.path.normpath(__file__), '../..'))
 
 APP_HOME = os.path.join(SIN_HOME, 'app')
 
-appsettings = 'settings'
-apppath = APP_HOME
+app_settings = 'settings'
+app_path = APP_HOME
 
-os.environ['DJANGO_SETTINGS_MODULE'] = appsettings
-if apppath:
-  sys.path.insert(0, apppath)
+os.environ['DJANGO_SETTINGS_MODULE'] = app_settings
+if app_path:
+  sys.path.insert(0, app_path)
 
 from twisted.internet import task, reactor
 from twisted.python import log, threadpool
@@ -22,6 +22,11 @@ from django.core.handlers.wsgi import WSGIHandler
 
 from content_store.models import ContentStore 
 from sin_site.models import SinSite
+from optparse import OptionParser
+from cluster.models import Group, Node
+import zookeeper
+from sincc import SinClusterClient
+from django.conf import settings
 
 def initialize():
   current_site = Site.objects.get_current()
@@ -52,19 +57,55 @@ def handle_signal(signum,stackframe):
     pool.stop()
     reactor.stop()
 
+class SinClusterListener(object):
+
+  def __call__(self, nodes):
+    # Get all available nodes from ZooKeeper and update the node status in DB
+    for db_node in Node.objects.all():
+      node = nodes.get(db_node.id)
+      if node and node.get_host() == db_node.host:
+        db_node.online = True
+      else:
+        db_node.online = False
+      db_node.save()
+
 signal.signal(signal.SIGHUP, handle_signal)
 signal.signal(signal.SIGINT, handle_signal)
 signal.signal(signal.SIGTERM, handle_signal)
 
 def main(argv):
+  usage = "usage: %prog [options]"
+  parser = OptionParser(usage=usage)
+  parser.add_option("-f", "--force", action="store_true", dest="force", help="Overwrite existing Sensei node info")
+  parser.add_option("-c", "--reset", action="store_true", dest="reset", help="Remove all registered nodes and then exit")
+  parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="Verbose mode")
+  (options, args) = parser.parse_args()
+
   logging.basicConfig(format='[%(asctime)s]%(levelname)-8s"%(message)s"', datefmt='%Y-%m-%d %a %H:%M:%S')
   
-  verbose = False
-  if '-v' in sys.argv:
-    verbose = True
-  
-  if verbose:
-    logging.getLogger().setLevel(logging.NOTSET)
+  logger = logging.getLogger()
+  logger.setLevel(logging.INFO)
+
+  if options.verbose:
+    logger.setLevel(logging.NOTSET)
+
+  zookeeper.set_log_stream(open("/dev/null"))
+  cc = SinClusterClient(settings.SIN_SERVICE_NAME, settings.ZOOKEEPER_URL, settings.ZOOKEEPER_TIMEOUT)
+  cc.add_listener(SinClusterListener())
+
+  if options.force or options.reset:
+    cc.reset()
+    Node.objects.all().delete()
+    logger.info("Removed all registered nodes from the system.")
+    logger.info("You may want to shut down all the agents.")
+    if options.reset:
+      return
+
+  for node in settings.SENSEI_NODES["nodes"]:
+    if not Node.objects.filter(id=node["node_id"]).exists():
+      Node.objects.create(id=node["node_id"], host=node["host"], agent_port=node["port"],
+                          online=False, group=Group(pk=1))
+      cc.register_node(node["node_id"], node["host"], port=node["port"])
 
   initialize()
   
