@@ -81,16 +81,17 @@ def main(argv):
   parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="Verbose mode")
   (options, args) = parser.parse_args()
 
-  logging.basicConfig(format='[%(asctime)s]%(levelname)-8s"%(message)s"', datefmt='%Y-%m-%d %a %H:%M:%S')
+  logging.basicConfig(format='[%(asctime)s] %(levelname)-8s"%(message)s"', datefmt='%Y-%m-%d %a %H:%M:%S')
   
-  logger = logging.getLogger()
-  logger.setLevel(logging.INFO)
+  logger = logging.getLogger("sin_server")
 
   if options.verbose:
     logger.setLevel(logging.NOTSET)
 
   zookeeper.set_log_stream(open("/dev/null"))
   cc = SinClusterClient(settings.SIN_SERVICE_NAME, settings.ZOOKEEPER_URL, settings.ZOOKEEPER_TIMEOUT)
+  cc.logger.setLevel(logging.INFO)
+  cc.logger.addHandler(logging.StreamHandler())
   cc.add_listener(SinClusterListener())
 
   if options.force or options.reset:

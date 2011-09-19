@@ -6,9 +6,8 @@ from optparse import OptionParser
 DEFAULT_TIMEOUT = 30000
 ZOO_OPEN_ACL_UNSAFE = {"perms":0x1f, "scheme":"world", "id" :"anyone"}
 
-logger = logging.getLogger()
-
 class SinClusterClientError(Exception):
+  """Exception raised for all errors related to SinClusterClient."""
 
   def __init__(self, value):
     self.value = value
@@ -17,7 +16,20 @@ class SinClusterClientError(Exception):
     return repr(self.value)
 
 
-class Node(object):
+class Node:
+  """A node in a Sin cluster.
+
+  A node in a Sin cluster consists of three parts:
+
+    1. node Id
+    2. host
+    3. port
+
+  Node Id is a none-negative integer uniquely assigned to each node.
+  "host:port" is also called the url of this node, which should also be
+  unique in a Sin cluster.
+
+  """
 
   def __init__(self, node_id, host, port):
     self.node_id = node_id
@@ -49,7 +61,8 @@ class Node(object):
     return "%s:%s" % (self.host, self.port)
 
 
-class SinClusterClient(object):
+class SinClusterClient:
+  """Sin cluster client class."""
 
   def __init__(self, service_name, connect_string, timeout=DEFAULT_TIMEOUT, default_port=6664):
     self.SERVICE_NODE = "/" + service_name
@@ -64,6 +77,7 @@ class SinClusterClient(object):
     self.conn_cv.wait(timeout / 1000)
     self.conn_cv.release()
     self.watcher_lock = threading.Lock()
+    self.logger = logging.getLogger("sincc")
 
     if not self.connected:
       raise SinClusterClientError("Unable to connect to %s" % connect_string)
@@ -75,10 +89,10 @@ class SinClusterClient(object):
     # Start to watch both /members and /available
     zookeeper.get_children(self.handle, self.MEMBERSHIP_NODE, self.watcher)
     available = zookeeper.get_children(self.handle, self.AVAILABILITY_NODE, self.watcher)
-    self.current_nodes = {}
+    self.available_nodes = {}
     for node_id in available:
-      self.current_nodes[int(node_id)] = Node(int(node_id),
-                                              zookeeper.get(self.handle, self.AVAILABILITY_NODE + "/" + node_id)[0])
+      self.available_nodes[int(node_id)] = Node(int(node_id),
+                                                zookeeper.get(self.handle, self.AVAILABILITY_NODE + "/" + node_id)[0])
 
   def connection_watcher(self, handle, event, state, path):
     self.handle = handle
@@ -92,14 +106,14 @@ class SinClusterClient(object):
 
   def notify_all(self):
     for listener in self.listeners:
-      listener(self.current_nodes)
+      listener(self.available_nodes)
 
   def watcher(self, handle, event, state, path):
     """Watching node changes."""
 
     self.watcher_lock.acquire()
-    logger.debug("Watcher called: handle=%d event=%d state=%d path=%s" %
-                 (handle, event, state, path))
+    self.logger.debug("Watcher called: handle=%d event=%d state=%d path=%s" %
+                      (handle, event, state, path))
 
     if event == zookeeper.CHILD_EVENT:
       if path == self.AVAILABILITY_NODE:
@@ -113,19 +127,19 @@ class SinClusterClient(object):
     members = zookeeper.get_children(self.handle, self.MEMBERSHIP_NODE, self.watcher)
     # No need to watch /available here.
     available = zookeeper.get_children(self.handle, self.AVAILABILITY_NODE)
-    self.current_nodes.clear()
+    self.available_nodes.clear()
     for node_id in members:
       if node_id in available:
-        self.current_nodes[int(node_id)] = Node(int(node_id),
-                                                zookeeper.get(self.handle, self.AVAILABILITY_NODE + "/" + node_id)[0])
+        self.available_nodes[int(node_id)] = Node(int(node_id),
+                                                  zookeeper.get(self.handle, self.AVAILABILITY_NODE + "/" + node_id)[0])
     self.notify_all()
     
   def handle_availability_changed(self):
     available = zookeeper.get_children(self.handle, self.AVAILABILITY_NODE, self.watcher)
-    self.current_nodes.clear()
+    self.available_nodes.clear()
     for node_id in available:
-      self.current_nodes[int(node_id)] = Node(int(node_id),
-                                              zookeeper.get(self.handle, self.AVAILABILITY_NODE + "/" + node_id)[0])
+      self.available_nodes[int(node_id)] = Node(int(node_id),
+                                                zookeeper.get(self.handle, self.AVAILABILITY_NODE + "/" + node_id)[0])
     self.notify_all()
 
   def register_node(self, node_id, host, port=0):
@@ -135,9 +149,11 @@ class SinClusterClient(object):
     if port <= 0:
       port = self.default_port
     try:
-      zookeeper.create(self.handle, path, host + ":" + str(port), [ZOO_OPEN_ACL_UNSAFE], 0)
+      data = host + ":" + str(port)
+      zookeeper.create(self.handle, path, data, [ZOO_OPEN_ACL_UNSAFE], 0)
+      self.logger.info("Node %d: %s is registered" % (node_id, data))
     except zookeeper.NodeExistsException:
-      logger.warn("%s already exists" % path)
+      self.logger.warn("%s already exists" % path)
 
   def remove_node(self, node_id):
     """Remove a node from the cluster."""
@@ -145,8 +161,9 @@ class SinClusterClient(object):
     path = self.MEMBERSHIP_NODE + "/" + str(node_id)
     try:
       zookeeper.delete(self.handle, path)
+      self.logger.info("Node %d is removed" % node_id)
     except zookeeper.NoNodeException:
-      logger.warn("%s does not exist" % path)
+      self.logger.warn("%s does not exist" % path)
 
   def get_registered_nodes(self):
     """Get all registered nodes."""
@@ -167,8 +184,9 @@ class SinClusterClient(object):
     path = self.AVAILABILITY_NODE + "/" + str(node_id)
     try:
       zookeeper.create(self.handle, path, data, [ZOO_OPEN_ACL_UNSAFE], zookeeper.EPHEMERAL)
+      self.logger.info("Node %d: %s is now available" % (node_id, data))
     except zookeeper.NodeExistsException:
-      logger.warn("%s already exists" % path)
+      self.logger.warn("%s already exists" % path)
 
   def mark_node_unavailable(self, node_id):
     """Mark a node unavailable."""
@@ -176,8 +194,9 @@ class SinClusterClient(object):
     path = self.AVAILABILITY_NODE + "/" + str(node_id)
     try:
       zookeeper.delete(self.handle, path)
+      self.logger.info("Node %d: %s is now unavailable" % (node_id, data))
     except zookeeper.NoNodeException:
-      logger.warn("%s does not exist" % path)
+      self.logger.warn("%s does not exist" % path)
 
   def reset(self):
     """Reset both MEMBERSHIP_NODE and AVAILABILITY_NODE to empty nodes."""
@@ -187,13 +206,14 @@ class SinClusterClient(object):
       path = self.MEMBERSHIP_NODE + "/" + node_id
       try:
         zookeeper.delete(self.handle, path)
+        self.logger.info("Node %s is removed (because of reset)" % node_id)
       except zookeeper.NoNodeException:
-        logger.warn("%s does not exist" % path)
+        self.logger.warn("%s does not exist" % path)
 
   def shutdown(self):
     """Shut down the cluster client."""
 
-    logger.info("Shutting down zookeeper session: %d" % self.handle)
+    self.logger.info("Shutting down zookeeper session: %d" % self.handle)
     zookeeper.close(self.handle)
 
 
@@ -210,14 +230,14 @@ if __name__ == '__main__':
   
   zookeeper.set_log_stream(open("/dev/null"))
 
-  logger.setLevel(logging.DEBUG)
+  cc = SinClusterClient("sin", options.servers, options.timeout)
+  cc.add_listener(SinClusterListener())
+
+  cc.logger.setLevel(logging.DEBUG)
   formatter = logging.Formatter("%(asctime)s %(filename)s:%(lineno)d - %(message)s")
   stream_handler = logging.StreamHandler()
   stream_handler.setFormatter(formatter)
-  logger.addHandler(stream_handler)
-
-  cc = SinClusterClient("sin", options.servers, options.timeout)
-  cc.add_listener(SinClusterListener())
+  cc.logger.addHandler(stream_handler)
 
   if (options.test_node >= 0):
     cc.register_node(options.test_node)

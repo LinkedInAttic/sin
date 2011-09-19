@@ -928,13 +928,14 @@ def buildClusterSVG(store, stream, xml_header=True):
   useful for generating an SVG file).
   """
 
-  layout = ClusterLayout.ClusterLayout()
+  layout = ClusterLayout.ClusterLayout(node_comment_color='white',
+                                       max_host_len=15)
 
   xOffset = 80
   yOffset = 10
   legend = 40
   replicas = store.replica
-  members = store.membership_set.order_by("node")
+  members = store.membership_set.order_by('node')
   totalNodes = len(members)
   numNodesPerReplica = totalNodes / store.replica
   remainingNodes = totalNodes % store.replica
@@ -945,8 +946,9 @@ def buildClusterSVG(store, stream, xml_header=True):
   for i in range(store.replica + extraRow):
     y1 = yOffset + i * ClusterLayout.NODE_DISTANCE_Y
     layout.addShape(Label(10, y1 + ClusterLayout.NODE_HEIGHT/2 + 2,
-                          "Replica " + str(i+1),
-                          fontSize=12, bold=True, color="darkblue"))
+                          'Replica ' + str(i+1),
+                          font_size=12, bold=False, color='white',
+                          alignment_baseline='middle'))
     numNodes = numNodesPerReplica
     if i == store.replica:
       # The replica row for extra nodes
@@ -956,13 +958,19 @@ def buildClusterSVG(store, stream, xml_header=True):
       current_node = members[node_index].node
       x1 = xOffset + j * ClusterLayout.NODE_DISTANCE_X
       layout.addNode(x1, y1,
-                     node_id = current_node.id,
-                     online = current_node.online,
-                     host = current_node.host,
-                     parts = members[node_index].parts)
+                     node_id=current_node.id,
+                     online=current_node.online,
+                     host=current_node.host,
+                     parts=members[node_index].parts)
 
   layout.setSize(xOffset + numNodesPerReplica * ClusterLayout.NODE_DISTANCE_X,
                  yOffset + (store.replica + extraRow) * ClusterLayout.NODE_DISTANCE_Y)
+
+  layout.addShape(Rectangle(1, 1,
+                            xOffset + numNodesPerReplica * ClusterLayout.NODE_DISTANCE_X - 1,
+                            yOffset + (store.replica + extraRow) * ClusterLayout.NODE_DISTANCE_Y - 1,
+                            color='white',
+                            fillcolor='none'))
 
   plotter = SvgPlotter(stream)
   plotter.visitImage(layout, xml_header)
