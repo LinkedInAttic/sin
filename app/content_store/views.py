@@ -10,7 +10,7 @@ from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
 from django.core.serializers.json import DateTimeAwareJSONEncoder
 from django.http import HttpResponse
-from django.template import loader, RequestContext
+from django.template import loader, Context
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseNotFound
 from django.http import HttpResponseGone
@@ -142,7 +142,7 @@ def deleteStore(request,store_name):
     params = {}
     params["name"] = store_name
 
-    members = store.membership_set.order_by("node")
+    members = store.members.order_by("node")
     for member in members:
       output = urllib2.urlopen("http://%s:%d/%s" % (member.node.host,
                                                     member.node.agent_port,
@@ -175,7 +175,7 @@ def purgeStore(request, store_name):
     params = {}
     params["name"] = store_name
 
-    members = store.membership_set.order_by("node")
+    members = store.members.order_by("node")
     for member in members:
       output = urllib2.urlopen("http://%s:%d/%s" % (member.node.host,
                                                     member.node.agent_port,
@@ -519,8 +519,7 @@ def updateDoc(request,store_name):
     resp = {'ok':False,'error':e.message}
   return HttpResponseServerError(json.dumps(resp))
 
-@login_required
-def startStore(request, store, config_id=None, restart=False, node=None):
+def do_start_store(request, store, config_id=None, restart=False, node=None):
   try:
     if not isinstance(store, ContentStore):
       try:
@@ -577,11 +576,11 @@ def startStore(request, store, config_id=None, restart=False, node=None):
     }
 
     if node is None:
-      members = store.membership_set.order_by("node")
+      members = store.members.order_by("node")
     else:
-      members = store.membership_set.filter(node=node)
+      members = store.members.filter(node=node)
     for member in members:
-      context = RequestContext(request, {
+      context = Context({
          'node_id'            : member.node_id,
          'node_partitions'    : member.parts[1:len(member.parts)-1],
          'max_partition_id'   : store.partitions - 1,
@@ -625,6 +624,10 @@ def startStore(request, store, config_id=None, restart=False, node=None):
     return HttpResponseServerError(json.dumps({'ok':False,'error':e.message}))
 
 @login_required
+def startStore(request, store, config_id=None, restart=False, node=None):
+  return do_start_store(request, store, config_id, restart, node)
+
+@login_required
 def stopStore(request, store_name):
   try:
     try:
@@ -638,7 +641,7 @@ def stopStore(request, store_name):
     params = {}
     params["name"] = store_name
 
-    members = store.membership_set.order_by("node")
+    members = store.members.order_by("node")
     for member in members:
       output = urllib2.urlopen("http://%s:%d/%s" % (member.node.host,
                                                     member.node.agent_port,
@@ -935,7 +938,7 @@ def buildClusterSVG(store, stream, xml_header=True):
   yOffset = 10
   legend = 40
   replicas = store.replica
-  members = store.membership_set.order_by('node')
+  members = store.members.order_by('node')
   totalNodes = len(members)
   numNodesPerReplica = totalNodes / store.replica
   remainingNodes = totalNodes % store.replica
@@ -999,7 +1002,7 @@ def testSetupCluster():
   for node in store1.nodes.all():
     print node.host
 
-  for member in store1.membership_set.order_by("node"):
+  for member in store1.members.order_by("node"):
     print member.node.host, member.replica, member.parts
 
   buildClusterSVG(store1, file("/tmp/%s.svg" % store1.name, "w+"), True)
@@ -1022,7 +1025,7 @@ def testSetupCluster():
   for node in store2.nodes.all():
     print node.host
 
-  for member in store2.membership_set.order_by("node"):
+  for member in store2.members.order_by("node"):
     print member.node.host, member.replica, member.parts
 
   buildClusterSVG(store2, file("/tmp/%s.svg" % store2.name, "w+"), True)

@@ -186,10 +186,15 @@ LOGGING = {
       }
     },
   'loggers': {
+    'sin_server': {
+      'handlers': ['console', 'mail_admins'],
+      'level': 'INFO',
+      'propagate': False,
+      },
     'content_store': {
       'handlers': ['console', 'mail_admins'],
       'level': 'INFO',
-      'propagate': True,
+      'propagate': False,
       },
     'django.request': {
       'handlers': ['mail_admins'],

@@ -21,7 +21,7 @@ class Node(models.Model):
     return u"%s:%s:%s" % (self.group.name, self.host, self.agent_port)
 
 class Membership(models.Model):
-  node      = models.ForeignKey(Node)
-  store     = models.ForeignKey("content_store.ContentStore")
+  node      = models.ForeignKey(Node, related_name="members")
+  store     = models.ForeignKey("content_store.ContentStore", related_name="members")
   replica   = models.IntegerField(default=0)
   parts     = models.CommaSeparatedIntegerField(max_length=1024)

@@ -20,13 +20,18 @@ from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.handlers.wsgi import WSGIHandler
 
-from content_store.models import ContentStore 
-from sin_site.models import SinSite
 from optparse import OptionParser
-from cluster.models import Group, Node
 import zookeeper
 from sincc import SinClusterClient
-from django.conf import settings
+
+from utils import enum
+
+from content_store.models import ContentStore 
+from content_store.views import do_start_store
+from cluster.models import Group, Node
+from sin_site.models import SinSite
+
+logger = logging.getLogger("sin_server")
 
 def initialize():
   current_site = Site.objects.get_current()
@@ -61,13 +66,27 @@ class SinClusterListener(object):
 
   def __call__(self, nodes):
     # Get all available nodes from ZooKeeper and update the node status in DB
+    logger.info("Current nodes = %s", [(key, node.get_url()) for key, node in nodes.iteritems()])
     for db_node in Node.objects.all():
       node = nodes.get(db_node.id)
       if node and node.get_host() == db_node.host:
-        db_node.online = True
+        if not db_node.online:
+          db_node.online = True
+          db_node.save()
+
+          logger.info('Node "%s: %s:%s" is now online, try to start all stores served by this node...' % (db_node.id,
+                                                                                                          db_node.host,
+                                                                                                          db_node.agent_port))
+          for store in db_node.stores.filter(status=enum.STORE_STATUS['running']):
+            try:
+              do_start_store(None, store, node=db_node)
+            except Exception as e:
+              logger.exception(e);
       else:
-        db_node.online = False
-      db_node.save()
+        if db_node.online:
+          logger.info('Node "%s: %s:%s" went offline.' % (db_node.id, db_node.host, db_node.agent_port))
+          db_node.online = False
+          db_node.save()
 
 signal.signal(signal.SIGHUP, handle_signal)
 signal.signal(signal.SIGINT, handle_signal)
@@ -83,8 +102,6 @@ def main(argv):
 
   logging.basicConfig(format='[%(asctime)s] %(levelname)-8s"%(message)s"', datefmt='%Y-%m-%d %a %H:%M:%S')
   
-  logger = logging.getLogger("sin_server")
-
   if options.verbose:
     logger.setLevel(logging.NOTSET)
 
@@ -104,6 +121,9 @@ def main(argv):
     if options.reset:
       return
 
+  # Reset online status, if the node is really online, we will send a start commend anyway.
+  Node.objects.filter(online=True).update(online=False)
+
   for node in settings.SENSEI_NODES["nodes"]:
     if not Node.objects.filter(id=node["node_id"]).exists():
       Node.objects.create(id=node["node_id"], host=node["host"], agent_port=node["port"],
@@ -119,6 +139,12 @@ def main(argv):
   site = server.Site(root)
   reactor.listenTCP(settings.SIN_LISTEN, site)
   pool.start()
+
+  def post_initialization():
+    cc.notify_all()
+
+  reactor.callInThread(post_initialization)
+
   reactor.run(installSignalHandlers=False)
 
 def target(*args):

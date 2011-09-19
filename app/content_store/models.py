@@ -95,7 +95,7 @@ class ContentStore(models.Model):
 
   group = models.ForeignKey(Group, related_name="stores", default=1)
 
-  nodes = models.ManyToManyField(Node, through="cluster.Membership")
+  nodes = models.ManyToManyField(Node, through="cluster.Membership", related_name="stores")
 
   collaborators = models.ManyToManyField(User, related_name="my_stores")
 
