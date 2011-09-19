@@ -89,6 +89,8 @@ def main(argv):
   if options.verbose:
     logger.setLevel(logging.NOTSET)
 
+  initialize()
+
   zookeeper.set_log_stream(open("/dev/null"))
   cc = SinClusterClient(settings.SIN_SERVICE_NAME, settings.ZOOKEEPER_URL, settings.ZOOKEEPER_TIMEOUT)
   cc.add_listener(SinClusterListener())
@@ -107,8 +109,6 @@ def main(argv):
                           online=False, group=Group(pk=1))
       cc.register_node(node["node_id"], node["host"], port=node["port"])
 
-  initialize()
-  
   static_files = static.File(os.path.join(os.path.join(SIN_HOME, 'admin')))
   WSGI = wsgi.WSGIResource(reactor, pool, WSGIHandler())
   root = Root(WSGI)
