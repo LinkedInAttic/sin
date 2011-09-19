@@ -11,7 +11,7 @@ import time
 from twisted.web.server import NOT_DONE_YET
 import zookeeper
 import threading
-from sincc import SinClusterClient
+import logging
 from optparse import OptionParser
 import socket
 
@@ -25,11 +25,10 @@ app_path = APP_HOME
 if app_path:
   sys.path.insert(0, app_path)
 
+from sincc import SinClusterClient
 from django.conf import settings
 
 CALL_BACK_LATER = 'CallBackLater'
-
-SIN_AGENT_PORT = 6664
 
 #
 # The dict for all running Sensei processes
@@ -42,17 +41,13 @@ running = {}
 class Root(Resource):
 
   def render_GET(self, request):
-    """
-    get response method for the root resource
-    localhost:8000/
-    """
+    """Get response method for the root resource localhost:8000/"""
+
     return 'Welcome to the REST API'
 
   def getChild(self, name, request):
-    """
-    We overrite the get child function so that we can handle invalid
-    requests
-    """
+    """Overwrite the get child function so that we can handle invalid requests."""
+
     if name == '':
       return self
     else:
@@ -71,9 +66,8 @@ class PageNotFoundError(Resource):
 class StartStore(Resource):
 
   def render_GET(self, request):
-    """
-    Start a Sensei store.
-    """
+    """Start a Sensei store."""
+
     global running
     try:
       name = request.args["name"][0]
@@ -120,9 +114,8 @@ class StartStore(Resource):
 class RestartStore(Resource):
 
   def render_GET(self, request, isCallback=False):
-    """
-    Restart a Sensei store.
-    """
+    """Restart a Sensei store."""
+
     try:
       name    = request.args["name"][0]
       vm_args = request.args["vm_args"][0]
@@ -183,9 +176,8 @@ def doStartStore(name, vm_args, sensei_port, broker_port,
                  sensei_properties, sensei_custom_facets,
                  sensei_plugins, schema, webapps, resources,
                  libs):
-  """
-  Do the real work to get a Sensei server started for a store.
-  """
+  """Do the real work to get a Sensei server started for a store."""
+
   store_home = os.path.join(settings.STORE_HOME, name)
   def _ensure_dir(d):
     try:
@@ -257,7 +249,8 @@ def doStartStore(name, vm_args, sensei_port, broker_port,
 
     architecture = "-d%s" % platform.architecture()[0][:2]
 
-    cmd = ["nohup", "java", "-server", architecture, vm_args, "-classpath", classpath, "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf, "&"]
+    cmd = ["nohup", "java", "-server", architecture, vm_args, "-classpath", classpath,
+           "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf, "&"]
     print ' '.join(cmd)
     p = subprocess.Popen(cmd, cwd=store_home, stdout=outFile, stderr=errFile)
     running[name] = p.pid
@@ -312,9 +305,10 @@ def doStartStore(name, vm_args, sensei_port, broker_port,
 class DeleteStore(Resource):
   def render_GET(self, request, isCallback=False):
     """Delete a Sensei store."""
-    log.msg("in DeleteStore...")
+
     try:
       name = request.args["name"][0]
+      log.msg('Delete store %s' % name)
       res, msg = doStopStore(name, 9)
       if msg == CALL_BACK_LATER:
         reactor.callLater(1, self.render_GET, request, True)
@@ -326,7 +320,7 @@ class DeleteStore(Resource):
           shutil.rmtree(store_home)
         except OSError as ose:
           if ose.errno == errno.ENOENT:
-            log.msg("store home for %s does not exist." % name)
+            log.msg("Store home for %s does not exist." % name)
           else:
             raise
         resp = {
@@ -357,9 +351,10 @@ class DeleteStore(Resource):
 class StopStore(Resource):
   def render_GET(self, request, isCallback=False):
     """Stop a Sensei store."""
-    log.msg("in StopStore...")
+
     try:
       name = request.args["name"][0]
+      log.msg('Stopping store %s' % name)
 
       res, msg = doStopStore(name)
       if msg == CALL_BACK_LATER:
@@ -433,13 +428,18 @@ class SinClusterListener(object):
 
 
 if __name__ == '__main__':
-  usage = "usage: %prog [options]"
+  usage = "usage: %prog [options] node_id"
   parser = OptionParser(usage=usage)
-  parser.add_option("", "--node-id", dest="node_id", type="int",
-                    default=-1, help="Node id for this host (default -1)")
   parser.add_option("", "--host", dest="host",
                     default="", help="Host name of this node (used for overriding default one)")
   (options, args) = parser.parse_args()
+
+  if len(args) != 1:
+    print "Required argument, node_id, is missing"
+    print usage
+    sys.exit(1)
+
+  node_id = int(args[0])
 
   root = Root()
   for viewName, className in VIEWS.items():
@@ -449,26 +449,27 @@ if __name__ == '__main__':
   log.msg("Starting server: %s" % str(datetime.now()))
 
   server = server.Site(root)
-  reactor.listenTCP(SIN_AGENT_PORT, server)
   
-  if options.node_id >= 0:
-    cc = SinClusterClient(settings.SIN_SERVICE_NAME, settings.ZOOKEEPER_URL, settings.ZOOKEEPER_TIMEOUT)
-    cc.add_listener(SinClusterListener())
+  cc = SinClusterClient(settings.SIN_SERVICE_NAME, settings.ZOOKEEPER_URL, settings.ZOOKEEPER_TIMEOUT)
+  cc.logger.setLevel(logging.DEBUG)
+  cc.logger.addHandler(logging.StreamHandler())
+  cc.add_listener(SinClusterListener())
 
-    nodes = cc.get_registered_nodes()
-    if nodes.get(options.node_id):
-      node = nodes[options.node_id]
-      host = socket.gethostname()
-      if options.host != "":
-        host = options.host
-      if socket.gethostbyname(node.get_host()) == socket.gethostbyname(host):
-        log.msg("Mark %s available" % node.get_url())
-        cc.mark_node_available(options.node_id, node.get_url())
-      else:
-        log.err("Current hostname might not be registered %s!" % host)
-        sys.exit(1)
+  nodes = cc.get_registered_nodes()
+  if nodes.get(node_id):
+    node = nodes[node_id]
+    host = socket.gethostname()
+    if options.host != "":
+      host = options.host
+    if socket.gethostbyname(node.get_host()) == socket.gethostbyname(host):
+      reactor.listenTCP(node.get_port(), server)
+      log.msg("Mark %s available" % node.get_url())
+      cc.mark_node_available(node_id, node.get_url())
     else:
-      log.err("Node id %d is not registered!" % options.node_id)
+      log.err("Hostname, %s, might not have been registered!" % host)
       sys.exit(1)
+  else:
+    log.err("Node id %d is not registered!" % node_id)
+    sys.exit(1)
 
   reactor.run()
