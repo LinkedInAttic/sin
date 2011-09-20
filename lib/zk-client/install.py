@@ -36,5 +36,6 @@ else:
   print "%s is not supported yet!" % system
   sys.exit()
 
+os.system("mkdir -p /usr/local/lib")
 os.system("cp -fR %s/libzookeeper_* /usr/local/lib" % src_lib_dir)
 os.system("cp -f %s/zookeeper.so %s" % (src_lib_dir, site_pkg_path))
