@@ -477,4 +477,9 @@ if __name__ == '__main__':
     log.err("Node id %d is not registered!" % node_id)
     sys.exit(1)
 
+  def cleanup_before_shutdown():
+    log.msg('Do some cleanups before shutdown...')
+    cc.mark_node_unavailable(node_id)
+
+  reactor.addSystemEventTrigger('before', 'shutdown', cleanup_before_shutdown)
   reactor.run()
