@@ -462,6 +462,11 @@ if __name__ == '__main__':
     if options.host != "":
       host = options.host
     if socket.gethostbyname(node.get_host()) == socket.gethostbyname(host):
+      # Force this node to be offline first.  (In the case where
+      # sin_agent is stopped and then immediately restarted, the
+      # ephemeral node created in the last session may still be there
+      # when sin_agent is restarted.)
+      cc.mark_node_unavailable(node_id)
       reactor.listenTCP(node.get_port(), server)
       log.msg("Mark %s available" % node.get_url())
       cc.mark_node_available(node_id, node.get_url())

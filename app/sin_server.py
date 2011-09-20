@@ -121,7 +121,12 @@ def main(argv):
     if options.reset:
       return
 
-  # Reset online status, if the node is really online, we will send a start commend anyway.
+  # Reset online status.  Some node(s) might have gone offline while Sin
+  # server was down, therefore the server did not get notified and still
+  # keeps the old "online" status for the node(s).  If the node(s) are
+  # still online, we will send the start-store commands to them anyway.
+  # If a store is already running on a node, the start-store command
+  # will simply become a no-op.
   Node.objects.filter(online=True).update(online=False)
 
   for node in settings.SENSEI_NODES["nodes"]:

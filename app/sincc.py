@@ -193,10 +193,11 @@ class SinClusterClient:
 
     path = self.AVAILABILITY_NODE + "/" + str(node_id)
     try:
+      data = zookeeper.get(self.handle, path)[0]
       zookeeper.delete(self.handle, path)
       self.logger.info("Node %d: %s is now unavailable" % (node_id, data))
     except zookeeper.NoNodeException:
-      self.logger.warn("%s does not exist" % path)
+      self.logger.warn("Tried to mark node %s unavailable, but it did not exist" % path)
 
   def reset(self):
     """Reset both MEMBERSHIP_NODE and AVAILABILITY_NODE to empty nodes."""
