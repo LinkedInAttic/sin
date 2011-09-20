@@ -43,6 +43,8 @@ default_schema = {
   }
 }
 
+MAX_ATTEMPTS = 20
+
 def get_store_name_cache_key(name):
   return 'store_%s' % name
 
@@ -145,9 +147,9 @@ class ContentStore(models.Model):
       return {}
 
     res = {}
-    retry = 20
-    while retry > 0:
-      retry -= 1
+    retry = 0
+    while retry < MAX_ATTEMPTS:
+      retry += 1
       try:
         url = 'http://%s:%s/sensei/sysinfo' % (socket.gethostbyname(self.broker_host), self.broker_port)
         doc = urllib2.urlopen(url).read()
@@ -159,8 +161,11 @@ class ContentStore(models.Model):
           break;
       except:
         # logging.exception(e)
-        logger.info("Hit an exception. Try to get sysinfo again...")
+        logger.info('Hit an exception. Try to get sysinfo for store "%s" again...' % self.name)
         time.sleep(2)
+
+    logger.info('Got sysinfo for store "%s" after %d %s' %
+                (self.name, retry, retry == 1 and 'try' or 'tries')) 
 
     return res
 
