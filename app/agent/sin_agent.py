@@ -1,4 +1,4 @@
-import re, sys, json, shutil, errno, platform
+import re, sys, json, shutil, errno, platform, signal
 import random, os, subprocess
 from twisted.internet import defer, reactor
 from twisted.web import server, resource
@@ -71,8 +71,8 @@ class StartStore(Resource):
     global running
     try:
       name = request.args["name"][0]
-      pid = running.get(name)
-      if pid:
+      p = running.get(name)
+      if p:
         return json.dumps({
           'ok':  False,
           'msg': 'store "%s" already started.' % name,
@@ -253,7 +253,7 @@ def doStartStore(name, vm_args, sensei_port, broker_port,
            "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf, "&"]
     print ' '.join(cmd)
     p = subprocess.Popen(cmd, cwd=store_home, stdout=outFile, stderr=errFile)
-    running[name] = p.pid
+    running[name] = p
 
   d = defer.Deferred()
   ongoing_set = set([f['url'] for f in webapps])
@@ -309,7 +309,7 @@ class DeleteStore(Resource):
     try:
       name = request.args["name"][0]
       log.msg('Delete store %s' % name)
-      res, msg = doStopStore(name, 9)
+      res, msg = doStopStore(name, True)
       if msg == CALL_BACK_LATER:
         reactor.callLater(1, self.render_GET, request, True)
         return NOT_DONE_YET
@@ -380,16 +380,19 @@ class StopStore(Resource):
     return self.render_GET(request)
 
 
-def doStopStore(name, sig=15):
+def doStopStore(name, kill=False):
   """Stop a Sensei store."""
   global running
   try:
-    pid = running.get(name)
-    if pid:
-      log.msg("Stopping existing process %d for store %s" % (pid, name))
-      os.kill(pid, sig)
+    p = running.get(name)
+    if p:
+      log.msg("Stopping existing process %d for store %s" % (p.pid, name))
+      if kill:
+        p.kill()
+      else:
+        p.terminate()
       psOutput = ''
-      ps = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (pid, name),
+      ps = subprocess.Popen("ps ax|grep -e '^%d.*%s'" % (p.pid, name),
                                   shell=True, stdout=subprocess.PIPE)
       while True:
         try:
@@ -402,7 +405,7 @@ def doStopStore(name, sig=15):
             raise
 
       if len(psOutput) > 0:
-        print "Waiting for process %d to die" % pid
+        print "Waiting for process %d to die" % p.pid
         return False, CALL_BACK_LATER
 
       del running[name]
@@ -427,6 +430,43 @@ class SinClusterListener(object):
     log.msg("Current nodes =", [(key, node.get_url()) for key, node in nodes.iteritems()])
 
 
+cluster_client = None
+
+def handle_signal(signum,stackframe):
+  if signum in [signal.SIGINT, signal.SIGTERM]:
+    ### Cleanup ###
+    log.msg('Do some cleanups before shutdown...')
+
+    reactor.stop()
+    if cluster_client:
+      cluster_client.mark_node_unavailable(node_id)
+
+    processes = running.values()
+    for p in processes:
+      p.terminate()
+
+    log.msg('Waiting for all store process dead, or kill them after 300 seconds.')
+    beginning = time.time()
+    while True:
+      all_dead = True
+      for p in processes:
+        if p.poll() is None:
+          all_dead = False
+          break
+      if all_dead:
+        break
+      passed = time.time() - beginning
+      if passed > 300:
+        for p in processes:
+          if p.poll() is None:
+            p.kill()
+        break
+      time.sleep(0.1)
+
+signal.signal(signal.SIGHUP, handle_signal)
+signal.signal(signal.SIGINT, handle_signal)
+signal.signal(signal.SIGTERM, handle_signal)
+
 if __name__ == '__main__':
   usage = "usage: %prog [options] node_id"
   parser = OptionParser(usage=usage)
@@ -450,12 +490,12 @@ if __name__ == '__main__':
 
   server = server.Site(root)
   
-  cc = SinClusterClient(settings.SIN_SERVICE_NAME, settings.ZOOKEEPER_URL, settings.ZOOKEEPER_TIMEOUT)
-  cc.logger.setLevel(logging.DEBUG)
-  cc.logger.addHandler(logging.StreamHandler())
-  cc.add_listener(SinClusterListener())
+  cluster_client = SinClusterClient(settings.SIN_SERVICE_NAME, settings.ZOOKEEPER_URL, settings.ZOOKEEPER_TIMEOUT)
+  cluster_client.logger.setLevel(logging.DEBUG)
+  cluster_client.logger.addHandler(logging.StreamHandler())
+  cluster_client.add_listener(SinClusterListener())
 
-  nodes = cc.get_registered_nodes()
+  nodes = cluster_client.get_registered_nodes()
   if nodes.get(node_id):
     node = nodes[node_id]
     host = socket.gethostname()
@@ -466,10 +506,10 @@ if __name__ == '__main__':
       # sin_agent is stopped and then immediately restarted, the
       # ephemeral node created in the last session may still be there
       # when sin_agent is restarted.)
-      cc.mark_node_unavailable(node_id)
+      cluster_client.mark_node_unavailable(node_id)
       reactor.listenTCP(node.get_port(), server)
       log.msg("Mark %s available" % node.get_url())
-      cc.mark_node_available(node_id, node.get_url())
+      cluster_client.mark_node_available(node_id, node.get_url())
     else:
       log.err("Hostname, %s, might not have been registered!" % host)
       sys.exit(1)
@@ -477,9 +517,4 @@ if __name__ == '__main__':
     log.err("Node id %d is not registered!" % node_id)
     sys.exit(1)
 
-  def cleanup_before_shutdown():
-    log.msg('Do some cleanups before shutdown...')
-    cc.mark_node_unavailable(node_id)
-
-  reactor.addSystemEventTrigger('before', 'shutdown', cleanup_before_shutdown)
-  reactor.run()
+  reactor.run(installSignalHandlers=False)
