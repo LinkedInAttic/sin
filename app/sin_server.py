@@ -79,7 +79,7 @@ class SinClusterListener(object):
                                                                                                           db_node.agent_port))
           for store in db_node.stores.filter(status=enum.STORE_STATUS['running']):
             try:
-              do_start_store(None, store, node=db_node)
+              do_start_store(None, store, node=db_node, with_running_info=False)
             except Exception as e:
               logger.exception(e);
       else:

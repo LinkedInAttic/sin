@@ -519,7 +519,7 @@ def updateDoc(request,store_name):
     resp = {'ok':False,'error':e.message}
   return HttpResponseServerError(json.dumps(resp))
 
-def do_start_store(request, store, config_id=None, restart=False, node=None):
+def do_start_store(request, store, config_id=None, restart=False, node=None, with_running_info=True):
   try:
     if not isinstance(store, ContentStore):
       try:
@@ -614,7 +614,7 @@ def do_start_store(request, store, config_id=None, restart=False, node=None):
     current_config.save()
     store.status = enum.STORE_STATUS['running']
     store.save()
-    resp = store.to_map(True, True)
+    resp = store.to_map(True, with_running_info)
     resp.update({
       "ok":True,
     })
@@ -624,8 +624,8 @@ def do_start_store(request, store, config_id=None, restart=False, node=None):
     return HttpResponseServerError(json.dumps({'ok':False,'error':e.message}))
 
 @login_required
-def startStore(request, store, config_id=None, restart=False, node=None):
-  return do_start_store(request, store, config_id, restart, node)
+def startStore(request, store, config_id=None, restart=False, node=None, with_running_info=True):
+  return do_start_store(request, store, config_id, restart, node, with_running_info)
 
 @login_required
 def stopStore(request, store_name):
