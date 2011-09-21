@@ -501,7 +501,8 @@ if __name__ == '__main__':
     host = socket.gethostname()
     if options.host != "":
       host = options.host
-    if socket.gethostbyname(node.get_host()) == socket.gethostbyname(host):
+    hosts = set(socket.gethostbyname_ex(node.get_host())[2])
+    if hosts.intersection(socket.gethostbyname_ex(host)[2]):
       # Force this node to be offline first.  (In the case where
       # sin_agent is stopped and then immediately restarted, the
       # ephemeral node created in the last session may still be there
