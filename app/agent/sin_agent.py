@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import re, sys, json, shutil, errno, platform, signal
 import random, os, subprocess
 from twisted.internet import defer, reactor
