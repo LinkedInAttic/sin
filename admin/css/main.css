@@ -8,6 +8,14 @@
   margin-left: 10px;
 }
 
+.store-tab
+{
+  width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 28px;
+}
+
 .display-none {
   display: none;
 }
@@ -55,7 +63,7 @@
 
 .store-row {
   width: 600px;
-  height: 108px;
+  height: 200px;
 }
 
 .store-row .cell {
@@ -75,11 +83,9 @@
 }
 
 .display-row.header .cell {
-  background: #3B424B;
 }
 
 .display-row.header .display-op {
-  background: #3B424B; !important;
 }
 
 .display-op {

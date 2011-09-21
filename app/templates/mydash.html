@@ -3,6 +3,7 @@
 
 	<link rel="stylesheet" href="http://wonlay.github.com/sin/styles/twitter-bootstrap.css" type="text/css" media="screen"/>
 	<link rel="stylesheet" href="http://wonlay.github.com/sin/styles/prettify.css" type="text/css" media="screen"/>
+  <link rel="stylesheet" href="{{ STATIC_URL }}css/main.css" type="text/css" media="screen" title="no title" charset="utf-8"> 
 	<script src="http://code.jquery.com/jquery-1.5.2.min.js"></script>
 	<script src="http://wonlay.github.com/sin/scripts/app.js" type="text/javascript" charset="utf-8"></script>
 	
@@ -26,7 +27,7 @@
         {% templatetag openvariable %}#delimiter{% templatetag closevariable %}Delimiter: {% templatetag openvariable %} delimiter {% templatetag closevariable %}; {% templatetag openvariable %}/delimiter{% templatetag closevariable %}
         {% templatetag openvariable %}#store{% templatetag closevariable %}Store: {% templatetag openvariable %} store {% templatetag closevariable %}; {% templatetag openvariable %}/store{% templatetag closevariable %}
         {% templatetag openvariable %}#termvector{% templatetag closevariable %}Term Vector: {% templatetag openvariable %} termvector {% templatetag closevariable %}; {% templatetag openvariable %}/termvector{% templatetag closevariable %}{% templatetag closevariable %}
-        <div class="cell display-op"><div class="op"><input class="edit" type="button" value="Edit" /> <input class="btn danger" type="button" value="Remove" /></div></div></div>
+        <div class="cell display-op"><div class="op"><input class="edit btn primary" type="button" value="Edit" /> <input class="remove btn danger" type="button" value="Remove" /></div></div></div>
         {% templatetag openvariable %}/add{% templatetag closevariable %}
       </div>
       <div class="editor" style="{% templatetag openvariable %}^add{% templatetag closevariable %}display: none;{% templatetag openvariable %}/add{% templatetag closevariable %}">
@@ -65,18 +66,18 @@
           <option value=""></option>
           <option value="NO">NO</option>
         </select></span>
-        <input class="{% templatetag openvariable %}#add{% templatetag closevariable %}add{% templatetag openvariable %}/add{% templatetag closevariable %}{% templatetag openvariable %}^add{% templatetag closevariable %}save{% templatetag openvariable %}/add{% templatetag closevariable %}-column" type="button" value="{% templatetag openvariable %}#add{% templatetag closevariable %}Add Column{% templatetag openvariable %}/add{% templatetag closevariable %}{% templatetag openvariable %}^add{% templatetag closevariable %}OK{% templatetag openvariable %}/add{% templatetag closevariable %}" />
-        {% templatetag openvariable %}^add{% templatetag closevariable %}<input class="cancel-edit-column" type="button" value="Cancel" />{% templatetag openvariable %}/add{% templatetag closevariable %}
+        <input class="{% templatetag openvariable %}#add{% templatetag closevariable %}add{% templatetag openvariable %}/add{% templatetag closevariable %}{% templatetag openvariable %}^add{% templatetag closevariable %}save{% templatetag openvariable %}/add{% templatetag closevariable %}-column btn" type="button" value="{% templatetag openvariable %}#add{% templatetag closevariable %}Add Column{% templatetag openvariable %}/add{% templatetag closevariable %}{% templatetag openvariable %}^add{% templatetag closevariable %}OK{% templatetag openvariable %}/add{% templatetag closevariable %}" />
+        {% templatetag openvariable %}^add{% templatetag closevariable %}<input class="cancel-edit-column btn" type="button" value="Cancel" />{% templatetag openvariable %}/add{% templatetag closevariable %}
       </div>
     </script>
     <script id="content-facet-param-tmpl" type="text/x-mustache-tmpl">
       <div>
-        <div>Name: {% templatetag openvariable %} name {% templatetag closevariable %} Value: {% templatetag openvariable %} value {% templatetag closevariable %} <input class="param-edit" type="button" value="Edit" /> <input class="remove-param" type="button" value="Remove" /></div>
+        <div>Name: {% templatetag openvariable %} name {% templatetag closevariable %} Value: {% templatetag openvariable %} value {% templatetag closevariable %} <input class="param-edit btn primary" type="button" value="Edit" /> <input class="remove-param btn danger" type="button" value="Remove" /></div>
       </div>
       <div class="param-editor" style="display: none;">
         Name: <input class="param-name" type="text" value="{% templatetag openvariable %} name {% templatetag closevariable %}" />
         Value: <input class="param-value" type="text" value="{% templatetag openvariable %} value {% templatetag closevariable %}" />
-        <input type="button" value="OK" />
+        <input class="btn success" type="button" value="OK" />
       </div>
     </script>
     <script id="content-facet-tmpl" type="text/x-mustache-tmpl">
@@ -84,7 +85,7 @@
         {% templatetag openvariable %}^add{% templatetag closevariable %}
         <div class="table display-row">
         <div class="cell">{% templatetag openvariable %} name {% templatetag closevariable %}</div> <div class="cell">{% templatetag openvariable %} type {% templatetag closevariable %}</div>
-        <div class="cell display-op"><div class="op"><input class="edit" type="button" value="Edit" /> <input class="remove" type="button" value="Remove" /></div></div></div>
+        <div class="cell display-op"><div class="op"><input class="edit btn primary" type="button" value="Edit" /> <input class="remove btn danger" type="button" value="Remove" /></div></div></div>
         {% templatetag openvariable %}/add{% templatetag closevariable %}
       </div>
       <div class="editor" style="{% templatetag openvariable %}^add{% templatetag closevariable %}display: none;{% templatetag openvariable %}/add{% templatetag closevariable %}">
@@ -105,8 +106,8 @@
             <option value="false">false</option>
             <option value="true">true</option>
           </select></span>
-        <input class="{% templatetag openvariable %}#add{% templatetag closevariable %}add{% templatetag openvariable %}/add{% templatetag closevariable %}{% templatetag openvariable %}^add{% templatetag closevariable %}save{% templatetag openvariable %}/add{% templatetag closevariable %}-facet" type="button" value="{% templatetag openvariable %}#add{% templatetag closevariable %}Add Facet{% templatetag openvariable %}/add{% templatetag closevariable %}{% templatetag openvariable %}^add{% templatetag closevariable %}OK{% templatetag openvariable %}/add{% templatetag closevariable %}" />
-        {% templatetag openvariable %}^add{% templatetag closevariable %}<input class="cancel-edit-facet" type="button" value="Cancel" />{% templatetag openvariable %}/add{% templatetag closevariable %}
+        <input class="{% templatetag openvariable %}#add{% templatetag closevariable %}add{% templatetag openvariable %}/add{% templatetag closevariable %}{% templatetag openvariable %}^add{% templatetag closevariable %}save{% templatetag openvariable %}/add{% templatetag closevariable %}-facet btn" type="button" value="{% templatetag openvariable %}#add{% templatetag closevariable %}Add Facet{% templatetag openvariable %}/add{% templatetag closevariable %}{% templatetag openvariable %}^add{% templatetag closevariable %}OK{% templatetag openvariable %}/add{% templatetag closevariable %}" />
+        {% templatetag openvariable %}^add{% templatetag closevariable %}<input class="cancel-edit-facet btn" type="button" value="Cancel" />{% templatetag openvariable %}/add{% templatetag closevariable %}
         </div>
         <div class="params-container" style="display: none;">
           Params:
@@ -116,19 +117,19 @@
             <div class="add-new-param">
               Name: <input class="param-name" type="text" />
               Value: <input class="param-value" type="text" />
-              <input class="add-param" type="button" value="Add Param" />
+              <input class="add-param btn" type="button" value="Add Param" />
             </div>
           </div>
         </div>
       </div>
     </script>
     <script id="collab-item-tmpl" type="text/x-mustache-tmpl">
-      <span>{% templatetag openvariable %} username {% templatetag closevariable %}</span> <span class="op" style="display: none;"><input class="remove" type="button" value="Remove" /></span>
+      <span>{% templatetag openvariable %} username {% templatetag closevariable %}</span> <span class="op" style="display: none;"><input class="remove btn danger" type="button" value="Remove" /></span>
     </script>
     <script id="collab-tmpl" type="text/x-mustache-tmpl">
       <ul class="item-container">
       </ul>
-      <input class="new-collab" type="text" /> <input class="add" type="button" value="Add" /> <input class="close-all-tabs" type="button" value="Cancel" />
+      <input class="new-collab" type="text" /> <input class="add btn" type="button" value="Add" /> <input class="close-all-tabs btn" type="button" value="Cancel" />
     </script>
     <script id="content-store-tmpl" type="text/x-mustache-tmpl">
 <div class="container">
@@ -181,10 +182,10 @@
 					   <td colspan="2" style="text-align:center">
 					
 						<input type="button" class="manage btn primary" onclick="javascript:_void();" value="Configure"/>
-						<input type="button" class="btn success" value="(Re-)Start"/>
-						<input type="button" class="btn danger" value="Stop"/>
+						<input type="button" class="restart btn success" value="(Re-)Start"/>
+						<input type="button" class="stopStore btn danger" value="Stop"/>
 						
-						<input type="button" class="btn" value="Purge"/>
+						<input type="button" class="purgeStore btn" value="Purge"/>
 					   </td>
 					</tr>
 				</tbody>
@@ -202,7 +203,7 @@
         <div class="cluster-tab store-tab" style="display: none;">
           <div class="cluster-display">
           </div>
-          <input class="close-all-tabs" type="button" value="Cancel" />
+          <input class="close-all-tabs btn" type="button" value="Cancel" />
         </div>
         <div class="manage-tab store-tab" style="display: none;">
       </div>
@@ -221,11 +222,11 @@
               NA
               {% templatetag openvariable %}/name{% templatetag closevariable %}
             </span>
-            <input class="show-name-editor op" type="button" value="Edit" />
+            <input class="show-name-editor op btn primary" type="button" value="Edit" />
           </span>
           <span class="name-editor display-none">
             <input class="config-name" style="width: 50px;" type="text" value="{% templatetag openvariable %} name {% templatetag closevariable %}" />
-            <input class="save-name" type="button" value="Save" />
+            <input class="save-name btn success" type="button" value="Save" />
           </span>
         </div>
         <div class="cell">{% templatetag openvariable %}#active{% templatetag closevariable %}Active{% templatetag openvariable %}/active{% templatetag closevariable %}</div>
@@ -233,14 +234,14 @@
         <div class="cell">{% templatetag openvariable %} created {% templatetag closevariable %}</div>
         <div class="cell">
           <div class="op">
-            <input class="schema" type="button" value="Schema" />
-            <input class="properties" type="button" value="Properties" />
-            <input class="custom_facets" type="button" value="Custom Facets" />
-            <input class="plugins" type="button" value="Plugins" />
-            <input class="extensions" type="button" value="Extensions" />
-            <input class="vm_args" type="button" value="VM Args" />
-            <input class="activate" type="button" value="Activate" />
-            <input class="delete" type="button" value="Delete" />
+            <input class="schema btn primary" type="button" value="Schema" />
+            <input class="properties btn primary" type="button" value="Properties" />
+            <input class="custom_facets btn primary" type="button" value="Custom Facets" />
+            <input class="plugins btn primary" type="button" value="Plugins" />
+            <input class="extensions btn primary" type="button" value="Extensions" />
+            <input class="vm_args btn primary" type="button" value="VM Args" />
+            <input class="activate btn success" type="button" value="Activate" />
+            <input class="delete btn danger" type="button" value="Delete" />
           </div>
         </div>
       </div>
@@ -269,8 +270,8 @@
         </div>
         <br />
         <div>
-          <input class="save-store" type="button" value="Save" />
-          <input class="close-all-sub-tabs" type="button" value="Cancel" />
+          <input class="save-store btn success" type="button" value="Save" />
+          <input class="close-all-sub-tabs btn" type="button" value="Cancel" />
         </div>
         <div>
           <a class="show-raw" href="javascript:_void()">Raw</a><br />
@@ -279,8 +280,8 @@
           </div>
         </div>
         <div>
-          <input class="save-schema-raw" type="button" value="Save Raw" />
-          <input class="close-all-sub-tabs" type="button" value="Cancel" />
+          <input class="save-schema-raw btn success" type="button" value="Save Raw" />
+          <input class="close-all-sub-tabs btn" type="button" value="Cancel" />
         </div>
       </div>
       <div class="properties-tab store-sub-tab">
@@ -288,8 +289,8 @@
           <textarea class="properties" style="width: 500px; height: 300px;">{% templatetag openvariable %} properties {% templatetag closevariable %}</textarea>
         </div>
         <div>
-          <input class="save-properties" type="button" value="Save" />
-          <input class="close-all-sub-tabs" type="button" value="Cancel" />
+          <input class="save-properties btn success" type="button" value="Save" />
+          <input class="close-all-sub-tabs btn" type="button" value="Cancel" />
         </div>
       </div>
       <div class="custom_facets-tab store-sub-tab">
@@ -297,8 +298,8 @@
           <textarea class="custom_facets" style="width: 500px; height: 300px;">{% templatetag openvariable %} custom_facets {% templatetag closevariable %}</textarea>
         </div>
         <div>
-          <input class="save-custom-facets" type="button" value="Save" />
-          <input class="close-all-sub-tabs" type="button" value="Cancel" />
+          <input class="save-custom-facets btn success" type="button" value="Save" />
+          <input class="close-all-sub-tabs btn" type="button" value="Cancel" />
         </div>
       </div>
       <div class="plugins-tab store-sub-tab">
@@ -306,8 +307,8 @@
           <textarea class="plugins" style="width: 500px; height: 300px;">{% templatetag openvariable %} plugins {% templatetag closevariable %}</textarea>
         </div>
         <div>
-          <input class="save-plugins" type="button" value="Save" />
-          <input class="close-all-sub-tabs" type="button" value="Cancel" />
+          <input class="save-plugins btn success" type="button" value="Save" />
+          <input class="close-all-sub-tabs btn" type="button" value="Cancel" />
         </div>
       </div>
       <div class="extensions-tab store-sub-tab">
@@ -315,11 +316,11 @@
         </div>
         <div>
           <input id="upload-extensions-{% templatetag openvariable %}id{% templatetag closevariable %}" class="upload-extensions" type="file" />
-          <input class="do-upload-extensions" type="button" value="Upload" style="display: none;" />
+          <input class="do-upload-extensions btn success" type="button" value="Upload" style="display: none;" />
         </div>
         <div>
-          <input class="save-extensions" type="button" value="Save" />
-          <input class="close-all-sub-tabs" type="button" value="Cancel" />
+          <input class="save-extensions btn success" type="button" value="Save" />
+          <input class="close-all-sub-tabs btn" type="button" value="Cancel" />
         </div>
       </div>
       <div class="vm_args-tab store-sub-tab">
@@ -327,8 +328,8 @@
           <textarea class="vm_args" style="width: 500px; height: 300px;">{% templatetag openvariable %} vm_args {% templatetag closevariable %}</textarea>
         </div>
         <div>
-          <input class="save-vm-args" type="button" value="Save" />
-          <input class="close-all-sub-tabs" type="button" value="Cancel" />
+          <input class="save-vm-args btn success" type="button" value="Save" />
+          <input class="close-all-sub-tabs btn" type="button" value="Cancel" />
         </div>
       </div>
     </script>
@@ -344,7 +345,7 @@
       <div class="item-container">
       </div>
       <div>
-        <input class="close-all-tabs" type="button" value="Cancel" />
+        <input class="close-all-tabs btn" type="button" value="Cancel" />
       </div>
     </script>
     <script id="file-tmpl" type="text/x-mustache-tmpl">
@@ -354,7 +355,7 @@
         <div class="cell">{% templatetag openvariable %} created {% templatetag closevariable %}</div>
         <div class="cell">
           <div class="op">
-            <input class="remove" type="button" value="Remove" />
+            <input class="remove btn danger" type="button" value="Remove" />
           </div>
         </div>
       </div>
@@ -377,7 +378,7 @@
         Replica: <input class="new-store-replica" type="text" /> <br />
         Partitions: <input class="new-store-partitions" type="text" value="2" /> <br />
         Description: <textarea class="new-store-desc"></textarea> <br />
-        <input class="new-store-add" type="button" value="Add New Store" />
+        <input class="new-store-add btn" type="button" value="Add New Store" />
       </div>
       <hr />
       <div class="stores-container">
