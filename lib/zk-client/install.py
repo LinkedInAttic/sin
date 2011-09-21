@@ -16,7 +16,7 @@ import os
 ZOOKEEPER_LIB_ROOT = os.path.normpath(os.path.join(os.path.normpath(__file__), '..'))
 
 v1, v2, _ = platform.python_version_tuple()
-python_ver = "%d.%d" % (v1, v2)
+python_ver = "%s.%s" % (v1, v2)
 system = platform.system()
 arch = platform.architecture()[0][:2]
 site_pkg_path = None
@@ -36,5 +36,6 @@ else:
   print "%s is not supported yet!" % system
   sys.exit()
 
+os.system("mkdir -p /usr/local/lib")
 os.system("cp -fR %s/libzookeeper_* /usr/local/lib" % src_lib_dir)
 os.system("cp -f %s/zookeeper.so %s" % (src_lib_dir, site_pkg_path))
