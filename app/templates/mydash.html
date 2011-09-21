@@ -211,6 +211,24 @@
     </script>
     <script id="store-config-item-tmpl" type="text/x-mustache-tmpl">
       <hr />
+		<ul class="pills">
+          <li><a href="javascript:_void()" class="schema">Schema</a></li>
+          <li><a href="javascript:_void()" class="properties">Properties</a></li>
+          <li><a href="javascript:_void()" class="custom_facets">Custom Facets</a></li>
+          <li><a href="javascript:_void()" class="plugins">Plugins</a></li>
+          <li><a href="javascript:_void()" class="extensions"> Extensions</a></li>
+          <li><a href="javascript:_void()" class="vm_args">VM Args</a></li>
+          <li><a href="javascript:_void()" class="activate">Activate</a></li>
+          <li><a href="javascript:_void()" class="delete">Delete</a></li>
+        </ul>
+		<div class="table-row store-row store-table" style="height: 20px;">
+	        <div class="cell">Name</div>
+	        <div class="cell">Status</div>
+	        <div class="cell">Last Activated</div>
+	        <div class="cell">Created</div>
+	        <div class="cell">
+	        </div>
+	      </div>
       <div class="table-row store-row store-table">
         <div class="cell">
           <span class="name-display">
@@ -233,16 +251,7 @@
         <div class="cell">{% templatetag openvariable %} last_activated {% templatetag closevariable %}</div>
         <div class="cell">{% templatetag openvariable %} created {% templatetag closevariable %}</div>
         <div class="cell">
-          <div class="op">
-            <input class="schema btn primary" type="button" value="Schema" />
-            <input class="properties btn primary" type="button" value="Properties" />
-            <input class="custom_facets btn primary" type="button" value="Custom Facets" />
-            <input class="plugins btn primary" type="button" value="Plugins" />
-            <input class="extensions btn primary" type="button" value="Extensions" />
-            <input class="vm_args btn primary" type="button" value="VM Args" />
-            <input class="activate btn success" type="button" value="Activate" />
-            <input class="delete btn danger" type="button" value="Delete" />
-          </div>
+          
         </div>
       </div>
       <div class="schema-tab store-sub-tab">
@@ -334,14 +343,6 @@
       </div>
     </script>
     <script id="store-config-tmpl" type="text/x-mustache-tmpl">
-      <div class="table-row store-row store-table" style="height: 20px;">
-        <div class="cell">Name</div>
-        <div class="cell">Status</div>
-        <div class="cell">Last Activated</div>
-        <div class="cell">Created</div>
-        <div class="cell">
-        </div>
-      </div>
       <div class="item-container">
       </div>
       <div>
