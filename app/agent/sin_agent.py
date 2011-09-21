@@ -432,7 +432,7 @@ class SinClusterListener(object):
 
 cluster_client = None
 
-def handle_signal(signum,stackframe):
+def handle_signal(signum, stackframe):
   if signum in [signal.SIGINT, signal.SIGTERM]:
     ### Cleanup ###
     log.msg('Do some cleanups before shutdown...')
@@ -445,7 +445,7 @@ def handle_signal(signum,stackframe):
     for p in processes:
       p.terminate()
 
-    log.msg('Waiting for all store process dead, or kill them after 300 seconds.')
+    log.msg('Waiting for all store processes to terminate (will force to kill them after 300 seconds).')
     beginning = time.time()
     while True:
       all_dead = True
