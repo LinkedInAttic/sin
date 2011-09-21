@@ -154,7 +154,7 @@
 						
 						<span class="timeago">{% templatetag openvariable %}created{% templatetag closevariable %}</span>
 						
-						<input style="float:right"class="admin btn primary" type="button" value="Admin" />
+						<a href="http://{% templatetag openvariable %} broker_host {% templatetag closevariable %}:{% templatetag openvariable %} broker_port {% templatetag closevariable %}/admin.html" target="_blank" style="float:right" class="admin btn primary">Admin</a>
 						</td>
 						
 					</tr>
@@ -167,7 +167,7 @@
 					<tr class="endpoint" {% templatetag openvariable %}^is_running{% templatetag closevariable %}style="display: none;"{% templatetag openvariable %}/is_running{% templatetag closevariable %}>
 						<td width="20%">Search endpoint:</td>
 						<td width="80%"><a target="_blank" href="http://{% templatetag openvariable %} broker_host {% templatetag closevariable %}:{% templatetag openvariable %}broker_port{% templatetag closevariable %}/sensei">http://{% templatetag openvariable %}broker_host{% templatetag closevariable %}:{% templatetag openvariable %}broker_port{% templatetag closevariable %}/sensei</a>
-						<input style="float:right"class="btn primary" type="button" value="Search" /></td>
+						<a href="http://{% templatetag openvariable %} broker_host {% templatetag closevariable %}:{% templatetag openvariable %} broker_port {% templatetag closevariable %}/demo.html" target="_blank" style="float:right" class="btn primary">Search</a></td>
 						</td>
 					</tr>
 					<tr class="endpoint" {% templatetag openvariable %}^is_running{% templatetag closevariable %}style="display: none;"{% templatetag openvariable %}/is_running{% templatetag closevariable %}>
