@@ -10,7 +10,7 @@ from django.shortcuts import render_to_response
 from decorators import login_required
 from utils import enum
 
-
+@login_required
 def mydash(request):
   return render_to_response('mydash.html', {
   }, context_instance=template.RequestContext(request))
