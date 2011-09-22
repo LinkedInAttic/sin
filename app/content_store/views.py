@@ -505,7 +505,6 @@ def updateDoc(request,store_name):
         resp = {'ok':False,'error':'doc: %d does not exist' % uid}
         return HttpResponseBadRequest(json.dumps(resp))
 
-      print existingDoc
       for k,v in jsonDoc.items():
         existingDoc[k]=v
       
