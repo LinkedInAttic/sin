@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import re, sys, json, shutil, errno, platform, signal
+import re, sys, json, shutil, errno, platform, signal, commands
 import random, os, subprocess
 from twisted.internet import defer, reactor
 from twisted.web import server, resource
@@ -499,11 +499,14 @@ if __name__ == '__main__':
   nodes = cluster_client.get_registered_nodes()
   if nodes.get(node_id):
     node = nodes[node_id]
-    host = socket.gethostname()
+    host = socket.gethostbyaddr(socket.gethostname())[0]
     if options.host != "":
       host = options.host
-    hosts = set(socket.gethostbyname_ex(node.get_host())[2])
-    if hosts.intersection(socket.gethostbyname_ex(host)[2]):
+    hosts_a = set(socket.gethostbyname_ex(node.get_host())[2])
+    hosts_b = set(socket.gethostbyname_ex(host)[2])
+    if not [h for h in hosts_b if not h.startswith('127.')]:
+      hosts_b.update([h for h in [c.split()[1][5:] for c in commands.getoutput("ifconfig").split("\n") if re.match(r'\s*inet.*', c)] if h])
+    if hosts_a.intersection(hosts_b):
       # Force this node to be offline first.  (In the case where
       # sin_agent is stopped and then immediately restarted, the
       # ephemeral node created in the last session may still be there
