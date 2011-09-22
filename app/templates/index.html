@@ -1,3 +1,4 @@
+{% load url from future %}
 <html xmlns:og="http://ogp.me/ns#">
 <head>
 	<title>Sin - search as service</title>
@@ -15,7 +16,7 @@
 	<link rel="stylesheet" href="http://wonlay.github.com/sin/styles/prettify.css" type="text/css" media="screen"/>
 	<link rel="stylesheet" href="http://wonlay.github.com/sin/styles/style.css" type="text/css" media="screen"/>
 	<script src="http://code.jquery.com/jquery-1.5.2.min.js"></script>
-	<script src="{{ STATIC_URL }}/js/app.js" type="text/javascript" charset="utf-8"></script>
+	<script src="{{ STATIC_URL }}js/app.js" type="text/javascript" charset="utf-8"></script>
 	
 	<script type="text/javascript" charset="utf-8">
 		function renderSnippet(page,src){
@@ -23,21 +24,26 @@
 			$('.active').removeClass('active');
 			$(src).parent('li').addClass('active');
 		};
-		
 	</script>
 </head>
 
 <body style="background-color:#d9ecf5">
 	<a href="http://github.com/wonlay/sin"><img style="position: absolute; top: 40; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
 	<img style="position: absolute; top: 40; left: 20; border: 0;" src="http://wonlay.github.com/sin/images/sin_logo_norm.png" width="149" height="149"/>
+	{% if form.errors %}
+	
+	{{ form.non_field_errors }}
+	
+	<p>Your username and password didn't match. Please try again.</p>
+	{% endif %}
         <div class="topbar-wrapper"> 
             <div class="topbar"> 
               <div class="topbar-inner"> 
                 <div class="container"> 
                   <h3><a href="#">Sin</a></h3> 
                   <ul class="nav"> 
-                    <li class="active"><a href="#" onclick="renderSnippet('http://wonlay.github.com/sin/home.html',this)">Home</a></li> 
-                    <li><a href="#" onclick="renderSnippet('/mydash',this)">Dashboard</a></li> 
+                    <li class="active"><a href="#" id="homeLink" onclick="renderSnippet('http://wonlay.github.com/sin/home.html',this)">Home</a></li> 
+                    <li><a href="/mydash" target="new">Dashboard</a></li> 
                     <li><a href="#" onclick="renderSnippet('http://wonlay.github.com/sin/downloads.html',this)">Downloads</a></li> 
                     <li><a href="#" onclick="renderSnippet('http://wonlay.github.com/sin/getstarted.html',this)">Get Started</a></li>
                     <li><a href="#" onclick="renderSnippet('http://wonlay.github.com/sin/api.html',this)">API</a></li>
@@ -56,7 +62,15 @@
                         <li><a href="http://groups.google.com/group/sin-users">Mailing List</a></li> 
 						<li><a href="http://www.apache.org/licenses/LICENSE-2.0.html">License (APL v2.0)</a></li>
                         <li class="divider"></li>
-						<li><a href="#">Login</a></li>
+					    <div class="user-ops">
+					      {% if user.is_authenticated %}
+						  <li><span>{{ user.username }}</span><a href="{% url 'logout' %}">Logout</a></li>
+					      {% else %}
+					      <li><a href="#" onclick="$('#login_modal').show()">Login</a></li>
+					      <li><a href="#" onclick="$('#register_modal').show()">Register</a></li>
+					      {% endif %}
+					    </div>
+						
                       </ul> 
                     </li> 
                   </ul> 
@@ -70,5 +84,62 @@
 			</iframe>
 		</div>
 		
+		
+		<div id="login_modal" class="modal" style="position: absolute; margin-top: 5px; z-index: 6;display: none"> 
+		        <form method="post" action="index">
+				  <input type="hidden" name="modalType" value="login" />
+		          <div class="modal-header"> 
+		            <h3>Please login:</h3>
+		          </div> 
+		          <div class="modal-body"> 
+			
+			        <table>
+					<tr>
+					    <td>{{ form.username.label_tag }}</td>
+					    <td>{{ form.username }}</td>
+					</tr>
+					<tr>
+					    <td>{{ form.password.label_tag }}</td>
+					    <td>{{ form.password }}</td>
+					</tr>
+					</table>
+					
+		          </div> 
+		          <div class="modal-footer"> 
+					<input type="submit" class="btn primary" value="login" />
+		            <input type="button" class="btn secondary" onclick="$('#login_modal').hide()" value="Cancel"/> 
+		          </div> 
+		        </form>
+		</div>
+		
+		<div id="register_modal" class="modal" style="position: absolute; margin-top: 5px; z-index: 6;display: none"> 
+		        <form method="post" action="index">
+				  <input type="hidden" name="modalType" value="register" />
+		          <div class="modal-header"> 
+		            <h3>Please register:</h3>
+		          </div> 
+		          <div class="modal-body"> 
+			        <table>
+						<tr>
+						    <td>{{ form.username.label_tag }}</td>
+						    <td>{{ form.username }} {{ form.username.errors }}</td>
+						</tr>
+						<tr>
+						    <td>{{ form.password1.label_tag }}</td>
+						    <td>{{ form.password1 }} {{ form.password1.errors }}</td>
+						</tr>
+						<tr>
+						    <td>{{ form.password2.label_tag }}</td>
+						    <td>{{ form.password2 }} {{ form.password2.errors }}</td>
+						</tr>
+					</table>
+					
+		          </div> 
+		          <div class="modal-footer"> 
+					<input type="submit" class="btn primary" value="Register" />
+		            <input type="button" class="btn secondary" onclick="$('#register_modal').hide()" value="Cancel"/> 
+		          </div> 
+		        </form>
+		</div>
 </body>
 </html>

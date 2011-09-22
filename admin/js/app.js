@@ -11,8 +11,6 @@ $(document).ready(function(){
     return false;
   });
   
-  //renderSnippet('home','stuff')
+  renderSnippet('http://wonlay.github.com/sin/home.html',$('#homeLink'));
 
-  $("#stuff").empty();
-	$("#home").children().clone().appendTo("#stuff");
 });
