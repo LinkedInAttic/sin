@@ -576,7 +576,10 @@ def do_start_store(request, store, config_id=None, restart=False, node=None, wit
     }
 
     if node is None:
-      members = store.members.order_by("node")
+      members = list(store.members.order_by("node"))
+      if not members:
+        setupCluster(store)
+        members = list(store.members.order_by("node"))
     else:
       members = store.members.filter(node=node)
     for member in members:
