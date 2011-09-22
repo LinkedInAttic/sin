@@ -17,7 +17,16 @@ def mydash(request):
 
 
 def index(request):
+  if request.method == 'POST':
+    form = AuthenticationForm(request, request.POST)
+    if form.is_valid():
+      dj_login(request, form.get_user())
+  else:
+    request.session.set_test_cookie()
+    form = AuthenticationForm(request)
+    
   return render_to_response('index.html', {
+    "form" : form
   }, context_instance=template.RequestContext(request))
   
 def home(request):
@@ -97,5 +106,5 @@ def register(request):
 
 def logout(request):
   dj_logout(request)
-  return HttpResponseRedirect(reverse('home'))
+  return HttpResponseRedirect(reverse('index'))
 

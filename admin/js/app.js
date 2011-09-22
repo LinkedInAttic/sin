@@ -13,6 +13,6 @@ $(document).ready(function(){
   
   //renderSnippet('home','stuff')
 
-  $("#stuff").empty();
-	$("#home").children().clone().appendTo("#stuff");
+//  $("#stuff").empty();
+//	$("#home").children().clone().appendTo("#stuff");
 });
