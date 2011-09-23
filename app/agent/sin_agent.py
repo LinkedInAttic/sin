@@ -240,7 +240,9 @@ def doStartStore(name, vm_args, sensei_port, broker_port,
     out_file.close()
 
   if not vm_args:
-    vm_args = '-Xmx1g -Xms1g -XX:NewSize=256m'
+    vm_args = ['-Xmx1g', '-Xms1g', '-XX:NewSize=256m']
+  else:
+    vm_args = vm_args.split()
 
   def start_sensei():
     outFile = open(os.path.join(logs, "std-output"), "w+")
@@ -250,7 +252,7 @@ def doStartStore(name, vm_args, sensei_port, broker_port,
 
     architecture = "-d%s" % platform.architecture()[0][:2]
 
-    cmd = ["nohup", "java", "-server", architecture, vm_args, "-classpath", classpath,
+    cmd = ["nohup", "java", "-server", architecture] + vm_args +["-classpath", classpath,
            "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf, "&"]
     print ' '.join(cmd)
     p = subprocess.Popen(cmd, cwd=store_home, stdout=outFile, stderr=errFile)
