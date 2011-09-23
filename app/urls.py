@@ -13,7 +13,7 @@ urlpatterns = patterns('views',
 
   url(r'^index/?$', 'index', name='index'),
   url(r'^mydash/?$', 'mydash', name='mydash'),
-  url(r'^$', 'home', name='home'),
+  url(r'^$', 'index', name='index'),
   url(r'^dashboard/?$', 'dashboard', name='dashboard'),
   url(r'^downloads/?$', 'downloads', name='downloads'),
   url(r'^get-started/?$', 'get_started', name='get_started'),
