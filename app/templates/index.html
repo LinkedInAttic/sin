@@ -28,7 +28,7 @@
 </head>
 
 <body style="background-color:#3B424B">
-	<a href="http://github.com/wonlay/sin"><img style="position: absolute; top: 40; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+	<a href="http://github.com/wonlay/sin"><img style="position: absolute; top: 40; right: 0; border: 0;z-index:6" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
 	<img style="position: absolute; top: 40; left: 20; border: 0;" src="http://wonlay.github.com/sin/images/sin_logo_norm.png" width="149" height="149"/>
 	{% if form.errors %}
 	
@@ -64,7 +64,8 @@
                         <li class="divider"></li>
 					    <div class="user-ops">
 					      {% if user.is_authenticated %}
-						  <li><span>{{ user.username }}</span><a href="{% url 'logout' %}">Logout</a></li>
+						  <li><strong><a>{{ user.username }}</a></strong></li>
+						  <li><a href="{% url 'logout' %}">Logout</a></li>
 					      {% else %}
 					      <li><a href="{% url 'login' %}">Login</a></li>
 					      <li><a href="{% url 'register' %}">Register</a></li>

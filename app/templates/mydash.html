@@ -387,7 +387,7 @@
       </div>
     </script>
     <script id="sin-tmpl" type="text/x-mustache-tmpl">
-      <div style="background-color:white;">
+      <div style="background-color:#efefef;">
       <div style="width:700px;margin-left:auto;margin-right:auto;">
         <img src="http://wonlay.github.com/sin/images/sin_logo_norm.png"/> 
         <span style="font-size:50px;font-weight:bold;">Sin Dashboard</span>
@@ -396,11 +396,39 @@
       
       <input style="margin-left:20px;margin-bottom:20px;" type="button" class="show-create-new btn success large" value="Create New Store" />
       <div class="new-store" style="display:none;margin-left:20px;">
-        New Store Name: <input class="new-store-name xlarge" type="text" /> <br />
-        Replica: <input class="new-store-replica xlarge" type="text" /> <br />
-        Partitions: <input class="new-store-partitions" type="text" value="2" /> <br />
-        Description: <textarea class="new-store-desc"></textarea> <br />
-        <input class="new-store-add btn" style="margin-top:10px;margin-bottom:10px" type="button btn primary" value="Add New Store" />
+        <div class="row" style="margin-bottom:10px">
+          <div class="span4 columns">
+            New Store Name: 
+          </div>
+          <div class="span8 columns">
+            <input class="new-store-name" type="text" />
+          </div>
+        </div>
+		<div class="row" style="margin-bottom:10px">
+          <div class="span4 columns">
+            Replica: 
+          </div>
+          <div class="span8 columns">
+            <input class="new-store-replica" type="text" />
+          </div>
+        </div>
+		<div class="row" style="margin-bottom:10px">
+          <div class="span4 columns">
+            Partitions: 
+          </div>
+          <div class="span8 columns">
+            <input class="new-store-partitions" type="text" value="2" /> 
+          </div>
+        </div>
+		<div class="row" style="margin-bottom:10px">
+          <div class="span4 columns">
+            Description: 
+          </div>
+          <div class="span8 columns">
+            <textarea class="new-store-desc"></textarea>
+          </div>
+        </div>
+        <input class="new-store-add btn primary" style="margin-bottom:10px" type="button" value="Add New Store" />
       </div>
       </div>
       <hr />
