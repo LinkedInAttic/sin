@@ -24,11 +24,11 @@
 			$('.active').removeClass('active');
 			$(src).parent('li').addClass('active');
 		};
-	</script>
+  </script>
 </head>
 
-<body style="background-color:#d9ecf5">
-	<a href="http://github.com/wonlay/sin"><img style="position: absolute; top: 40; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+<body style="background-color:#3B424B">
+	<a href="http://github.com/wonlay/sin"><img style="position: absolute; top: 40; right: 0; border: 0;z-index:6" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
 	<img style="position: absolute; top: 40; left: 20; border: 0;" src="http://wonlay.github.com/sin/images/sin_logo_norm.png" width="149" height="149"/>
 	{% if form.errors %}
 	
@@ -64,10 +64,11 @@
                         <li class="divider"></li>
 					    <div class="user-ops">
 					      {% if user.is_authenticated %}
-						  <li><span>{{ user.username }}</span><a href="{% url 'logout' %}">Logout</a></li>
+						  <li><strong><a>{{ user.username }}</a></strong></li>
+						  <li><a href="{% url 'logout' %}">Logout</a></li>
 					      {% else %}
-					      <li><a href="#" onclick="$('#login_modal').show()">Login</a></li>
-					      <li><a href="#" onclick="$('#register_modal').show()">Register</a></li>
+					      <li><a href="{% url 'login' %}">Login</a></li>
+					      <li><a href="{% url 'register' %}">Register</a></li>
 					      {% endif %}
 					    </div>
 						
@@ -82,64 +83,6 @@
 			<iframe class="well" id="content-frame" src="home.html" width="900" height="600" style="position: absolute; top: 70; left: 200; right:200; border: 0; margin-left:auto; margin-right:auto">
 			  <p>Your browser does not support iframes.</p>
 			</iframe>
-		</div>
-		
-		
-		<div id="login_modal" class="modal" style="position: absolute; margin-top: 5px; z-index: 6;display: none"> 
-		        <form method="post" action="index">
-				  <input type="hidden" name="modalType" value="login" />
-		          <div class="modal-header"> 
-		            <h3>Please login:</h3>
-		          </div> 
-		          <div class="modal-body"> 
-			
-			        <table>
-					<tr>
-					    <td>{{ form.username.label_tag }}</td>
-					    <td>{{ form.username }}</td>
-					</tr>
-					<tr>
-					    <td>{{ form.password.label_tag }}</td>
-					    <td>{{ form.password }}</td>
-					</tr>
-					</table>
-					
-		          </div> 
-		          <div class="modal-footer"> 
-					<input type="submit" class="btn primary" value="login" />
-		            <input type="button" class="btn secondary" onclick="$('#login_modal').hide()" value="Cancel"/> 
-		          </div> 
-		        </form>
-		</div>
-		
-		<div id="register_modal" class="modal" style="position: absolute; margin-top: 5px; z-index: 6;display: none"> 
-		        <form method="post" action="index">
-				  <input type="hidden" name="modalType" value="register" />
-		          <div class="modal-header"> 
-		            <h3>Please register:</h3>
-		          </div> 
-		          <div class="modal-body"> 
-			        <table>
-						<tr>
-						    <td>{{ form.username.label_tag }}</td>
-						    <td>{{ form.username }} {{ form.username.errors }}</td>
-						</tr>
-						<tr>
-						    <td>{{ form.password1.label_tag }}</td>
-						    <td>{{ form.password1 }} {{ form.password1.errors }}</td>
-						</tr>
-						<tr>
-						    <td>{{ form.password2.label_tag }}</td>
-						    <td>{{ form.password2 }} {{ form.password2.errors }}</td>
-						</tr>
-					</table>
-					
-		          </div> 
-		          <div class="modal-footer"> 
-					<input type="submit" class="btn primary" value="Register" />
-		            <input type="button" class="btn secondary" onclick="$('#register_modal').hide()" value="Cancel"/> 
-		          </div> 
-		        </form>
-		</div>
+    </div>
 </body>
 </html>

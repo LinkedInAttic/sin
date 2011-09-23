@@ -99,28 +99,19 @@ PARAM_RESULT_FACET_INFO_SELECTED = "selected"
 
 
 class SenseiFacet:
-  expand = False
-  minHits = 1
-  maxCounts = 10
-  orderBy = PARAM_RESULT_HITS
-  
   def __init__(self,expand=False,minHits=1,maxCounts=10,orderBy=PARAM_RESULT_HITS):
-    if expand:
-      self.expand = True
+    self.expand = expand
     self.minHits = minHits
     self.maxCounts = maxCounts
     self.orderBy = orderBy
 
 class SenseiSelection:
-  field = None
-  values = []
-  excludes = []
-  properties = {}
-  operation = PARAM_SELECT_OP_OR
-  
   def __init__(self,field,oper=PARAM_SELECT_OP_OR):
     self.field = field
     self.operation = oper
+    self.values = []
+    self.excludes = []
+    self.properties = {}
     
   def addSelection(self,value,isNot=False):
     if isNot:
@@ -183,24 +174,26 @@ class SenseiSort:
       return self.field + ":" + self.dir
 
 class SenseiRequest:
-  facets = {}
-  selections = []
-  sorts = None
-  query = None
-  qParam = {}
-  offset = 0
-  count = 10
-  explain = False
-  fetch = False
-  routeParam = None
+  def __init__(self):
+    self.facets = {}
+    self.selections = []
+    self.sorts = None
+    self.query = None
+    self.qParam = {}
+    self.offset = 0
+    self.count = 10
+    self.explain = False
+    self.fetch = False
+    self.routeParam = None
   
 class SenseiHit:
-  docid = None
-  uid = None
-  srcData = {}
-  score = None
-  explanation = None
-  stored = None
+  def __init__(self):
+    self.docid = None
+    self.uid = None
+    self.srcData = {}
+    self.score = None
+    self.explanation = None
+    self.stored = None
   
   def load(self,jsonHit):
     self.docid = jsonHit.get(PARAM_RESULT_HIT_DOCID)

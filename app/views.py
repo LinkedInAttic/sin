@@ -16,17 +16,8 @@ def mydash(request):
   }, context_instance=template.RequestContext(request))
 
 
-def index(request):
-  if request.method == 'POST':
-    form = AuthenticationForm(request, request.POST)
-    if form.is_valid():
-      dj_login(request, form.get_user())
-  else:
-    request.session.set_test_cookie()
-    form = AuthenticationForm(request)
-    
+def index(request):  
   return render_to_response('index.html', {
-    "form" : form
   }, context_instance=template.RequestContext(request))
   
 def home(request):
@@ -59,7 +50,7 @@ def team(request):
   }, context_instance=template.RequestContext(request))
 
 def login(request):
-  next = request.REQUEST.get('next', reverse('home'))
+  next = request.REQUEST.get('next', reverse('index'))
 
   if request.user.is_authenticated():
     return HttpResponseRedirect(next)
@@ -79,7 +70,7 @@ def login(request):
     }, context_instance=template.RequestContext(request))
 
 def register(request):
-  next = request.REQUEST.get('next', reverse('home'))
+  next = request.REQUEST.get('next', reverse('index'))
 
   if request.user.is_authenticated():
     return HttpResponseRedirect(next)
