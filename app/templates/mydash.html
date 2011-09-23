@@ -1,4 +1,5 @@
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml"> 
 <head>
 
 	<link rel="stylesheet" href="http://wonlay.github.com/sin/styles/twitter-bootstrap.css" type="text/css" media="screen"/>
@@ -11,11 +12,20 @@
 
 	<style>
 	.upperright{float:right;margin-top:-2px;color:#000000;font-size:20px;font-weight:bold;text-shadow:0 1px 0 #ffffff;filter:alpha(opacity=20);-khtml-opacity:0.2;-moz-opacity:0.2;opacity:0.2;}.alert-message .close:hover{color:#000000;text-decoration:none;filter:alpha(opacity=40);-khtml-opacity:0.4;-moz-opacity:0.4;opacity:0.4;}
-	
+	.content-store-item{
+    margin-left:auto;
+    margin-right:auto;
+    margin-top:20px;
+    margin-bottom:20px;
+    width:750px;
+    border-style:solid;
+    border-color:#efefef;
+    background-color:white;
+  }
 	</style>
 	
 </head>
-<body>
+<body style="background-color:#3B424B">
 	<script id="content-column-tmpl" type="text/x-mustache-tmpl">
       <div class="container">
         {% templatetag openvariable %}^add{% templatetag closevariable %}
@@ -373,13 +383,19 @@
       </div>
     </script>
     <script id="sin-tmpl" type="text/x-mustache-tmpl">
+      <div style="background-color:white;">
+      <div>
+        <img src="http://wonlay.github.com/sin/images/sin_logo_norm.png"/> <span style="text-align:center;font-size:50px;font-weight:bold;">Sin Dashboard</span>
+        <hr/>
+      </div>
       <h3><a class="show-create-new" href="javascript:_void()">Create New Store</a></h3>
-      <div class="new-store" style="display:none;">
-        New Store Name: <input class="new-store-name" type="text" /> <br />
-        Replica: <input class="new-store-replica" type="text" /> <br />
+      <div class="new-store" style="display:none;margin-left:20px;">
+        New Store Name: <input class="new-store-name xlarge" type="text" /> <br />
+        Replica: <input class="new-store-replica xlarge" type="text" /> <br />
         Partitions: <input class="new-store-partitions" type="text" value="2" /> <br />
         Description: <textarea class="new-store-desc"></textarea> <br />
-        <input class="new-store-add btn" type="button" value="Add New Store" />
+        <input class="new-store-add btn" style="margin-top:10px;margin-bottom:10px" type="button btn primary" value="Add New Store" />
+      </div>
       </div>
       <hr />
       <div class="stores-container">
