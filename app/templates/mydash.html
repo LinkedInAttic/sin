@@ -16,11 +16,15 @@
     margin-left:auto;
     margin-right:auto;
     margin-top:20px;
-    margin-bottom:20px;
+    margin-bottom:50px;
     width:750px;
     border-style:solid;
     border-color:#efefef;
     background-color:white;
+  }
+  .stores-container{
+    padding-top:20px;
+    padding-bottom:30px;
   }
 	</style>
 	
@@ -384,11 +388,13 @@
     </script>
     <script id="sin-tmpl" type="text/x-mustache-tmpl">
       <div style="background-color:white;">
-      <div>
-        <img src="http://wonlay.github.com/sin/images/sin_logo_norm.png"/> <span style="text-align:center;font-size:50px;font-weight:bold;">Sin Dashboard</span>
+      <div style="width:700px;margin-left:auto;margin-right:auto;">
+        <img src="http://wonlay.github.com/sin/images/sin_logo_norm.png"/> 
+        <span style="font-size:50px;font-weight:bold;">Sin Dashboard</span>
         <hr/>
       </div>
-      <h3><a class="show-create-new" href="javascript:_void()">Create New Store</a></h3>
+      
+      <input style="margin-left:20px;margin-bottom:20px;" type="button" class="show-create-new btn success large" value="Create New Store" />
       <div class="new-store" style="display:none;margin-left:20px;">
         New Store Name: <input class="new-store-name xlarge" type="text" /> <br />
         Replica: <input class="new-store-replica xlarge" type="text" /> <br />

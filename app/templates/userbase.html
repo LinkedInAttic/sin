@@ -1,0 +1,37 @@
+{% load url from future %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml"> 
+ <head>
+	<title>Sin - search as service</title>
+	<link rel="icon" type="image/png" href="images/sin-small.png"/>
+	<meta name="description" content="sin is a service for you to build sophisticated search applications"/>
+	<meta name="keywords" content="search,realtime,sin,indexing,opensource,zoie,bobo,sensei,lucene" />
+	<meta http-equiv='Content-Type' content='text/html;charset=utf-8' />
+	<meta property="og:title" value="sin" />
+	<meta property="og:image" value="http://wonlay.github.com/sin/images/sin_logo.png" />
+	<meta property="og:description" value="sin is a service for you to build sophisticated search applications" />
+	<meta property="og:site_name" value="github" />
+	<meta property="og:type" value="website" />
+	
+	<link rel="stylesheet" href="http://wonlay.github.com/sin/styles/twitter-bootstrap.css" type="text/css" media="screen"/>
+	<link rel="stylesheet" href="http://wonlay.github.com/sin/styles/prettify.css" type="text/css" media="screen"/>
+	<link rel="stylesheet" href="http://wonlay.github.com/sin/styles/style.css" type="text/css" media="screen"/>
+	<script src="http://code.jquery.com/jquery-1.5.2.min.js"></script>
+	<script src="{{ STATIC_URL }}js/app.js" type="text/javascript" charset="utf-8"></script>
+</head>
+
+  <body> 
+  <div class="header"> 
+    <div class="user-ops">
+      {% if user.is_authenticated %}
+      <span>{{ user.username }}</span> | <a href="{% url 'logout' %}">Logout</a>
+      {% else %}
+      <a href="{% url 'login' %}">Login</a> | <a href="{% url 'register' %}">Register</a>
+      {% endif %}
+    </div>
+    <img src="{{ STATIC_URL }}images/sin-small.png" /> 
+  </div>  
+  {% block content %}
+  {% endblock %}
+  </body> 
+</html> 
