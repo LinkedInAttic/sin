@@ -18,10 +18,7 @@
 # connect to a Sin end-point
 client = SinClient(sinHost,sinPort)
 
-# create a store with 3 replications, 5 partitions and with a description
-store = client.newStore('newStore',3,5,'my new store')
-
-# alternatively, open an existing store
+# open a store
 store = client.openStore('oldStore')
 
 # add a new doc to the store
