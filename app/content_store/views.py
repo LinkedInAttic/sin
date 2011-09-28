@@ -389,6 +389,7 @@ def updateExtensions(request, store_name, config_id):
 
     config.updated()
     config.extensions = extensions
+    config.save()
     resp['ok'] = True
     resp.update(config.to_map())
   else:
