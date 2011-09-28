@@ -234,12 +234,14 @@ class StoreConfig(models.Model):
   def updated(self):
     if self.name and self.last_activated <= datetime.datetime.now():
       extensions = list(self.extensions.all())
-      self.pk = None
-      self.active = False
-      self.last_activated = datetime.datetime.max
-      # self.created = datetime.datetime.now()
+      self.pk               = None
+      self.name             = ''
+      self.active           = False
+      self.last_activated   = datetime.datetime.max
+      # self.created          = datetime.datetime.now()
       self.save()
       self.extensions = extensions
+      self.save()
     else:
       self.save()
 
