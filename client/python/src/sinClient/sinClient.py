@@ -5,6 +5,7 @@
 
 from senseiClient import *
 
+import sys
 import urllib
 import urllib2
 import time
@@ -175,7 +176,7 @@ class SinClient:
   opener = None
   path = 'store'
   
-  def __init__(self, host='localhost', port=8000):
+  def __init__(self, host='localhost', port=8666):
     self.host = host
     self.port = port
     self.opener = urllib2.build_opener()
@@ -288,4 +289,101 @@ if __name__ == '__main__':
   
   senseiClient = store.getSenseiClient()
   result = senseiClient.doQuery()"""
+  
+def main(argv):
+  api_key = ""
+  if len(argv) <= 1:
+    print "please secify the api key"
+    return None
+    #client = SenseiClient()
+  else:
+    api_key = argv[1]
+    
+  import logging  
+  logger = logging.getLogger("sin_client")  
+  logger.setLevel(logging.DEBUG)
+  formatter = logging.Formatter("%(asctime)s %(filename)s:%(lineno)d - %(message)s")
+  stream_handler = logging.StreamHandler()
+  stream_handler.setFormatter(formatter)
+  logger.addHandler(stream_handler)
 
+  
+#  def test_sql(stmt):
+#    # test(stmt)
+#    req = SenseiRequest(stmt)
+#    res = client.doQuery(req)
+#    res.display(req.get_columns(), 1000)
+    
+  def cleanup():
+    """ clean up when the user exit the command line
+    """
+  def getStoreName(stmt):
+    if stmt.startswith("use "):
+      args = stmt.split()
+      return args[1]
+    else:
+      return ""
+    
+  def testStore(store, api_key):
+    try:
+        sinClient_test = SinClient()
+        sinClient_test.openStore(store, api_key)
+        return True
+    except:
+      return False
+
+
+  import readline
+  store = ""
+  readline.parse_and_bind("tab: complete")
+  while 1:
+    try:
+      stmt = raw_input('> ')
+      if stmt == "exit":
+        cleanup()
+        break
+      else: 
+        store = getStoreName(stmt)
+        if len(store)==0 or testStore(store, api_key) == False:
+          print "invalid store name, please specify store name"
+          print "e.g.  use STORE_NAME"
+        else:
+          break
+          
+    except EOFError:
+      print "EOF error"
+      break
+    except Exception as e:
+      print e.message,  "something is wrong when specifying the store name."
+
+  # have the sotre name and api key now.
+  sinClient = SinClient()
+  sindex = sinClient.openStore(store, api_key)
+  if sindex.available() == True:
+    print "> store status: running"
+    
+  def exe_sql(stmt, client):
+    # test(stmt)
+    req = SenseiRequest(stmt)
+    res = client.doQuery(req)
+    res.display(req.get_columns(), 1000)
+      
+  sensieClient = sindex.getSenseiClient()  
+  while 1:
+    try:
+      stmt = raw_input('> ')
+      if stmt == "exit":
+        cleanup()
+        break
+      else: 
+        exe_sql(stmt,sensieClient)  
+    except EOFError:
+      print "EOF error"
+      break
+    except Exception as e:
+      print e.message,  "something is wrong when specifying the store name."
+      
+      
+    
+if __name__ == '__main__':
+    main(sys.argv)
