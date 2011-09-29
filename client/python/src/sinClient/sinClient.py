@@ -336,6 +336,9 @@ def main(argv):
   import readline
   store = ""
   readline.parse_and_bind("tab: complete")
+  print "Sin Commandline version 0.1;"
+  print "Specify a store before using BQL to query the store (use STORE_NAME);"
+  print "Type 'exit' to end this program."
   while 1:
     try:
       stmt = raw_input('> ')
@@ -360,7 +363,8 @@ def main(argv):
   sinClient = SinClient()
   sindex = sinClient.openStore(store, api_key)
   if sindex.available() == True:
-    print "> store status: running"
+    print "store status: running"
+    print "input BQL to query the store."
     
   def exe_sql(stmt, client):
     # test(stmt)
@@ -381,7 +385,7 @@ def main(argv):
       print "EOF error"
       break
     except Exception as e:
-      print e.message,  "something is wrong when specifying the store name."
+      print "something is wrong with your BQL input."
       
       
     
