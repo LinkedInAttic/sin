@@ -74,7 +74,7 @@ start() {
 
 stop() {
   echo $"Stopping $prog: "
-  for pid in `ps x -o  "%p %r %a" | \grep "[p]ython $HOME/app/agent/sin_agent.py $NODE_ID" | awk '{print $1}'`; do
+  for pid in `ps x -o  "%p %r %a" | \grep "[p]ython $HOME/app/agent/sin_agent.py $NODE_ID$" | awk '{print $1}'`; do
     echo -n $"Stopping $prog($pid): "
     kill $pid
     RETVAL=$?

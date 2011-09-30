@@ -73,25 +73,27 @@ start() {
 stop() {
   echo $"Stopping $prog: "
   for pgid in `ps x -o  "%p %r %a" | \grep .[/]bin/zookeeper-server-start.sh | awk '{print $2}'`; do
-    echo -n $"Stopping $prog($pgid): "
-    kill -- -$pgid
-    RETVAL=$?
-    c=50
-    while [ $c -gt 0 ]; do
-      let c=$c-1
-      flag=1
-      for p in `ps x -o  "%p %r %a" | \grep -E $"[0-9]+ +$pgid +"`; do
-        flag=0
-        break
+    for pid in `ps x -o  "%p %r %a" | \grep -E $"[0-9]+ +$pgid +" | \grep java | awk '{print $1}'`; do
+      echo -n $"Stopping $prog($pid): "
+      kill $pid
+      RETVAL=$?
+      c=50
+      while [ $c -gt 0 ]; do
+        let c=$c-1
+        flag=1
+        for p in `ps x -o  "%p %r %a" | \grep -E $"[0-9]+ +$pgid +"`; do
+          flag=0
+          break
+        done
+        if [ $flag -ne 0 ]; then
+          break
+        fi
+        sleep .1
       done
-      if [ $flag -ne 0 ]; then
-        break
+      if [ $c -le 0 ]; then
+        RETVAL=1
       fi
-      sleep .1
     done
-    if [ $c -le 0 ]; then
-      RETVAL=1
-    fi
   done
   [ $RETVAL -eq 0 ] && echo_success
   [ $RETVAL -ne 0 ] && echo_failure
