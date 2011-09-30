@@ -1,0 +1,134 @@
+#! /bin/sh
+# /etc/init.d/sin_server: start the sin_server daemon.
+
+# chkconfig: 345 85 15
+# description: sin_server
+
+HOME=/home/liwang/GITROOT/sin
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
+
+prog=sin_server
+DESC="sin_server daemon"
+
+RETVAL=0
+
+# detect the distribution:
+if [ -f /etc/redhat-release -o -f /etc/fedora-release ] ; then
+  DISTRIBUTION="redhat"
+elif [ -f /etc/SuSE-release ] ; then
+  DISTRIBUTION="suse"
+elif [ -f /etc/debian_version ] ; then
+  DISTRIBUTION="debian"
+else
+  DISTRIBUTION="debian"
+fi
+
+# Source function library.
+[ "$DISTRIBUTION" = "redhat" ] && . /etc/init.d/functions
+[ "$DISTRIBUTION" = "suse" ] && . /etc/rc.status
+
+if [ "$DISTRIBUTION" = "suse" ] ; then
+  echo_success() {
+    rc_status -v
+  }
+  echo_failure() {
+    rc_status -v
+  }
+  success() {
+    echo_success
+  }
+  failure() {
+    echo_success
+  }
+elif [ "$DISTRIBUTION" = "debian" ] ; then
+  echo_success() {
+    echo ok
+  }
+  echo_failure() {
+    echo failed
+  }
+  success() {
+    echo_success
+  }
+  failure() {
+    echo_success
+  }
+fi
+
+start() {
+  ulimit -n 65536
+  ulimit -s 10240
+  ulimit -c unlimited
+  echo -n $"Starting $prog: "
+  python $HOME/app/sin_server.py </dev/null 2>&1 | /usr/sbin/cronolog $HOME/log/sin_server/sin_server.%Y%m%d.log >/dev/null 2>&1 &
+  RETVAL=$?
+  [ $RETVAL -eq 0 ] && echo_success
+  [ $RETVAL -ne 0 ] && echo_failure
+    echo
+  return $RETVAL
+}
+
+stop() {
+  echo $"Stopping $prog: "
+  for pid in `ps x -o  "%p %r %a" | \grep "[p]ython $HOME/app/sin_server.py" | awk '{print $1}'`; do
+    echo -n $"Stopping $prog($pid): "
+    kill $pid
+    RETVAL=$?
+    c=50
+    while [ $c -gt 0 ]; do
+      let c=$c-1
+      flag=1
+      for p in `ps x -o  "%p %r %a" | \grep -E $"$pid +[0-9]+ +"`; do
+        flag=0
+        break
+      done
+      if [ $flag -ne 0 ]; then
+        break
+      fi
+      sleep .1
+    done
+    if [ $c -le 0 ]; then
+      RETVAL=1
+    fi
+  done
+  [ $RETVAL -eq 0 ] && echo_success
+  [ $RETVAL -ne 0 ] && echo_failure
+    echo
+  return $RETVAL
+}
+
+reload() {
+  stop
+  start
+}
+
+restart() {
+  stop
+  start
+}
+
+case "$1" in
+start)
+  start
+  ;;
+
+stop)
+  stop
+  ;;
+
+reload)
+  reload
+  ;;
+
+restart)
+  restart
+  ;;
+
+*)
+  echo $"Usage: $0 {start|stop|reload|restart}"
+  exit 1
+esac
+
+exit $?
+
