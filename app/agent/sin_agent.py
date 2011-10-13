@@ -501,9 +501,11 @@ if __name__ == '__main__':
   nodes = cluster_client.get_registered_nodes()
   if nodes.get(node_id):
     node = nodes[node_id]
-    host = socket.gethostbyaddr(socket.gethostname())[0]
+    host = None
     if options.host != "":
       host = options.host
+    else:
+      host = socket.gethostbyaddr(socket.gethostname())[0]
     hosts_a = set(socket.gethostbyname_ex(node.get_host())[2])
     hosts_b = set(socket.gethostbyname_ex(host)[2])
     if not [h for h in hosts_b if not h.startswith('127.')]:
