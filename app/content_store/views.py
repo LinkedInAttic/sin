@@ -99,6 +99,7 @@ def newStore(request,store_name):
   )
   store.save()
   store.collaborators.add(request.user)
+  store.save()
 
   setupCluster(store)
 
@@ -815,6 +816,7 @@ def add_collab(request, store_name):
 
   # Not checking if user alread in collabs, just adding
   store.collaborators.add(user)
+  store.save()
   resp = {
     'ok' : True,
     'id': user.id,
@@ -850,6 +852,7 @@ def remove_collab(request, store_name):
     return HttpResponse(json.dumps(resp))
 
   store.collaborators.remove(user)
+  store.save()
   resp = {
     'ok' : True,
     'id': user.id,

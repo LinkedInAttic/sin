@@ -16,6 +16,11 @@
   line-height: 28px;
 }
 
+.store-tab li
+{
+  line-height: 28px;
+}
+
 .display-none {
   display: none;
 }
