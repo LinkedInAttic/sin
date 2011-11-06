@@ -9,5 +9,11 @@ package org.projectsin.client.api;
  */
 public interface SinClient
 {
-  public SinStore openStore(SinStoreConfig storeConfig);
+  /**
+   * @param storeConfig
+   * @return
+   * @throws InvalidSinConfigurationException
+   */
+  public SinStore openStore(SinStoreConfig storeConfig)
+      throws InvalidSinConfigurationException;
 }

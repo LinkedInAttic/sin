@@ -34,6 +34,11 @@ public class SinSearchQuery
     return this;
   }
   
+  public boolean getHasQuery()
+  {
+    return _query != null && _query.trim().length() > 0;
+  }
+  
   public int getStart()
   {
     return _start;
@@ -72,10 +77,19 @@ public class SinSearchQuery
   {
     return Collections.unmodifiableMap(_facetMap);
   }
+  
+  public boolean getHasFacetSet()
+  {
+    return !_facetMap.isEmpty();
+  }
 
   public Set<String> getCountSet()
   {
     return Collections.unmodifiableSet(_countSet);
   }
   
+  public boolean getHasCountSet()
+  {
+    return !_countSet.isEmpty();
+  }
 }

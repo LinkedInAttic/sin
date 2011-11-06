@@ -6,6 +6,7 @@ package org.projectsin.client;
 import org.projectsin.client.api.SinClient;
 import org.projectsin.client.api.SinClientFactory;
 import org.projectsin.client.api.SinConfig;
+import org.projectsin.client.impl.SinClientImpl;
 
 /**
  * @author ruslan
@@ -26,8 +27,8 @@ public class DefaultSinClientFactory implements SinClientFactory
   @Override
   public SinClient createClient(SinConfig config)
   {
-    // TODO Auto-generated method stub
-    return null;
+    final SinClient sinClient = new SinClientImpl(config);
+    return sinClient;
   }
 
 }
