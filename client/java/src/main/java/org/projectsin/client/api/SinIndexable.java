@@ -4,5 +4,5 @@ public interface SinIndexable
 {
   public long getId();
   
-  public String getAsString();
+  public String getAsJSONString();
 }

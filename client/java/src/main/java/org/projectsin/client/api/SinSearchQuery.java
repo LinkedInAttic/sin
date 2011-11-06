@@ -17,11 +17,14 @@ public class SinSearchQuery
 {
   private String    _query;
   
-  private int       _start  = 0;
+  private int       _start  =  0;
   private int       _length = 10;
+  private int       _maxFacetCountHits = 50;
   
   private Map<String,String> _facetMap = new HashMap<String,String>();
   private Set<String>        _countSet = new HashSet<String>();
+  
+  private Set<String>        _fieldSet = new HashSet<String>(); 
   
   public String getQuery()
   {
@@ -61,6 +64,17 @@ public class SinSearchQuery
     return this;
   }
   
+  public int getMaxFacetCountHits()
+  {
+    return _maxFacetCountHits;
+  }
+
+  public SinSearchQuery setMaxFacetCountHits(int maxFacetCountHits)
+  {
+    _maxFacetCountHits = maxFacetCountHits;
+    return this;
+  }
+
   public SinSearchQuery addFacet(String facet, String value)
   {
     _facetMap.put(facet, value);
@@ -71,6 +85,22 @@ public class SinSearchQuery
   {
     _countSet.add(facet);
     return this;
+  }
+  
+  public SinSearchQuery addField(String field)
+  {
+    _fieldSet.add(field);
+    return this;
+  }
+  
+  public boolean getHasFieldSet()
+  {
+    return !_fieldSet.isEmpty();
+  }
+
+  public Set<String> getFieldSet()
+  {
+    return Collections.unmodifiableSet(_fieldSet);
   }
 
   public Map<String, String> getFacetMap()

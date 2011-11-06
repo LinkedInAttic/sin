@@ -35,6 +35,7 @@ import org.json.JSONObject;
 import org.projectsin.client.api.InvalidSinConfigurationException;
 import org.projectsin.client.api.SinConfig;
 import org.projectsin.client.api.SinIndexable;
+import org.projectsin.client.api.SinIndexableFactory;
 import org.projectsin.client.api.SinSearchQuery;
 import org.projectsin.client.api.SinSearchResult;
 import org.projectsin.client.api.SinStore;
@@ -57,6 +58,8 @@ public class SinStoreImpl implements SinStore
   private final String  _updDocsUrl;
   private final String  _delDocsUrl;
   
+  private final SinIndexableFactory _indexableFactory;
+  
   public SinStoreImpl(SinConfig sinConfig, SinStoreConfig storeConfig)
     throws InvalidSinConfigurationException
   {
@@ -74,6 +77,8 @@ public class SinStoreImpl implements SinStore
     {
       throw new InvalidSinConfigurationException(e);
     }
+    
+    _indexableFactory = new SinIndexableFactoryImpl(_storeConfig);
   }
   
   /* (non-Javadoc)
@@ -102,7 +107,7 @@ public class SinStoreImpl implements SinStore
       {
         try
         {
-          JSONObject jsonObj = new JSONObject(doc.getAsString());
+          JSONObject jsonObj = new JSONObject(doc.getAsJSONString());
           jsonMsgs.put(jsonObj);
         }
         catch (JSONException e)
@@ -127,7 +132,7 @@ public class SinStoreImpl implements SinStore
   {
     try
     {
-      JSONObject jsonObj = new JSONObject(doc.getAsString());
+      JSONObject jsonObj = new JSONObject(doc.getAsJSONString());
 
       jsonObj.put(_storeConfig.getIdField(),
                   doc.getId());
@@ -197,6 +202,11 @@ public class SinStoreImpl implements SinStore
       }
     }
     
+    if(query.getHasFieldSet())
+    {
+      rb.addFields(query.getFieldSet());
+    }
+    
     if(query.getHasCountSet())
     {
       for(String s: query.getCountSet())
@@ -205,7 +215,7 @@ public class SinStoreImpl implements SinStore
         
         nvp.add(new BasicNameValuePair(facetParam + ".expand", "true"));
         nvp.add(new BasicNameValuePair(facetParam + ".minhit", "0" ));
-        nvp.add(new BasicNameValuePair(facetParam + ".max"   , "50"));
+        nvp.add(new BasicNameValuePair(facetParam + ".max"   , Integer.toString(query.getMaxFacetCountHits())));
         nvp.add(new BasicNameValuePair(facetParam + ".order" , "hits"));
       }
     }
@@ -267,15 +277,31 @@ public class SinStoreImpl implements SinStore
                 {
                   continue;
                 }
+                
+                if(query.getHasFieldSet())
+                {
+                  for (String f: query.getFieldSet())
+                  {
+                    JSONArray valArr = (JSONArray)jsonHit.get(f);
+                    if(valArr != null)
+                    {
+                      for(int ti = 0; ti < valArr.length(); ti++)
+                      {
+                        String val = (String)valArr.get(ti);
+                        rb.addFieldValue(f, id, val);
+                      }/*for*/
+                    }/*valArr != null*/
+
+                  }
+                }
               }
             }/*hitsArr*/
             
-            Long jsonNumHits = (Long)jsonObj.get("numhits");
-            if(jsonNumHits != null)
-            {
-              int numHits = jsonNumHits.intValue();
-              rb.setNumHits(numHits);
-            }
+            int numHits = jsonObj.getInt("numhits");
+            rb.setNumHits(numHits);
+            
+            double score = jsonObj.getDouble("score");
+            rb.setScore(score);
             
             if(query.getHasCountSet())
             {
@@ -378,6 +404,15 @@ public class SinStoreImpl implements SinStore
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
+  }
+
+  /* (non-Javadoc)
+   * @see org.projectsin.client.api.SinStore#getIndexableFactory()
+   */
+  @Override
+  public SinIndexableFactory getIndexableFactory()
+  {
+    return _indexableFactory;
   }
 
 }
