@@ -1,1 +1,0 @@
-../sinClient/senseiClient.py

@@ -3,7 +3,7 @@
 """Python client library for Sin
 """
 
-from senseiClient import *
+from sensei import *
 
 import sys
 import urllib
