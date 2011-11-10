@@ -40,6 +40,11 @@
 			<name>Lei Wang</name>
 			<email>wonlay@gmail.com</email>
 		</developer>
+    <developer>
+      <id>ruslansv</id>
+      <name>Ruslan Belkin</name>
+      <email>Ruslan.Belkin@gmail.com</email>
+    </developer>
 	</developers>
 
 	<!-- Set the compiler to java6 -->
@@ -69,19 +74,19 @@
 			<artifactId>slf4j-api</artifactId>
 			<version>1.6.1</version>
 		</dependency>
-		
+
 		<dependency>
-		    <groupId>org.slf4j</groupId>
-		    <artifactId>slf4j-log4j12</artifactId>
-		    <version>1.6.1</version>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.6.1</version>
 		</dependency>
 
-	 
+
 		<dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>4.1</version>
-        </dependency>
+			<groupId>org.apache.httpcomponents</groupId>
+			<artifactId>httpclient</artifactId>
+			<version>4.1</version>
+		</dependency>
 
 		<dependency>
 			<groupId>org.json</groupId>
@@ -96,8 +101,15 @@
 			<type>jar</type>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.0.1</version>
+		</dependency>
+
 	</dependencies>
-	
+
 
 	<distributionManagement>
 		<snapshotRepository>
