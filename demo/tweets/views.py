@@ -12,11 +12,11 @@ import logging
 import json
 
 sinClient = SinClient(settings.SIN_HOST,settings.SIN_PORT)
-store = sinClient.openStore(settings.SIN_STORE)
+store = sinClient.openStore(settings.SIN_STORE, settings.SIN_API_KEY)
 searcher = store.getSenseiClient()
 
 req = SenseiRequest()
-req.fetch = True
+req.fetch_stored = True
 req.count = 10
 facetSpec = SenseiFacet()
 facetSpec.expand = True
@@ -27,7 +27,7 @@ req.sorts = [sort]
 req.facets={'authorname':facetSpec}
 
 sel = SenseiSelection('authorname')
-req.selections.append(sel)
+req.selections['authorname'] = sel
 
 def search(request):
   q = request.GET.get('query')
@@ -52,7 +52,7 @@ def search(request):
     facetList = []
     if res.hits:
       for senseiHit in res.hits:
-        hits.append(senseiHit.srcData)
+        hits.append(senseiHit['srcdata'])
     if res.facetMap:
       authorFacetList = res.facetMap.get('authorname')
       if authorFacetList:

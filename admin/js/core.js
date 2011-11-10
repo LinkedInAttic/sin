@@ -4481,6 +4481,8 @@ $(function() {
       'click .stopStore': 'stopStore',
       'click .manage': 'showManage',
       'click .collaborators': 'showCollaborators',
+      'click .index-loader': 'showIndexLoader',
+      'click .loadindex': 'loadIndex',
       'click .cluster': 'showCluster',
       'click .close-all-tabs': 'closeAllTabs',
       'click .restart': 'restart'
@@ -4556,8 +4558,45 @@ $(function() {
     },
 
     initialize: function() {
-      _.bindAll(this, 'showManage', 'closeAllTabs', 'showCollaborators', 'showCluster', 'restart', 'render', 'stopStore', 'regenerateApiKey', 'deleteStore', 'purgeStore');
+      _.bindAll(this, 'showManage', 'closeAllTabs', 'showCollaborators', 'showIndexLoader', 'loadIndex', 'showCluster', 'restart', 'render', 'stopStore', 'regenerateApiKey', 'deleteStore', 'purgeStore');
       this.model.view = this;
+    },
+
+    loadIndex: function() {
+      var me = this;
+      var uri = me.$('.uri').val();
+      if (uri.length == 0) {
+        alert('Please give a uri to load, hdfs://host:port/path for example');
+        return;
+      }
+
+      $.blockUI({ message: '<h1><img class="indicator" src="/static/images/indicator.gif" /> Loading...</h1>' });
+      $.post('/store/'+me.model.get('name') + '/load-index/', {uri: uri}, function(res) {
+        if (res["ok"]) {
+          me.closeAllTabs();
+          alert('New index loaded.');
+          $.getJSON('/store/'+me.model.get('name') + '/with-running-info/', function(res) {
+            if (res.ok) {
+              me.model.set(res);
+              var running_info = me.model.get('running_info');
+              if (running_info && running_info.numdocs >=0) {
+                me.$('.numdocs').text(me.model.get('running_info').numdocs);
+                me.$('.running-info').show();
+              }
+              else {
+                me.$('.status').text("Error");
+              }
+            }
+            else {
+              alert(res.error);
+            }
+          });
+        }
+        else {
+          alert(res["msg"]);
+        }
+        $.unblockUI();
+      }, 'json');
     },
 
     regenerateApiKey: function() {
@@ -4645,6 +4684,12 @@ $(function() {
       }
     },
 
+    showIndexLoader: function() {
+      var me = this;
+      me.closeAllTabs();
+      me.$('.index-loader-tab').show();
+    },
+
     showCluster: function() {
       var me = this;
       me.closeAllTabs();
@@ -4692,6 +4737,33 @@ $(function() {
             if (running_info && running_info.numdocs >=0) {
               me.$('.numdocs').text(me.model.get('running_info').numdocs);
               me.$('.running-info').show();
+              var broker = 'http://'+me.model.get('broker_host')+':'+me.model.get('broker_port');
+              $.ajax({
+                url: broker+'/sensei/admin/jmx/'+encodeURIComponent(broker),
+                type: 'POST',
+                contentType: 'text/json',
+                data: JSON.stringify({
+                        type: 'list'
+                      }),
+                dataType: 'json',
+                success:  function(data) {
+                            if (!(data && data.value))
+                              return;
+                            var jmx = data.value;
+                            var db = jmx['com.senseidb'];
+                            if (!db)
+                              return;
+                            for (var name in db) {
+                              if ((''+name).indexOf('zoie-name=') == 0) {
+                                var mb = db[name];
+                                if (mb.op && mb.op.loadIndex) {
+                                  me.$('.index-loader').show();
+                                }
+                                return;
+                              }
+                            }
+                          }
+              });
             }
             else {
               me.$('.status').text("Error");

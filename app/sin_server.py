@@ -133,7 +133,7 @@ def main(argv):
     if not Node.objects.filter(id=node["node_id"]).exists():
       Node.objects.create(id=node["node_id"], host=node["host"], agent_port=node["port"],
                           online=False, group=Group(pk=1))
-      cc.register_node(node["node_id"], node["host"], port=node["port"])
+    cc.register_node(node["node_id"], node["host"], port=node["port"])
 
   static_files = static.File(os.path.join(os.path.join(SIN_HOME, 'admin')))
   WSGI = wsgi.WSGIResource(reactor, pool, WSGIHandler())

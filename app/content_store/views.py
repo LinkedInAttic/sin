@@ -18,6 +18,8 @@ from django.http import HttpResponseNotAllowed
 from django.http import HttpResponseServerError
 import kafka
 
+from twisted.internet import task, reactor
+
 from decorators import login_required, api_key_required
 from utils import enum, generate_api_key, get_local_pub_ip
 from utils import ClusterLayout
@@ -161,6 +163,51 @@ def deleteStore(request,store_name):
       'msg': str(e),
     }
   return HttpResponse(json.dumps(resp))
+
+@login_required
+def load_index(request, store_name):
+  try:
+    store = request.user.my_stores.get(name=store_name)
+  except ContentStore.DoesNotExist:
+    return HttpResponse(json.dumps({
+      'ok'    : False,
+      'msg'   : 'You do not own a store with the name "%s".' % store_name
+    }))
+
+  if store.status < enum.STORE_STATUS['running']:
+    return HttpResponse(json.dumps({
+      'ok'    : False,
+      'msg'   : 'Your store is not running. Index loading works only for stores that are running.',
+    }))
+
+  uri = request.REQUEST.get('uri')
+  if not uri:
+    return HttpResponse(json.dumps({
+      'ok'    : False,
+      'msg'   : 'Your store is not running. Index loading works only for stores that are running.',
+    }))
+
+  store.bootstrap_uri = uri
+  store.bootstrap_uri_updated = datetime.datetime.now()
+
+  errors = []
+  # Foreach running nodes, we have the indices updated:
+  for member in store.members.filter(node__online=True):
+    res, msg = member.load_index(uri)
+    if not res:
+      errors.append(msg)
+
+  if errors:
+    return HttpResponse(json.dumps({
+      'ok'    : False,
+      'msg'   : '\n'.join(errors),
+    }))
+
+  store.save()
+  return HttpResponse(json.dumps({
+    'ok'    : True,
+    'msg'   : 'Succeeded.',
+  }))
 
 @login_required
 def purgeStore(request, store_name):
@@ -612,6 +659,23 @@ def do_start_store(request, store, config_id=None, restart=False, node=None, wit
                                   not restart and "start-store" or "restart-store"),
                                urllib.urlencode(params))
 
+      if store.bootstrap_uri and member.bootstrapped < store.bootstrap_uri_updated:
+        def _bootstrap(store, member, retry=0):
+          up = False
+          clusterinfo = store.running_info.get(u'clusterinfo')
+          if clusterinfo:
+            for c in clusterinfo:
+              if c.get('id') == member.node_id:
+                up = True
+          if not up:
+            if retry < 20:
+              reactor.callLater(30, _bootstrap, store, member, retry+1)
+            return
+
+          member.load_index()
+
+        reactor.callLater(3, _bootstrap, store, member, 0)
+
     store.configs.filter(active=True).update(active=False)
     current_config.active = True
     current_config.last_activated = datetime.datetime.now();
@@ -908,6 +972,9 @@ def setupCluster(store):
   totalNodes = len(nodes)
   numNodesPerReplica = totalNodes / store.replica
   remainingNodes = totalNodes % store.replica
+  if numNodesPerReplica == 0:
+    logger.error("Not enough online nodes(%d) for %d replicas." % (totalNodes, store.replica))
+    return
   numPartsPerNode = store.partitions / numNodesPerReplica
   remainingParts = store.partitions % numNodesPerReplica
   extraRow = remainingNodes > 0 and 1 or 0

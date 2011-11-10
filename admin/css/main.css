@@ -29,6 +29,10 @@
   display: none;
 }
 
+.index-loader-tab .uri {
+  width: 780px;
+}
+
 .table {
   display: table;
 }

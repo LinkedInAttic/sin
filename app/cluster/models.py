@@ -1,8 +1,8 @@
-import logging
+import datetime, json, logging, os
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from utils import enum
+from utils import enum, jolokia
 from utils.enum import to_choices
 
 class Group(models.Model):
@@ -21,7 +21,35 @@ class Node(models.Model):
     return u"%s:%s:%s" % (self.group.name, self.host, self.agent_port)
 
 class Membership(models.Model):
-  node      = models.ForeignKey(Node, related_name="members")
-  store     = models.ForeignKey("content_store.ContentStore", related_name="members")
-  replica   = models.IntegerField(default=0)
-  parts     = models.CommaSeparatedIntegerField(max_length=1024)
+  node           = models.ForeignKey(Node, related_name="members")
+  store          = models.ForeignKey("content_store.ContentStore", related_name="members")
+  replica        = models.IntegerField(default=0)
+  parts          = models.CommaSeparatedIntegerField(max_length=1024)
+  bootstrapped   = models.DateTimeField(default=datetime.datetime.min)
+
+  def load_index(self, uri=None):
+    if not uri:
+      uri = self.store.bootstrap_uri
+    if not uri:
+      return False, u'uri cannot be empty.'
+    if self.store.status < enum.STORE_STATUS['running']:
+      return False, 'Store "%s" is not running.' % self.store.name
+    if not self.node.online:
+      return False, u'Node "%s" is offline.' % self.node
+
+    client = jolokia.Client('http://%s:%d/admin/jmx' % (self.node.host, self.store.broker_port))
+    for part in json.loads(self.parts):
+      res = client.request({
+        "type"        : "exec",
+        "mbean"       : "com.senseidb:zoie-name=pair-admin-%s-%s" % (self.node_id, part),
+        "operation"   : "loadIndex",
+        "arguments"   : [os.path.join(uri, str(part))]
+      })
+      if not (res and res.get('value')):
+        logging.error(u'Loading index failed for node "%s" partition "%s": %s' % (self.node, part, json.dumps(res)))
+        return False, u'Loading index failed for node "%s" partition "%s": %s' % (self.node, part, json.dumps(res))
+
+    self.bootstrapped = datetime.datetime.now()
+    self.save()
+    return True, None
+

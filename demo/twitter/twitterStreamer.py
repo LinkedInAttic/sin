@@ -7,9 +7,10 @@ from dateutil.parser import *
 
 from sinClient.sinClient import *
 
-sinHost = "projectsin.org"
+sinHost = "localhost"
 sinPort = 8666
 sinStore = "tweets"
+sinApiKey = "O87D1PRQv65wSsjSVJgqovq5hbVpSeRThXUJUIzAMg0"
 queryString = "apple"
 batchsize = 100
 baseurl = 'http://search.twitter.com/search.json'
@@ -43,7 +44,7 @@ def extract(tweetHit):
 if __name__ == '__main__':
 
   sinClient = SinClient(sinHost,sinPort)
-  tweetStore = sinClient.openStore(sinStore)
+  tweetStore = sinClient.openStore(sinStore, sinApiKey)
   since_id = None
   opener = urllib2.build_opener()
   opener.addheaders = [('User-agent', 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_7) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.91 Safari/534.30')]

@@ -95,6 +95,9 @@ class ContentStore(models.Model):
   status = models.SmallIntegerField(choices=to_choices(enum.STORE_STATUS),
     default=enum.STORE_STATUS['new'])
 
+  bootstrap_uri           = models.CharField(max_length=1024)
+  bootstrap_uri_updated   = models.DateTimeField(auto_now_add=True)
+
   group = models.ForeignKey(Group, related_name="stores", default=1)
 
   nodes = models.ManyToManyField(Node, through="cluster.Membership", related_name="stores")
@@ -181,6 +184,7 @@ class ContentStore(models.Model):
       'name': self.name,
       'replica': self.replica,
       'partitions': self.partitions,
+      'bootstrap_uri': self.bootstrap_uri,
       'sensei_port': self.sensei_port,
       'broker_host': self.broker_host,
       'broker_port': self.broker_port,

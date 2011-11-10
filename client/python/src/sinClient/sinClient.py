@@ -121,7 +121,7 @@ class Sindex:
     sel = SenseiSelection("uid")
     sel.addSelection(str(id))
     req.count = 1
-    req.fetch = True
+    req.fetch_stored = True
     req.selections = [sel]
     res = self.senseiClient.doQuery(req)
     doc = None
@@ -260,7 +260,7 @@ if __name__ == '__main__':
   searcher = store.getSenseiClient()
   req = SenseiRequest()
 
-  req.fetch = True
+  req.fetch_stored = True
   req.count = 5
   res = searcher.doQuery(req)
 

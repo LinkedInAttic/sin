@@ -146,7 +146,7 @@
       <input class="new-collab" type="text" /> <input class="add btn" type="button" value="Add" /> <input class="close-all-tabs btn" type="button" value="Cancel" />
     </script>
     <script id="content-store-tmpl" type="text/x-mustache-tmpl">
-<div class="container">
+      <div class="container">
 
         
 
@@ -197,6 +197,7 @@
 					
 						<input type="button" class="manage btn primary" onclick="javascript:_void();" value="Configure"/>
 						<input type="button" class="collaborators btn primary" onclick="javascript:_void();" value="Collaborators"/>
+						<input type="button" class="index-loader btn primary display-none" onclick="javascript:_void();" value="Index Loader"/>
 						<input type="button" class="restart btn success" value="(Re-)Start"/>
 						<input type="button" class="stopStore btn danger" value="Stop"/>
 						
@@ -212,15 +213,18 @@
           {% templatetag openvariable %}#description{% templatetag closevariable %}<p>Description: {% templatetag openvariable %}description{% templatetag closevariable %}</p>{% templatetag openvariable %}/description{% templatetag closevariable %}
          
           </p>
+      </div>
+      <div class="collab-tab store-tab" style="display: none;">
+      </div>
+      <div class="index-loader-tab store-tab" style="display: none;">
+        <input class="uri" type="text" value="{% templatetag openvariable %}bootstrap_uri{% templatetag closevariable %}" /> <input class="loadindex btn" type="button" value="Load" /> <input class="close-all-tabs btn" type="button" value="Cancel" />
+      </div>
+      <div class="cluster-tab store-tab" style="display: none;">
+        <div class="cluster-display">
         </div>
-        <div class="collab-tab store-tab" style="display: none;">
-        </div>
-        <div class="cluster-tab store-tab" style="display: none;">
-          <div class="cluster-display">
-          </div>
-          <input class="close-all-tabs btn" type="button" value="Cancel" />
-        </div>
-        <div class="manage-tab store-tab" style="display: none;">
+        <input class="close-all-tabs btn" type="button" value="Cancel" />
+      </div>
+      <div class="manage-tab store-tab" style="display: none;">
       </div>
       <hr />
     </script>

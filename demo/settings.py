@@ -20,9 +20,10 @@ DATABASES = {
     }
 }
 
-SIN_HOST = 'projectsin.org'
+SIN_HOST = 'localhost'
 SIN_PORT = 8666
 SIN_STORE = 'tweets'
+SIN_API_KEY = 'O87D1PRQv65wSsjSVJgqovq5hbVpSeRThXUJUIzAMg0'
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
