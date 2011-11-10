@@ -38,6 +38,7 @@ class Membership(models.Model):
       return False, u'Node "%s" is offline.' % self.node
 
     client = jolokia.Client('http://%s:%d/admin/jmx' % (self.node.host, self.store.broker_port))
+    errors = []
     for part in json.loads(self.parts):
       res = client.request({
         "type"        : "exec",
@@ -46,8 +47,11 @@ class Membership(models.Model):
         "arguments"   : [os.path.join(uri, str(part))]
       })
       if not (res and res.get('value')):
-        logging.error(u'Loading index failed for node "%s" partition "%s": %s' % (self.node, part, json.dumps(res)))
-        return False, u'Loading index failed for node "%s" partition "%s": %s' % (self.node, part, json.dumps(res))
+        errors.append(u'Loading index failed for node "%s" partition "%s": %s' % (self.node, part, json.dumps(res)))
+        logging.error(errors[-1])
+
+    if errors:
+      return False, '\n'.join(errors)
 
     self.bootstrapped = datetime.datetime.now()
     self.save()
