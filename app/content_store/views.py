@@ -1,4 +1,4 @@
-import logging, random, re, os, subprocess, json, shutil, urllib, urllib2, datetime
+import logging, random, re, os, subprocess, json, shutil, urllib, urllib2, datetime, threading
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -191,11 +191,30 @@ def load_index(request, store_name):
   store.bootstrap_uri_updated = datetime.datetime.now()
 
   errors = []
+  class LoadThread(threading.Thread):
+    def __init__(self, member, *args, **kwargs):
+      super(LoadThread, self).__init__(*args, **kwargs)
+      self.member = member
+
+    def run(self):
+      res, msg = member.load_index_threaded(uri)
+      if not res:
+        errors.append(msg)
+
   # Foreach running nodes, we have the indices updated:
-  for member in store.members.filter(node__online=True):
-    res, msg = member.load_index(uri)
-    if not res:
-      errors.append(msg)
+  members = list(store.members.filter(node__online=True))
+  threads = []
+  for member in members:
+    t = LoadThread(member)
+    t.setDaemon(True)
+    if (len(members) - len(threads)) > 1:
+      threads.append(t)
+      t.start()
+    else:
+      t.run()
+
+  for t in threads:
+    t.join()
 
   if errors:
     return HttpResponse(json.dumps({
@@ -672,7 +691,10 @@ def do_start_store(request, store, config_id=None, restart=False, node=None, wit
               reactor.callLater(30, _bootstrap, store, member, retry+1)
             return
 
-          member.load_index()
+          def _load(member):
+            member.load_index_threaded()
+
+          reactor.callInThread(_load, member)
 
         reactor.callLater(3, _bootstrap, store, member, 0)
 
