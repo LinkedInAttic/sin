@@ -9,8 +9,6 @@ import sys
 import urllib
 import urllib2
 import time
-import kafka
-
 import json
 
 class Sindex:
