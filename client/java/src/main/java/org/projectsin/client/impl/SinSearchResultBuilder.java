@@ -16,6 +16,7 @@ public class SinSearchResultBuilder
   
   private Map<String, Map<String, Integer>>     _facetCounts = new HashMap<String, Map<String, Integer>>();
   private Map<String, Map<Long, List<String>>>  _fieldValues = new HashMap<String, Map<Long, List<String>>>();
+  private Map<Long, Double> _scores = new HashMap<Long,Double>();
   
   public SinSearchResultBuilder addId(long id)
   {
@@ -29,9 +30,9 @@ public class SinSearchResultBuilder
     return this;
   }
   
-  public SinSearchResultBuilder setScore(double score)
+  public SinSearchResultBuilder setScore(long id, double score)
   {
-    _score = score;
+    _scores.put(id, score);
     return this;
   }
   
@@ -79,11 +80,12 @@ public class SinSearchResultBuilder
     
     result.setNumHits(_numHits);
     result.setIds(new ArrayList<Long>(_ids));
-    result.setScore(_score);
     
     // TODO MED makes this immutable compeltely
     result.setFacetCounts(new HashMap<String, Map<String, Integer>>   (_facetCounts));
     result.setFieldValues(new HashMap<String, Map<Long, List<String>>>(_fieldValues));
+    
+    result.setScores(new HashMap<Long,Double>(_scores));
     
     return result;
   }
