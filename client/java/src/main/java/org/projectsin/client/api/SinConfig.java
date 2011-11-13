@@ -10,7 +10,7 @@ package org.projectsin.client.api;
 public class SinConfig
 {
   private String    _host;
-  private int       _port;
+  private int       _port = 8666;
   
   public String getHost()
   {

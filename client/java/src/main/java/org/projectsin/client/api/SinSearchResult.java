@@ -4,7 +4,6 @@
 package org.projectsin.client.api;
 
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -19,10 +18,10 @@ public class SinSearchResult
 
   private int         _numHits;
   private List<Long>  _ids;
-  private double      _score;
 
   private Map<String, Map<String, Integer>>    _facetCounts;
   private Map<String, Map<Long, List<String>>>  _fieldValues;
+  private Map<Long,Double>  _scores;
 
   public int getNumHits()
   {
@@ -44,16 +43,6 @@ public class SinSearchResult
     _ids = ids;
   }
   
-  public double getScore()
-  {
-    return _score;
-  }
-
-  public void setScore(double score)
-  {
-    _score = score;
-  }
-
   public Map<String, Map<String, Integer>> getFacetCounts()
   {
     return _facetCounts;
@@ -72,6 +61,16 @@ public class SinSearchResult
   public void setFieldValues(Map<String, Map<Long, List<String>>> fieldValues)
   {
     _fieldValues = fieldValues;
+  }
+
+  public Map<Long, Double> getScores()
+  {
+    return _scores;
+  }
+
+  public void setScores(Map<Long, Double> scores)
+  {
+    _scores = scores;
   }
 
 }
