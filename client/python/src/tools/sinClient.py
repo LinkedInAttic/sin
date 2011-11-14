@@ -1,1 +1,1 @@
-../sinClient/sinClient.py
+../sin/sinClient.py
