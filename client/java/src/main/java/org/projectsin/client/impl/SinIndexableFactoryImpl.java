@@ -48,7 +48,7 @@ public class SinIndexableFactoryImpl implements SinIndexableFactory
   {
     try
     {
-      if(!jsonObj.has(_storeConfig.getIdField()))
+      if(jsonObj.has(_storeConfig.getIdField()))
         return jsonObj.getLong(_storeConfig.getIdField());
     }
     catch (JSONException e)

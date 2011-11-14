@@ -223,8 +223,6 @@ public class SinStoreImpl implements SinStore
     nvp.add(new BasicNameValuePair("start", Integer.toString(query.getStart ())));
     nvp.add(new BasicNameValuePair("rows" , Integer.toString(query.getLength())));
     
-    nvp.add(new BasicNameValuePair("sort" , "date:desc"));
-    
     URI uri;
     try
     {
@@ -272,6 +270,9 @@ public class SinStoreImpl implements SinStore
                 {
                   id = Long.valueOf(idVal);
                   rb.addId(id);
+
+                  double score = jsonHit.getDouble("score");
+                  rb.setScore(id, score);
                 }
                 else
                 {
@@ -299,9 +300,6 @@ public class SinStoreImpl implements SinStore
             
             int numHits = jsonObj.getInt("numhits");
             rb.setNumHits(numHits);
-            
-            double score = jsonObj.getDouble("score");
-            rb.setScore(score);
             
             if(query.getHasCountSet())
             {

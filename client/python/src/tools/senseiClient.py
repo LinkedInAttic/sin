@@ -1,1 +1,1 @@
-../sinClient/senseiClient.py
+../sin/senseiClient.py
