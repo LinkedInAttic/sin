@@ -5,7 +5,7 @@ from utils import get_local_pub_ip
 LOCAL_PUB_IP = get_local_pub_ip()
 SIN_HOME = os.path.normpath(os.path.join(os.path.normpath(__file__), '../..'))
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 STORE_HOME = '/tmp/store/'
@@ -23,7 +23,7 @@ MANAGERS = ADMINS
 DATABASES = {
   'default': {
     'ENGINE': 'django.db.backends.sqlite3', # Add 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-    'NAME': '/tmp/sin',            # Or path to database file if using sqlite3.
+    'NAME': '/var/sin/sin.db',            # Or path to database file if using sqlite3.
     'USER': '',            # Not used with sqlite3.
     'PASSWORD': '',          # Not used with sqlite3.
     'HOST': '',            # Set to empty string for localhost. Not used with sqlite3.
@@ -35,10 +35,10 @@ ZOOKEEPER_URL = 'localhost:2181'
 ZOOKEEPER_TIMEOUT = 30000
 SIN_SERVICE_NAME = 'sin'
 
-SENSEI_NODES = {
-  "nodes":[
-    {"node_id":0, "host":LOCAL_PUB_IP, "port":6664},
-    ]
+SIN_NODES = {
+  "nodes": [
+    {"node_id": 0, "host": LOCAL_PUB_IP, "port": 6664},
+  ],
 }
 
 KAFKA_HOST = 'localhost'

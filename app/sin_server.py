@@ -129,7 +129,7 @@ def main(argv):
   # will simply become a no-op.
   Node.objects.filter(online=True).update(online=False)
 
-  for node in settings.SENSEI_NODES["nodes"]:
+  for node in settings.SIN_NODES["nodes"]:
     if not Node.objects.filter(id=node["node_id"]).exists():
       Node.objects.create(id=node["node_id"], host=node["host"], agent_port=node["port"],
                           online=False, group=Group(pk=1))

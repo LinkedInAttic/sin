@@ -5,6 +5,7 @@
 # description: kafka
 
 HOME=/home/liwang/apps/kafka
+USER=root
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
 
@@ -62,7 +63,7 @@ start() {
   ulimit -c unlimited
   echo -n $"Starting $prog: "
   cd $HOME
-  nohup ./bin/kafka-server-start.sh ./config/server.properties </dev/null 2>&1 | /usr/sbin/cronolog ./log/kafka/kafka.%Y%m%d.log >/dev/null 2>&1 &
+  nohup su $USER -c "./bin/kafka-server-start.sh ./config/server.properties </dev/null 2>&1 | /usr/sbin/cronolog ./log/kafka/kafka.%Y%m%d.log </dev/null 2>&1" </dev/null >/dev/null 2>&1 &
   RETVAL=$?
   [ $RETVAL -eq 0 ] && echo_success
   [ $RETVAL -ne 0 ] && echo_failure
@@ -72,8 +73,8 @@ start() {
 
 stop() {
   echo $"Stopping $prog: "
-  for pgid in `ps x -o  "%p %r %a" | \grep .[/]bin/kafka-server-start.sh | awk '{print $2}'`; do
-    for pid in `ps x -o  "%p %r %a" | \grep -E $"[0-9]+ +$pgid +" | \grep java | awk '{print $1}'`; do
+  for pgid in `ps ax -o  "%p %r %a" | \grep .[/]bin/kafka-server-start.sh | awk '{print $2}'`; do
+    for pid in `ps ax -o  "%p %r %a" | \grep -E $"[0-9]+ +$pgid +" | \grep java | awk '{print $1}'`; do
       echo -n $"Stopping $prog($pid): "
       kill $pid
       RETVAL=$?
@@ -81,7 +82,7 @@ stop() {
       while [ $c -gt 0 ]; do
         let c=$c-1
         flag=1
-        for p in `ps x -o  "%p %r %a" | \grep -E $"[0-9]+ +$pgid +"`; do
+        for p in `ps ax -o  "%p %r %a" | \grep -E $"[0-9]+ +$pgid +"`; do
           flag=0
           break
         done

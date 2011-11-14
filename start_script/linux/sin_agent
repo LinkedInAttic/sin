@@ -5,6 +5,7 @@
 # description: sin_agent
 
 HOME=/home/liwang/GITROOT/sin
+USER=root
 NODE_ID=0
 
 export JAVA_HOME=/export/apps/jdk/JDK-1_6_0_21
@@ -64,7 +65,7 @@ start() {
   ulimit -s 10240
   ulimit -c unlimited
   echo -n $"Starting $prog: "
-  python $HOME/app/agent/sin_agent.py $NODE_ID </dev/null 2>&1 | /usr/sbin/cronolog $HOME/log/sin_agent/sin_agent.%Y%m%d.log >/dev/null 2>&1 &
+  nohup su $USER -c $"python $HOME/app/agent/sin_agent.py $NODE_ID </dev/null 2>&1 | /usr/sbin/cronolog $HOME/log/sin_agent/sin_agent.%Y%m%d.log </dev/null 2>&1" </dev/null >/dev/null 2>&1 &
   RETVAL=$?
   [ $RETVAL -eq 0 ] && echo_success
   [ $RETVAL -ne 0 ] && echo_failure
@@ -74,7 +75,7 @@ start() {
 
 stop() {
   echo $"Stopping $prog: "
-  for pid in `ps x -o  "%p %r %a" | \grep "[p]ython $HOME/app/agent/sin_agent.py $NODE_ID$" | awk '{print $1}'`; do
+  for pid in `ps ax -o  "%p %r %a" | \grep "[p]ython $HOME/app/agent/sin_agent.py $NODE_ID$" | awk '{print $1}'`; do
     echo -n $"Stopping $prog($pid): "
     kill $pid
     RETVAL=$?
@@ -82,7 +83,7 @@ stop() {
     while [ $c -gt 0 ]; do
       let c=$c-1
       flag=1
-      for p in `ps x -o  "%p %r %a" | \grep -E $"$pid +[0-9]+ +"`; do
+      for p in `ps ax -o  "%p %r %a" | \grep -E $"$pid +[0-9]+ +"`; do
         flag=0
         break
       done
