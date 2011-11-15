@@ -26,21 +26,35 @@ except ImportError:
 global_pass = ''
 
 class BaseDeployer(object):
-  def __init__(self, host, home, node_id, server=False, user='root'):
+  def __init__(self, host, home, node_id, login=None, server=False, user='root', upgrade=False):
+    global global_pass
+
     self.host    = host
     self.home    = home
     self.node_id = node_id
+    self.login   = login
     self.server  = server
     self.user    = user
+    self.upgrade = upgrade
+
+    self.password  = None
+    self.pass_sent = False
 
     self.ssh = paramiko.SSHClient()
     self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    self.ssh.connect(self.host)
+    retry = 0
+    while True:
+      try:
+        self.ssh.connect(self.host, username=self.login, password=self.password)
+        break
+      except paramiko.AuthenticationException:
+        retry += 1
+        if retry > 3:
+          print "Authentication failed."
+          sys.exit(1)
+        self.password = global_pass = getpass.getpass()
     self.sftp  = self.ssh.open_sftp()
     self.shell = self.ssh.invoke_shell()
-
-    self.password  = ''
-    self.pass_sent = False
 
     # Read wellcome message:
     self._read_data()
@@ -95,7 +109,7 @@ class BaseDeployer(object):
     self.shell.send('%s 2>&1\n' % cmd)
     return self._read_data()
 
-  def autostart(self, service):
+  def autostart(self, service, on=True):
     raise Exception("Not implemented")
 
   def check_zkpython(self):
@@ -282,15 +296,15 @@ class BaseDeployer(object):
     return True
 
   def install_sin(self):
-    if self.check_sin():
+    if not self.upgrade and self.check_sin():
       return
 
     print 'Installing sin...'
     tmpfile = 'sin.tar.gz'
     tmpfile_local = os.path.expanduser('~/%s' % tmpfile)
     # Packaging:
-    os.system('tar -C %s -czf %s --exclude log --exclude app/django'
-              ' --exclude demo/django --exclude admin/um ./' % (SIN_HOME, tmpfile_local))
+    print ('tar -C %s -czf %s --exclude log --exclude app/django --exclude '
+              'demo/django --exclude admin/um --exclude "*.swp" --exclude "*.pyc" ./' % (SIN_HOME, tmpfile_local))
 
     sin_server = '/etc/init.d/sin_server'
     sin_agent = '/etc/init.d/sin_agent'
@@ -341,8 +355,14 @@ class BaseDeployer(object):
     if m:
       group = m.group('group')
 
+    if self.upgrade:
+      self.autostart('sin_server', off)
+      self.autostart('sin_agent', off)
+      print self.command('%s stop' % sin_server)
+      print self.command('%s stop' % sin_agent)
+
     print self.command('mkdir -p %s' % self.home)
-    print self.command('tar -C %s -xzf %s' % (self.home, tmpfile))
+    print self.command('tar --overwrite -C %s -xzf %s' % (self.home, tmpfile))
 
     print self.command('\\cp -f %s %s' % (tmp_sin_server, os.path.join(self.home, sin_server_src)))
     data = self.command('\\cp -f %s %s' % (tmp_sin_agent, os.path.join(self.home, sin_agent_src)))
@@ -393,8 +413,11 @@ class DeployerRHEL6_X86_64(BaseDeployer):
   def __init__(self, *args, **kwargs):
     super(DeployerRHEL6_X86_64, self).__init__(*args, **kwargs)
 
-  def autostart(self, service):
-    print self.command('chkconfig %s on' % service)
+  def autostart(self, service, on=True):
+    if on:
+      print self.command('chkconfig %s on' % service)
+    else:
+      print self.command('chkconfig %s off' % service)
 
   def do_install_zkpython(self):
     print 'Installing zkpython...'
@@ -432,7 +455,9 @@ class DeployerRHEL6_X86_64(BaseDeployer):
 def main(argv):
   usage = "usage: %prog [options] <install dir>"
   parser = OptionParser(usage=usage)
+  parser.add_option("-l", "--login", type="string", dest="login", default=None, help="The login user you want to run the deployment script on each node.")
   parser.add_option("-u", "--user", type="string", dest="user", default="root", help="The user sin will running as.")
+  parser.add_option("-g", "--upgrade", action="store_true", dest="upgrade", help="Install or upgrade if installed.")
   (options, args) = parser.parse_args()
   if len(args) != 1:
     parser.error("Please give me a install dir (/var/sin for example).")
@@ -441,7 +466,13 @@ def main(argv):
   server = True
   sin_nodes = sorted(list(settings.SIN_NODES.get('nodes', [])), key=lambda node:node['node_id'])
   for node in sin_nodes:
-    deployer = DeployerRHEL6_X86_64(node['host'], home, node['node_id'], server=server, user=options.user)
+    deployer = DeployerRHEL6_X86_64(node['host'],
+                                    home,
+                                    node['node_id'],
+                                    login   = options.login,
+                                    server  = server,
+                                    user    = options.user,
+                                    upgrade = options.upgrade)
     deployer.deploy()
     server = False
 
