@@ -11,6 +11,6 @@ $(document).ready(function(){
     return false;
   });
   
-  renderSnippet('http://wonlay.github.com/sin/home.html',$('#homeLink'));
+  renderSnippet('http://javasoze.github.com/sin/home.html',$('#homeLink'));
 
 });

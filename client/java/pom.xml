@@ -24,9 +24,9 @@
 	</licenses>
 
 	<scm>
-		<connection>scm:git://github.com/wonlay/sin.git</connection>
-		<developerConnection>scm:git@github.com:wonlay/sin.git</developerConnection>
-		<url>http://github.com/wonlay/sin</url>
+		<connection>scm:git://github.com/javasoze/sin.git</connection>
+		<developerConnection>scm:git@github.com:javasoze/sin.git</developerConnection>
+		<url>http://github.com/javasoze/sin</url>
 	</scm>
 
 	<developers>
