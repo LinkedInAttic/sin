@@ -114,21 +114,21 @@ class BaseDeployer(object):
   def do_install_zkpython(self):
     raise Exception("Not implemented")
 
-  #def check_setuptools(self):
-    #data = self.command('easy_install --version')
-    #print data
-    #if 'command not found' in data:
-      #return False
-    #return True
+  def check_setuptools(self):
+    data = self.command('easy_install --version')
+    print data
+    if 'command not found' in data:
+      return False
+    return True
 
-  #def install_setuptools(self):
-    #if self.check_setuptools():
-      #return
+  def install_setuptools(self):
+    if self.check_setuptools():
+      return
 
-    #self.do_install_setuptools()
+    self.do_install_setuptools()
 
-  #def do_install_setuptools(self):
-    #raise Exception("Not implemented")
+  def do_install_setuptools(self):
+    raise Exception("Not implemented")
 
   def check_django(self):
     data = self.command('python -c "import django"')
@@ -381,7 +381,7 @@ class BaseDeployer(object):
 
   def deploy(self):
     self.install_zkpython()
-    #self.install_setuptools()
+    self.install_setuptools()
     self.install_django()
     self.install_twisted()
     self.install_cronolog()
@@ -409,12 +409,12 @@ class DeployerRHEL6_X86_64(BaseDeployer):
       raise Exception("zkpython install failed!")
     print 'zkpython installed.'
 
-  #def do_install_setuptools(self):
-    #print 'Installing setuptools...'
-    #print self.command('yum -y install python-setuptools')
-    #if not self.check_setuptools():
-      #raise Exception("setuptools install failed!")
-    #print 'setuptools installed.'
+  def do_install_setuptools(self):
+    print 'Installing setuptools...'
+    print self.command('yum -y install python-setuptools')
+    if not self.check_setuptools():
+      raise Exception("setuptools install failed!")
+    print 'setuptools installed.'
 
   def do_install_cronolog(self):
     print 'Installing cronolog...'
