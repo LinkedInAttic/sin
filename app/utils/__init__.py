@@ -1,4 +1,4 @@
-import time, base64, hashlib, random, socket
+import commands, base64, hashlib, random, re, socket, time
 
 def totimestamp(dt):
   return time.mktime(dt.timetuple()) + dt.microsecond/1e6
@@ -20,3 +20,15 @@ def get_local_pub_ip():
   finally:
     skt.close()
 
+def is_current_host(host, me=None):
+  if not me:
+    me = socket.gethostbyaddr(socket.gethostname())[0]
+
+  hosts_a = set(socket.gethostbyname_ex(host)[2])
+  hosts_b = set(socket.gethostbyname_ex(me)[2])
+  if not [h for h in hosts_b if not h.startswith('127.')]:
+    hosts_b.update([h for h in [c.split()[1][5:] for c in commands.getoutput("ifconfig").split("\n") if re.match(r'\s*inet.*', c)] if h])
+  if hosts_a.intersection(hosts_b):
+    return True
+  else:
+    return False

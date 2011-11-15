@@ -159,8 +159,8 @@ class BaseDeployer(object):
     version = '1.3.1'
     name = 'Django-%s' % version
     tmpfile = '%s.tar.gz' % name
-    tmpfile_local = os.path.expanduser('~/%s' % tmpfile)
-    if not os.path.exists(tmpfile):
+    tmpfile_local = os.path.expanduser('~/local-%s' % tmpfile)
+    if not os.path.exists(tmpfile_local):
       urllib.urlretrieve('http://www.djangoproject.com/download/%s/tarball/' % version, tmpfile_local)
 
     try: self.sftp.remove(tmpfile)
@@ -168,6 +168,7 @@ class BaseDeployer(object):
     self.command('\\rm -Rf %s' % name)  # Remove the tmp dir
 
     self.sftp.put(tmpfile_local, tmpfile)
+
     self.command('tar xzf %s' % tmpfile)
     print self.command('python %s/setup.py install' % name)
 
@@ -191,11 +192,10 @@ class BaseDeployer(object):
     if self.check_twisted():
       return
 
-    print 'Installing twisted...'
-    print self.command('yum -y install python-twisted-web')
-    if not self.check_twisted():
-      raise Exception("twisted install failed!")
-    print 'twisted installed.'
+    self.do_install_twisted()
+
+  def do_install_twisted(self):
+    raise Exception("Not implemented")
 
   def check_cronolog(self):
     data = self.command('cronolog --version')
@@ -228,8 +228,8 @@ class BaseDeployer(object):
     version = '1.5.5'
     name = 'pyparsing-%s' % version
     tmpfile = '%s.tar.gz' % name
-    tmpfile_local = os.path.expanduser('~/%s' % tmpfile)
-    if not os.path.exists(tmpfile):
+    tmpfile_local = os.path.expanduser('~/local-%s' % tmpfile)
+    if not os.path.exists(tmpfile_local):
       urllib.urlretrieve('http://cheeseshop.python.org/packages/source/p/pypar'
                          'sing/pyparsing-%s.tar.gz' % version, tmpfile_local)
 
@@ -238,6 +238,7 @@ class BaseDeployer(object):
     self.command('\\rm -Rf %s' % name)  # Remove the tmp dir
 
     self.sftp.put(tmpfile_local, tmpfile)
+
     self.command('tar xzf %s' % tmpfile)
     print self.command('easy_install %s' % name)
 
@@ -265,8 +266,8 @@ class BaseDeployer(object):
     version = '1.0'
     name = 'sensei-python-%s' % version
     tmpfile = '%s.tar.gz' % name
-    tmpfile_local = os.path.expanduser('~/%s' % tmpfile)
-    if not os.path.exists(tmpfile):
+    tmpfile_local = os.path.expanduser('~/local-%s' % tmpfile)
+    if not os.path.exists(tmpfile_local):
       urllib.urlretrieve('https://github.com/downloads/javasoze/sensei/sensei-'
                          'python-%s.tar.gz' % version, tmpfile_local)
 
@@ -275,6 +276,7 @@ class BaseDeployer(object):
     self.command('\\rm -Rf %s' % name)  # Remove the tmp dir
 
     self.sftp.put(tmpfile_local, tmpfile)
+
     self.command('tar xzf %s' % tmpfile)
     print self.command('easy_install %s' % name)
 
@@ -301,9 +303,9 @@ class BaseDeployer(object):
 
     print 'Installing sin...'
     tmpfile = 'sin.tar.gz'
-    tmpfile_local = os.path.expanduser('~/%s' % tmpfile)
+    tmpfile_local = os.path.expanduser('~/local-%s' % tmpfile)
     # Packaging:
-    print ('tar -C %s -czf %s --exclude log --exclude app/django --exclude '
+    os.system('tar -C %s -czf %s --exclude log --exclude app/django --exclude '
               'demo/django --exclude admin/um --exclude "*.swp" --exclude "*.pyc" ./' % (SIN_HOME, tmpfile_local))
 
     sin_server = '/etc/init.d/sin_server'
@@ -438,6 +440,13 @@ class DeployerRHEL6_X86_64(BaseDeployer):
     if not self.check_setuptools():
       raise Exception("setuptools install failed!")
     print 'setuptools installed.'
+
+  def do_install_twisted(self):
+    print 'Installing twisted...'
+    print self.command('yum -y install python-twisted-web')
+    if not self.check_twisted():
+      raise Exception("twisted install failed!")
+    print 'twisted installed.'
 
   def do_install_cronolog(self):
     print 'Installing cronolog...'

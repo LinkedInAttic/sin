@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import re, sys, json, shutil, errno, platform, signal, commands
+import sys, json, shutil, errno, platform, signal, commands
 import random, os, subprocess
 from twisted.internet import defer, reactor
 from twisted.web import server, resource
@@ -28,6 +28,8 @@ if app_path:
 
 from sincc import SinClusterClient
 from django.conf import settings
+
+from utils import is_current_host
 
 CALL_BACK_LATER = 'CallBackLater'
 
@@ -504,13 +506,7 @@ if __name__ == '__main__':
     host = None
     if options.host != "":
       host = options.host
-    else:
-      host = socket.gethostbyaddr(socket.gethostname())[0]
-    hosts_a = set(socket.gethostbyname_ex(node.get_host())[2])
-    hosts_b = set(socket.gethostbyname_ex(host)[2])
-    if not [h for h in hosts_b if not h.startswith('127.')]:
-      hosts_b.update([h for h in [c.split()[1][5:] for c in commands.getoutput("ifconfig").split("\n") if re.match(r'\s*inet.*', c)] if h])
-    if hosts_a.intersection(hosts_b):
+    if is_current_host(node.get_host(), host):
       # Force this node to be offline first.  (In the case where
       # sin_agent is stopped and then immediately restarted, the
       # ephemeral node created in the last session may still be there
