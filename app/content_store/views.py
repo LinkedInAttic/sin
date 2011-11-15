@@ -1,4 +1,4 @@
-import logging, random, re, os, subprocess, json, shutil, urllib, urllib2, datetime, threading
+import logging, random, re, os, subprocess, json, shutil, sys, urllib, urllib2, datetime, threading
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -29,9 +29,13 @@ from utils import validator
 from content_store.models import ContentStore, StoreConfig
 from cluster.models import Group, Node, Membership
 
-from senseiClient import SenseiClient
-from senseiClient import SenseiRequest
-from senseiClient import SenseiSelection
+try:
+  from sensei import SenseiClient, SenseiRequest, SenseiSelection
+except ImportError:
+  print "sensei-python is not installed. Please go to https://github.com/javasoze/sensei/downloads"
+  print "download the latest sensei-python package, untar, cd into that directory, and run"
+  print "sudo easy_install ./"
+  sys.exit(1)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)

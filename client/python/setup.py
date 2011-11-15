@@ -1,18 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from distutils.core import setup
- 
+import sys
+
+try:
+  from setuptools import setup, find_packages
+except ImportError:
+  print 'Error: setuptools is required. http://pypi.python.org/pypi/setuptools'
+  sys.exit(1)
+
 setup(
-    name='sin-python-client',
-    version='0.1-SNAPSHOT',
-    description='This library implements a Sin client',
-    url='https://github.com/wonlay/sin',
-    packages=['sin'],
-    package_dir={'sin': 'src/sin'},
-    package_data={'sin': ['data/test.json']},
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Topic :: Service",
-        "License :: Apache Public License v.2.0",
-    ],
+    name               = 'sin-python',
+    version            = '0.1',
+    description        = 'This library implements a Sin client',
+    url                = 'https://github.com/wonlay/sin',
+    packages           = find_packages(),
+    install_requires   = ['sensei-python>=1.0'],
+    dependency_links   = ['https://github.com/downloads/javasoze/sensei/sensei-python-1.0.tar.gz'],
+    classifiers        = [
+                           "Development Status :: 3 - Alpha",
+                           "Topic :: Service",
+                           "License :: Apache Public License v.2.0",
+                         ],
 )

@@ -5,8 +5,10 @@ from utils import get_local_pub_ip
 LOCAL_PUB_IP = get_local_pub_ip()
 SIN_HOME = os.path.normpath(os.path.join(os.path.normpath(__file__), '../..'))
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+
+VERSION = 0.1
 
 STORE_HOME = '/tmp/store/'
 

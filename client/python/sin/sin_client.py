@@ -3,13 +3,16 @@
 """Python client library for Sin
 """
 
-from senseiClient import *
-
 import sys
 import urllib
 import urllib2
 import time
 import json
+
+from sensei import BQLRequest, SenseiClientError, SenseiFacet, SenseiSelection,\
+                   SenseiSort, SenseiFacetInitParams, SenseiFacetInfo,\
+                   SenseiNodeInfo, SenseiSystemInfo, SenseiRequest, SenseiHit,\
+                   SenseiResultFacet, SenseiResult, SenseiClient
 
 class Sindex:
   opener = None

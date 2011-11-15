@@ -236,6 +236,43 @@ class BaseDeployer(object):
       raise Exception("pyparsing install failed!")
     print 'pyparsing installed.'
 
+  def check_pysensei(self):
+    data = self.command('python -c "import sensei"')
+    print data
+    if 'ImportError:' in data:
+      return False
+    return True
+
+  def install_pysensei(self):
+    if self.check_pysensei():
+      return
+
+    print 'Installing sensei-python...'
+    version = '1.0'
+    name = 'sensei-python-%s' % version
+    tmpfile = '%s.tar.gz' % name
+    tmpfile_local = os.path.expanduser('~/%s' % tmpfile)
+    if not os.path.exists(tmpfile):
+      urllib.urlretrieve('https://github.com/downloads/javasoze/sensei/sensei-'
+                         'python-%s.tar.gz' % version, tmpfile_local)
+
+    try: self.sftp.remove(tmpfile)
+    except: pass
+    self.command('\\rm -Rf %s' % name)  # Remove the tmp dir
+
+    self.sftp.put(tmpfile_local, tmpfile)
+    self.command('tar xzf %s' % tmpfile)
+    print self.command('easy_install %s' % name)
+
+    self.command('\\rm -Rf %s' % name)  # Remove the tmp dir
+    try: self.sftp.remove(tmpfile)
+    except: pass
+    # Local file are not removed.
+
+    if not self.check_pysensei():
+      raise Exception("sensei-python install failed!")
+    print 'sensei-python installed.'
+
   def check_sin(self):
     sin_server = '/etc/init.d/sin_server'
     data = self.command('ls %s' % sin_server)
@@ -349,6 +386,7 @@ class BaseDeployer(object):
     self.install_twisted()
     self.install_cronolog()
     self.install_pyparsing()
+    self.install_pysensei()
     self.install_sin()
 
 class DeployerRHEL6_X86_64(BaseDeployer):
