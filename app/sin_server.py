@@ -97,6 +97,7 @@ def main(argv):
   parser = OptionParser(usage=usage)
   parser.add_option("-f", "--force", action="store_true", dest="force", help="Overwrite existing Sensei node info")
   parser.add_option("-c", "--reset", action="store_true", dest="reset", help="Remove all registered nodes and then exit")
+  parser.add_option("-i", "--init", action="store_true", dest="init", help="Initialize nodes")
   parser.add_option("-v", "--verbose", action="store_true", dest="verbose", help="Verbose mode")
   (options, args) = parser.parse_args()
 
@@ -121,6 +122,15 @@ def main(argv):
     if options.reset:
       return
 
+  for node in settings.SIN_NODES["nodes"]:
+    if not Node.objects.filter(id=node["node_id"]).exists():
+      Node.objects.create(id=node["node_id"], host=node["host"], agent_port=node["port"],
+                          online=False, group=Group(pk=1))
+    cc.register_node(node["node_id"], node["host"], port=node["port"])
+
+  if options.init:
+    return
+
   # Reset online status.  Some node(s) might have gone offline while Sin
   # server was down, therefore the server did not get notified and still
   # keeps the old "online" status for the node(s).  If the node(s) are
@@ -129,11 +139,6 @@ def main(argv):
   # will simply become a no-op.
   Node.objects.filter(online=True).update(online=False)
 
-  for node in settings.SIN_NODES["nodes"]:
-    if not Node.objects.filter(id=node["node_id"]).exists():
-      Node.objects.create(id=node["node_id"], host=node["host"], agent_port=node["port"],
-                          online=False, group=Group(pk=1))
-    cc.register_node(node["node_id"], node["host"], port=node["port"])
 
   static_files = static.File(os.path.join(os.path.join(SIN_HOME, 'admin')))
   WSGI = wsgi.WSGIResource(reactor, pool, WSGIHandler())

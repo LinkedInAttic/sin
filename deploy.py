@@ -26,7 +26,7 @@ except ImportError:
 global_pass = ''
 
 class BaseDeployer(object):
-  def __init__(self, host, home, node_id, login=None, server=False, user='root', upgrade=False):
+  def __init__(self, host, home, node_id, login=None, server=False, user='root', upgrade=False, base=None):
     global global_pass
 
     self.host    = host
@@ -36,29 +36,59 @@ class BaseDeployer(object):
     self.server  = server
     self.user    = user
     self.upgrade = upgrade
+    self.base    = base
 
     self.password  = None
     self.pass_sent = False
 
-    self.ssh = paramiko.SSHClient()
-    self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    retry = 0
-    while True:
-      try:
-        self.ssh.connect(self.host, username=self.login, password=self.password)
-        break
-      except paramiko.AuthenticationException:
-        retry += 1
-        if retry > 3:
-          print "Authentication failed."
-          sys.exit(1)
-        self.password = global_pass = getpass.getpass()
-    self.sftp  = self.ssh.open_sftp()
-    self.shell = self.ssh.invoke_shell()
+    if base:
+      self.ssh   = base.ssh
+      self.sftp  = base.sftp
+      self.shell = base.shell
+    else:
+      self.ssh = paramiko.SSHClient()
+      self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+      retry = 0
+      while True:
+        try:
+          self.ssh.connect(self.host, username=self.login, password=self.password)
+          break
+        except paramiko.AuthenticationException:
+          retry += 1
+          if retry > 3:
+            print "Authentication failed."
+            sys.exit(1)
+          self.password = global_pass = getpass.getpass()
+      self.sftp  = self.ssh.open_sftp()
+      self.shell = self.ssh.invoke_shell()
 
-    # Read wellcome message:
-    self._read_data()
-    print self.command('sudo -u %s sh' % 'root')
+      # Read wellcome message:
+      self._read_data()
+      print self.command('sudo -u %s sh' % 'root')
+
+  def get_deployer(self):
+    data = self.command('uname -a')
+    print data
+    if 'el6.x86_64' in data:
+      deployer_class = DeployerRHEL6_X86_64
+    elif 'Darwin' in data:
+      if 'x86_64' in data:
+        deployer_class = DeployerDarwin_X86_64
+      elif 'i386' in data:
+        deployer_class = DeployerDarwin_I386
+    else:
+      print 'Platform not supported. You may have to install manually by'
+      print 'following: http://linkedin.jira.com/wiki/display/SIN/Developer+Setup'
+      sys.exit(1)
+
+    return deployer_class(self.host,
+                          self.home,
+                          self.node_id,
+                          login   = self.login,
+                          server  = self.server,
+                          user    = self.user,
+                          upgrade = self.upgrade,
+                          base    = self)
 
   def _check_sudo(self, data):
     global global_pass
@@ -363,7 +393,8 @@ class BaseDeployer(object):
       print self.command('%s stop' % sin_server)
       print self.command('%s stop' % sin_agent)
 
-    print self.command('mkdir -p %s' % self.home)
+    print self.command('mkdir -p %s' % os.path.join(self.home, 'log/sin_server'))
+    print self.command('mkdir -p %s' % os.path.join(self.home, 'log/sin_agent'))
     print self.command('tar --overwrite -C %s -xzf %s' % (self.home, tmpfile))
 
     print self.command('\\cp -f %s %s' % (tmp_sin_server, os.path.join(self.home, sin_server_src)))
@@ -381,7 +412,9 @@ class BaseDeployer(object):
         self.autostart('sin_server')
         # syncdb:
         print self.command('su %s -c "python %s syncdb --noinput 2>&1"' % (self.user,
-                                                                      os.path.join(self.home, 'app/manage.py')))
+                                                                           os.path.join(self.home, 'app/manage.py')))
+        print self.command('su %s -c "python %s -i 2>&1"' % (self.user,
+                                                             os.path.join(self.home, 'app/sin_server.py')))
         print self.command('%s restart' % sin_server)
 
       self.autostart('sin_agent')
@@ -402,6 +435,10 @@ class BaseDeployer(object):
     print 'sin installed.'
 
   def deploy(self):
+    if not self.base:
+      print 'Please call get_deployer() to get your deployer.'
+      sys.exit(1)
+
     self.install_zkpython()
     self.install_setuptools()
     self.install_django()
@@ -461,6 +498,14 @@ class DeployerRHEL6_X86_64(BaseDeployer):
       raise Exception("cronolog install failed!")
     print 'cronolog installed.'
 
+class DeployerDarwin_X86_64(BaseDeployer):
+  def __init__(self, *args, **kwargs):
+    super(DeployerDarwin_X86_64, self).__init__(*args, **kwargs)
+
+class DeployerDarwin_I386(BaseDeployer):
+  def __init__(self, *args, **kwargs):
+    super(DeployerDarwin_I386, self).__init__(*args, **kwargs)
+
 def main(argv):
   usage = "usage: %prog [options] <install dir>"
   parser = OptionParser(usage=usage)
@@ -475,13 +520,15 @@ def main(argv):
   server = True
   sin_nodes = sorted(list(settings.SIN_NODES.get('nodes', [])), key=lambda node:node['node_id'])
   for node in sin_nodes:
-    deployer = DeployerRHEL6_X86_64(node['host'],
-                                    home,
-                                    node['node_id'],
-                                    login   = options.login,
-                                    server  = server,
-                                    user    = options.user,
-                                    upgrade = options.upgrade)
+    deployer = BaseDeployer(
+                              node['host'],
+                              home,
+                              node['node_id'],
+                              login   = options.login,
+                              server  = server,
+                              user    = options.user,
+                              upgrade = options.upgrade
+                           ).get_deployer()
     deployer.deploy()
     server = False
 
