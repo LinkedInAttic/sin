@@ -3,11 +3,12 @@
 """Python client library for Sin
 """
 
+import cookielib
+import json
 import sys
+import time
 import urllib
 import urllib2
-import time
-import json
 
 from sensei import BQLRequest, SenseiClientError, SenseiFacet, SenseiSelection,\
                    SenseiSort, SenseiFacetInitParams, SenseiFacetInfo,\
@@ -24,14 +25,15 @@ class Sindex:
   description = None
   status = None
   
-  def __init__(self, id, name, api_key, description, created, url, config, senseiClient, status):
+  def __init__(self, id, name, api_key, description, created, url, config, senseiClient, status, cookie_jar):
     self.id = id
     self.name = name
     self.api_key = api_key
     self.created = created
     self.description = description
     self.senseiClient = senseiClient
-    self.opener = urllib2.build_opener()
+    self.cookie_jar = cookie_jar
+    self.opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
     self.opener.addheaders = [('X-Sin-Api-Key', api_key)]
     self.baseurl = url
     self.config = config
@@ -180,7 +182,16 @@ class SinClient:
   def __init__(self, host='localhost', port=8666):
     self.host = host
     self.port = port
-    self.opener = urllib2.build_opener()
+    self.cookie_jar = cookielib.CookieJar()
+    self.opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
+
+  def login(self, username, password):
+    url = 'http://%s:%s/login_api' % (self.host, self.port)
+    res = self.opener.open(url, json.dumps({'username': username, 'password': password}))
+    obj = json.loads(res.read())
+    if not obj.get('ok'):
+      raise Exception(obj.get('msg', 'Login failed'))
+    return True
   
   def openStore(self, name, api_key):
     baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
@@ -204,7 +215,7 @@ class SinClient:
     status = jsonObj['status_display']
     
     senseiClient = SenseiClient(self.host,brokerPort)
-    sindex = Sindex(storeId,name,api_key,description,storeCreated,baseurl,storeConfig,senseiClient,status)
+    sindex = Sindex(storeId,name,api_key,description,storeCreated,baseurl,storeConfig,senseiClient,status,self.cookie_jar)
     while not sindex.available():
       time.sleep(0.5)
     
@@ -234,7 +245,7 @@ class SinClient:
     #status = jsonObj['status_display']
     
     #senseiClient = SenseiClient(self.host,brokerPort)
-    #return Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,status)
+    #return Sindex(storeId,name,description,storeCreated,baseurl,storeConfig,senseiClient,status,self.cookie_jar)
 
   #def storeExists(self,name):
     #baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')

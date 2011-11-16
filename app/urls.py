@@ -21,6 +21,7 @@ urlpatterns = patterns('views',
   url(r'^developers/?$', 'developers', name='developers'),
   url(r'^team/?$', 'team', name='team'),
 
+  url(r'^login_api/?$', 'login_api', name='login_api'),
   url(r'^login/?$', 'login', name='login'),
   url(r'^register/?$', 'register', name='register'),
   url(r'^logout/?$', 'logout', name='logout'),

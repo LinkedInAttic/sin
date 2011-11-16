@@ -1,3 +1,4 @@
+import json, logging
 from django import template
 from django.conf import settings
 from django.contrib.auth import login as dj_login, logout as dj_logout
@@ -48,6 +49,32 @@ def developers(request):
 def team(request):
   return render_to_response('team.html', {
   }, context_instance=template.RequestContext(request))
+
+def login_api(request):
+  req = request.raw_post_data
+  if not req:
+    return HttpResponse(json.dumps({
+      'ok'   : False,
+      'msg'  : 'No request found',
+    }))
+
+  request.session.set_test_cookie()
+
+  try:
+    req = json.loads(req)
+    form = AuthenticationForm(request, req)
+    if form.is_valid():
+      dj_login(request, form.get_user())
+      return HttpResponse(json.dumps({
+        'ok'   : True,
+      }))
+  except Exception as e:
+    logging.exception(e)
+
+  return HttpResponse(json.dumps({
+    'ok'   : False,
+    'msg'  : 'Login failed',
+  }))
 
 def login(request):
   next = request.REQUEST.get('next', reverse('index'))
