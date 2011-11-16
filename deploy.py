@@ -62,7 +62,7 @@ class BaseDeployer(object):
       self.sftp  = self.ssh.open_sftp()
       self.shell = self.ssh.invoke_shell()
 
-      # Read wellcome message:
+      # Read welcome message:
       self._read_data()
       print self.command('sudo -u %s sh' % 'root')
 
