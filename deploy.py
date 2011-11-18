@@ -139,6 +139,18 @@ class BaseDeployer(object):
     self.shell.send('%s 2>&1\n' % cmd)
     return self._read_data()
 
+  def get_python_version(self):
+    data = self.command('python --version')
+    version = None
+    m = re.search(r'(?m)^Python (?P<version>[\d\.]+)', data)
+    if m:
+      version = m.group('version')
+
+    if version:
+      return version.split('.')
+
+    return None
+
   def autostart(self, service, on=True):
     raise Exception("Not implemented")
 
@@ -172,7 +184,27 @@ class BaseDeployer(object):
     self.do_install_setuptools()
 
   def do_install_setuptools(self):
-    raise Exception("Not implemented")
+    print 'Installing setuptools...'
+    py_version = self.get_python_version()
+    tmpfile = 'setuptools-0.6c11-py%s.%s.egg' % (py_version[0], py_version[1])
+    tmpfile_local = os.path.expanduser('~/local-%s' % tmpfile)
+    if not os.path.exists(tmpfile_local):
+      urllib.urlretrieve('http://pypi.python.org/packages/%s.%s/s/setuptools/%s' % (py_version[0],
+                                                                                    py_version[1],
+                                                                                    tmpfile), tmpfile_local)
+    try: self.sftp.remove(tmpfile)
+    except: pass
+
+    self.sftp.put(tmpfile_local, tmpfile)
+
+    print self.command('sh %s' % tmpfile)
+
+    try: self.sftp.remove(tmpfile)
+    except: pass
+
+    if not self.check_setuptools():
+      raise Exception("setuptools install failed!")
+    print 'setuptools installed.'
 
   def check_django(self):
     data = self.command('python -c "import django"')
@@ -225,7 +257,11 @@ class BaseDeployer(object):
     self.do_install_twisted()
 
   def do_install_twisted(self):
-    raise Exception("Not implemented")
+    print 'Installing twisted...'
+    print self.command('easy_install Twisted')
+    if not self.check_twisted():
+      raise Exception("twisted install failed!")
+    print 'twisted installed.'
 
   def check_cronolog(self):
     data = self.command('cronolog --version')
@@ -395,7 +431,7 @@ class BaseDeployer(object):
 
     print self.command('mkdir -p %s' % os.path.join(self.home, 'log/sin_server'))
     print self.command('mkdir -p %s' % os.path.join(self.home, 'log/sin_agent'))
-    print self.command('tar --overwrite -C %s -xzf %s' % (self.home, tmpfile))
+    print self.command('tar -C %s -xzf %s' % (self.home, tmpfile))
 
     print self.command('\\cp -f %s %s' % (tmp_sin_server, os.path.join(self.home, sin_server_src)))
     data = self.command('\\cp -f %s %s' % (tmp_sin_agent, os.path.join(self.home, sin_agent_src)))
@@ -498,13 +534,68 @@ class DeployerRHEL6_X86_64(BaseDeployer):
       raise Exception("cronolog install failed!")
     print 'cronolog installed.'
 
-class DeployerDarwin_X86_64(BaseDeployer):
+class DeployerDarwin_I386(BaseDeployer):
+  def autostart(self, service, on=True):
+    print "Warn: autostart not implemented."
+
+  def __init__(self, *args, **kwargs):
+    super(DeployerDarwin_I386, self).__init__(*args, **kwargs)
+
+  def do_install_zkpython(self):
+    print 'Installing zkpython...'
+    tmpfile = 'zkpython.tar.gz'
+    try: self.sftp.remove(tmpfile)
+    except: pass
+    self.sftp.put(os.path.join(SIN_HOME, 'lib/zk-client/darwin-i386-2.6/zkpython.tar.gz'), tmpfile)
+    self.command('tar -C / -xzf %s' % tmpfile)
+    try: self.sftp.remove(tmpfile)
+    except: pass
+    if not self.check_zkpython():
+      raise Exception("zkpython install failed!")
+    print 'zkpython installed.'
+
+  def do_install_cronolog(self):
+    print 'Installing cronolog...'
+    tmpfile = 'cronolog.tar.gz'
+    try: self.sftp.remove(tmpfile)
+    except: pass
+    self.sftp.put(os.path.join(SIN_HOME, 'lib/cronolog/cronolog-1.6.2.darwin.i386.tar.gz'), tmpfile)
+    self.command('tar -C / -xzf %s' % tmpfile)
+    try: self.sftp.remove(tmpfile)
+    except: pass
+    if not self.check_cronolog():
+      raise Exception("cronolog install failed!")
+    print 'cronolog installed.'
+
+class DeployerDarwin_X86_64(DeployerDarwin_I386):
   def __init__(self, *args, **kwargs):
     super(DeployerDarwin_X86_64, self).__init__(*args, **kwargs)
 
-class DeployerDarwin_I386(BaseDeployer):
-  def __init__(self, *args, **kwargs):
-    super(DeployerDarwin_I386, self).__init__(*args, **kwargs)
+  def do_install_zkpython(self):
+    print 'Installing zkpython...'
+    tmpfile = 'zkpython.tar.gz'
+    try: self.sftp.remove(tmpfile)
+    except: pass
+    self.sftp.put(os.path.join(SIN_HOME, 'lib/zk-client/darwin-x86_64-2.6/zkpython.tar.gz'), tmpfile)
+    self.command('tar -C / -xzf %s' % tmpfile)
+    try: self.sftp.remove(tmpfile)
+    except: pass
+    if not self.check_zkpython():
+      raise Exception("zkpython install failed!")
+    print 'zkpython installed.'
+
+  def do_install_cronolog(self):
+    print 'Installing cronolog...'
+    tmpfile = 'cronolog.tar.gz'
+    try: self.sftp.remove(tmpfile)
+    except: pass
+    self.sftp.put(os.path.join(SIN_HOME, 'lib/cronolog/cronolog-1.6.2.darwin.x86_64.tar.gz'), tmpfile)
+    self.command('tar -C / -xzf %s' % tmpfile)
+    try: self.sftp.remove(tmpfile)
+    except: pass
+    if not self.check_cronolog():
+      raise Exception("cronolog install failed!")
+    print 'cronolog installed.'
 
 def main(argv):
   usage = "usage: %prog [options] <install dir>"
