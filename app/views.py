@@ -122,6 +122,12 @@ def register(request):
     'next': next,
     }, context_instance=template.RequestContext(request))
 
+def logout_api(request):
+  dj_logout(request)
+  return HttpResponse(json.dumps({
+    'ok'   : True,
+  }))
+
 def logout(request):
   dj_logout(request)
   return HttpResponseRedirect(reverse('index'))

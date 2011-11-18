@@ -192,6 +192,14 @@ class SinClient:
     if not obj.get('ok'):
       raise Exception(obj.get('msg', 'Login failed'))
     return True
+
+  def logout(self):
+    url = 'http://%s:%s/logout_api' % (self.host, self.port)
+    res = self.opener.open(url)
+    obj = json.loads(res.read())
+    if not obj.get('ok'):
+      raise Exception(obj.get('msg', 'Logout failed'))
+    return True
   
   def openStore(self, name, api_key):
     baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')

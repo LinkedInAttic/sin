@@ -24,6 +24,7 @@ urlpatterns = patterns('views',
   url(r'^login_api/?$', 'login_api', name='login_api'),
   url(r'^login/?$', 'login', name='login'),
   url(r'^register/?$', 'register', name='register'),
+  url(r'^logout_api/?$', 'logout_api', name='logout_api'),
   url(r'^logout/?$', 'logout', name='logout'),
 
   url(r'^cluster/', include('cluster.urls')),
