@@ -434,7 +434,6 @@ def main(argv):
   store = ""
   readline.parse_and_bind("tab: complete")
   print "Sin Commandline version 0.1;"
-  print "Specify a store before using BQL to query the store (use STORE_NAME);"
   print "Type 'exit' to end this program."
   while 1:
     try:
