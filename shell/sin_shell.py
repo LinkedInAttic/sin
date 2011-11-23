@@ -17,7 +17,7 @@ import sys
 import datetime
 import logging
 
-from sin.sinClient import SinClient
+from sin.sin_client import SinClient
 
 logger = logging.getLogger("sin_client")
 

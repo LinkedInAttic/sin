@@ -531,7 +531,7 @@ def addDocs(request,store_name):
       resp = {'ok':False,'error':'invalid json: %s' % docs}
       return HttpResponseBadRequest(json.dumps(resp))
     except Exception as e:
-      logger.error(e.messages)
+      logger.error(e.message)
       resp = {'ok':False,'error':e.message}
       return HttpResponseServerError(json.dumps(resp))
 
