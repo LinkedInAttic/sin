@@ -4,6 +4,8 @@
 package org.projectsin.client.api;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -17,11 +19,12 @@ public class SinSearchResult
   private static final long serialVersionUID = 1L;
 
   private int         _numHits;
-  private List<Long>  _ids;
 
   private Map<String, Map<String, Integer>>    _facetCounts;
   private Map<String, Map<Long, List<String>>>  _fieldValues;
-  private Map<Long,Double>  _scores;
+  
+  private List<Long>  _ids;
+  private List<SinSearchHit>    _searchHits;
 
   public int getNumHits()
   {
@@ -38,11 +41,45 @@ public class SinSearchResult
     return _ids;
   }
   
-  public void setIds(List<Long> ids)
+  public void setSearchHits(List<SinSearchHit> searchHits)
   {
-    _ids = ids;
+    _searchHits = searchHits;
+    if(_searchHits != null)
+    {
+      _ids = new ArrayList<Long>(_searchHits.size());
+      _fieldValues = new HashMap<String, Map<Long, List<String>>>();
+
+      for(SinSearchHit hit: _searchHits)
+      {
+        _ids.add(hit.getId());
+        Map<String,List<String>> fvMap = hit.getFieldValues();
+        if(fvMap != null)
+        {
+          for(Map.Entry<String, List<String>> e: fvMap.entrySet())
+          {
+            Map<Long,List<String>> id2ValuesMap = _fieldValues.get(e.getKey());
+            if(id2ValuesMap == null)
+            {
+              id2ValuesMap = new HashMap<Long,List<String>>();
+              _fieldValues.put(e.getKey(), id2ValuesMap);
+            }
+            id2ValuesMap.put(hit.getId(), e.getValue());
+          }
+        }
+      }/*for*/
+    }
+    else
+    {
+      _ids = null;
+      _fieldValues = null;
+    }
   }
   
+  public List<SinSearchHit> getSearchHits()
+  {
+    return _searchHits;
+  }
+
   public Map<String, Map<String, Integer>> getFacetCounts()
   {
     return _facetCounts;
@@ -56,21 +93,6 @@ public class SinSearchResult
   public Map<String, Map<Long, List<String>>> getFieldValues()
   {
     return _fieldValues;
-  }
-
-  public void setFieldValues(Map<String, Map<Long, List<String>>> fieldValues)
-  {
-    _fieldValues = fieldValues;
-  }
-
-  public Map<Long, Double> getScores()
-  {
-    return _scores;
-  }
-
-  public void setScores(Map<Long, Double> scores)
-  {
-    _scores = scores;
   }
 
 }
