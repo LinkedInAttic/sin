@@ -37,9 +37,6 @@ except ImportError:
   print "sudo easy_install ./"
   sys.exit(1)
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
 kafkaHost = settings.KAFKA_HOST
 kafkaPort = int(settings.KAFKA_PORT)
 kafkaProducer = kafka.KafkaProducer(kafkaHost, kafkaPort)
@@ -518,7 +515,7 @@ def addDocs(request,store_name):
       for doc in jsonDocs:
         (valid, error) = my_validator.validate(doc)
         if not valid:
-          logger.warn("Found an invalid doc for store %s when adding docs" % store_name)
+          logging.warn("Found an invalid doc for store %s when adding docs" % store_name)
           resp = {'ok': False,'numPosted':0, 'error':error}
           return HttpResponseBadRequest(json.dumps(resp))
         str = json.dumps(doc).encode('utf-8')
@@ -531,7 +528,7 @@ def addDocs(request,store_name):
       resp = {'ok':False,'error':'invalid json: %s' % docs}
       return HttpResponseBadRequest(json.dumps(resp))
     except Exception as e:
-      logger.error(e.messages)
+      logging.exception(e)
       resp = {'ok':False,'error':e.message}
       return HttpResponseServerError(json.dumps(resp))
 
@@ -566,7 +563,7 @@ def updateDoc(request,store_name):
 
       (valid, error) = my_validator.validate(jsonDoc)
       if not valid:
-        logger.warn("Found an invalid doc for store %s when updating a doc" % store_name)
+        logging.warn("Found an invalid doc for store %s when updating a doc" % store_name)
         resp = {'ok': False,'numPosted':0, 'error':error}
         return HttpResponseBadRequest(json.dumps(resp))
 
@@ -675,7 +672,7 @@ def do_start_store(request, store, config_id=None, restart=False, node=None, wit
       sensei_properties = loader.get_template_from_string(current_config.properties)
       params["sensei_properties"] = sensei_properties.render(context)
 
-      logger.info("Sending request: http://%s:%d/%s" % (member.node.host, member.node.agent_port,
+      logging.info("Sending request: http://%s:%d/%s" % (member.node.host, member.node.agent_port,
                                                 not restart and "start-store" or "restart-store"))
       output = urllib2.urlopen("http://%s:%d/%s"
                                % (member.node.host, member.node.agent_port,
@@ -999,7 +996,7 @@ def setupCluster(store):
   numNodesPerReplica = totalNodes / store.replica
   remainingNodes = totalNodes % store.replica
   if numNodesPerReplica == 0:
-    logger.error("Not enough online nodes(%d) for %d replicas." % (totalNodes, store.replica))
+    logging.error("Not enough online nodes(%d) for %d replicas." % (totalNodes, store.replica))
     return
   numPartsPerNode = store.partitions / numNodesPerReplica
   remainingParts = store.partitions % numNodesPerReplica

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import errno
 import socket
 import struct
 import binascii
@@ -41,14 +42,32 @@ def encode_produce_request(topic, partition, messages):
 class KafkaProducer:
     def __init__(self, host, port):
         self.REQUEST_KEY = 0
+        self.host = host
+        self.port = port
+        self.connect()
+
+    def connect(self, retry=0):
         self.connection = socket.socket()
-        self.connection.connect((host, port))
+        while retry >= 0:
+            try:
+                self.connection.connect((self.host, self.port))
+                break
+            except socket.error, msg:
+                retry -= 1
+                if retry < 0:
+                    raise
 
     def close(self):
         self.connection.close()
 
     def send(self, messages, topic, partition = 0):
-        self.connection.sendall(encode_produce_request(topic, partition, messages))
+        try:
+            self.connection.sendall(encode_produce_request(topic, partition, messages))
+        except socket.error, msg:
+            if msg.errno == errno.EPIPE:
+                # disconnected, reconnecting...
+                self.connect(retry=3)
+                self.send(messages, topic, partition)
     
 if __name__ == '__main__':
     if len(sys.argv) < 4:
