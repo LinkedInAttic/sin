@@ -5,7 +5,6 @@ package org.projectsin.client.impl;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -16,7 +15,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
@@ -59,6 +57,7 @@ public class SinStoreImpl implements SinStore
   private final String  _delDocsUrl;
   
   private final SinIndexableFactory _indexableFactory;
+  private final SinSearchResultParser   _searchResultParser;
   
   public SinStoreImpl(SinConfig sinConfig, SinStoreConfig storeConfig)
     throws InvalidSinConfigurationException
@@ -79,6 +78,7 @@ public class SinStoreImpl implements SinStore
     }
     
     _indexableFactory = new SinIndexableFactoryImpl(_storeConfig);
+    _searchResultParser = new SinSearchResultParserImpl(storeConfig.getIdField());
   }
   
   /* (non-Javadoc)
@@ -202,11 +202,6 @@ public class SinStoreImpl implements SinStore
       }
     }
     
-    if(query.getHasFieldSet())
-    {
-      rb.addFields(query.getFieldSet());
-    }
-    
     if(query.getHasCountSet())
     {
       for(String s: query.getCountSet())
@@ -235,8 +230,6 @@ public class SinStoreImpl implements SinStore
       
       HttpGet get = new HttpGet(uri);
       
-      System.out.println("query=" + uri.toString());
-      
       get.addHeader("X-Sin-Api-Key", _storeConfig.getApiKey());
       
       HttpResponse res = _httpClient.execute(get);
@@ -246,96 +239,7 @@ public class SinStoreImpl implements SinStore
       try
       {
         is = res.getEntity().getContent();
-        
-        StringWriter sw = new StringWriter();
-        IOUtils.copy(is, sw, "UTF-8");
-        
-        String respData = sw.toString();
-        
-        JSONObject jsonObj = new JSONObject(respData);
-        
-        if(jsonObj != null)
-        {
-          JSONArray hitsArr = (JSONArray)jsonObj.get("hits");
-          if(hitsArr != null)
-          {
-            for(int i = 0; i < hitsArr.length(); i++)
-            {
-              JSONObject jsonHit = (JSONObject)hitsArr.get(i);
-              if(jsonHit != null)
-              {
-                long id = 0;
-                String idVal = (String)((JSONArray)jsonHit.get(_storeConfig.getIdField())).get(0);
-                if(idVal != null)
-                {
-                  id = Long.valueOf(idVal);
-                  rb.addId(id);
-
-                  double score = jsonHit.getDouble("score");
-                  rb.setScore(id, score);
-                }
-                else
-                {
-                  continue;
-                }
-                
-                if(query.getHasFieldSet())
-                {
-                  for (String f: query.getFieldSet())
-                  {
-                    JSONArray valArr = (JSONArray)jsonHit.get(f);
-                    if(valArr != null)
-                    {
-                      for(int ti = 0; ti < valArr.length(); ti++)
-                      {
-                        String val = (String)valArr.get(ti);
-                        rb.addFieldValue(f, id, val);
-                      }/*for*/
-                    }/*valArr != null*/
-
-                  }
-                }
-              }
-            }/*hitsArr*/
-            
-            int numHits = jsonObj.getInt("numhits");
-            rb.setNumHits(numHits);
-            
-            if(query.getHasCountSet())
-            {
-              JSONObject facetsObj = (JSONObject)jsonObj.get("facets");
-              if(facetsObj != null)
-              {
-                for(String s: query.getCountSet())
-                {
-                  JSONArray facetArr = (JSONArray)facetsObj.get(s);
-                  if(facetArr != null)
-                  {
-                    for(int fi = 0; fi < facetArr.length(); fi++)
-                    {
-                      JSONObject facetObj = (JSONObject)facetArr.get(fi);
-                      if(facetObj != null)
-                      {
-                        Long   countVal = (Long)facetObj.get("count");
-                        String facetVal = (String)facetObj.get("value");
-                        
-                        if(countVal != null && facetVal != null)
-                        {
-                          rb.addFacetCount(s, facetVal, countVal.intValue());
-                        }
-                      }
-                    }/*for*/
-                  }
-                }/*for*/
-              }/*facetObj != null*/
-            }/*countFacets != null && !countFacets.isEmpty()*/
-          }
-        }/*jsonObj != null*/
-      }
-      catch (JSONException e)
-      {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
+        return _searchResultParser.parseResult(is, query.getFieldSet(), query.getCountSet());
       }
       finally   {
         if(is != null)

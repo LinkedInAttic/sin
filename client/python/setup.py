@@ -15,7 +15,7 @@ setup(
     url                = 'https://github.com/wonlay/sin',
     packages           = find_packages(),
     install_requires   = ['sensei-python>=1.0'],
-    dependency_links   = ['https://github.com/downloads/javasoze/sensei/sensei-python-1.0.tar.gz'],
+    dependency_links   = ['https://github.com/downloads/senseidb/sensei/sensei-python-1.0.tar.gz'],
     classifiers        = [
                            "Development Status :: 3 - Alpha",
                            "Topic :: Service",

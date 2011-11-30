@@ -15,6 +15,11 @@ from sensei import BQLRequest, SenseiClientError, SenseiFacet, SenseiSelection,\
                    SenseiNodeInfo, SenseiSystemInfo, SenseiRequest, SenseiHit,\
                    SenseiResultFacet, SenseiResult, SenseiClient
 
+from optparse import OptionParser
+import getpass
+
+store_map = {}
+
 class Sindex:
   opener = None
   name = None
@@ -174,14 +179,13 @@ class Sindex:
     return self.senseiClient
 
 class SinClient:
-  host = None
-  port = None
-  opener = None
-  path = 'store'
-  
+  """Sin Client."""
+
   def __init__(self, host='localhost', port=8666):
     self.host = host
     self.port = port
+    self.stores = None
+    self.store_map = {}
     self.cookie_jar = cookielib.CookieJar()
     self.opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self.cookie_jar))
 
@@ -191,6 +195,14 @@ class SinClient:
     obj = json.loads(res.read())
     if not obj.get('ok'):
       raise Exception(obj.get('msg', 'Login failed'))
+
+    # Get info of all stores
+    baseurl = 'http://%s:%d/%s' % (self.host, self.port, 'store')
+    urlReq = urllib2.Request(baseurl + "/stores")
+    stores = self.opener.open(urlReq).read()
+    self.stores = json.loads(stores)
+    for store in self.stores:
+      self.store_map[store.get("name")] = store
     return True
 
   def logout(self):
@@ -200,14 +212,58 @@ class SinClient:
     if not obj.get('ok'):
       raise Exception(obj.get('msg', 'Logout failed'))
     return True
+
+  def show_stores(self):
+    """Execute SHOW STORES command."""
+
+    keys = ["name", "description"]
+    max_lens = None
+
+    def get_max_lens(keys):
+      max_lens = {}
+      for key in keys:
+        max_lens[key] = len(key)
+      for store in self.stores:
+        for key in keys:
+          tmp_len = len(store.get(key))
+          if tmp_len > max_lens[key]:
+            max_lens[key] = tmp_len
+      return max_lens
+
+    def print_line(keys, max_lens, char='-', sep_char='+'):
+      sys.stdout.write(sep_char)
+      for key in keys:
+        sys.stdout.write(char * (max_lens[key] + 2) + sep_char)
+      sys.stdout.write('\n')
+
+    def print_header(keys, max_lens):
+      print_line(keys, max_lens, '-', '+')
+      sys.stdout.write('|')
+      for key in keys:
+        sys.stdout.write(' %s%s |' % (key, ' ' * (max_lens[key] - len(key))))
+      sys.stdout.write('\n')
+      print_line(keys, max_lens, '-', '+')
+
+    def print_footer(keys, max_lens):
+      print_line(keys, max_lens, '-', '+')
+
+    max_lens = get_max_lens(keys)
+    print_header(keys, max_lens)
+    for store in self.stores:
+      sys.stdout.write('|')
+      for key in keys:
+        val = store.get(key)
+        sys.stdout.write(' %s%s |' % (val, ' ' * (max_lens[key] - len(val))))
+      sys.stdout.write('\n')
+    print_footer(keys, max_lens)
   
   def openStore(self, name, api_key):
-    baseurl = 'http://%s:%d/%s' % (self.host,self.port,'store')
+    baseurl = 'http://%s:%d/%s' % (self.host, self.port, 'store')
     url = '%s/%s/%s' % (baseurl,'open-store',name)
     urlReq = urllib2.Request(url)
     self.opener.addheaders = [('X-Sin-Api-Key', api_key)]
     res = self.opener.open(urlReq)
-    jsonObj = dict(json.loads(res.read()))
+    jsonObj = json.loads(res.read())
     
     if not jsonObj['ok']:
       errorMsg = "error: %s" % jsonObj.get('error','unknown error')
@@ -222,7 +278,7 @@ class SinClient:
     description = jsonObj.get('description',None)
     status = jsonObj['status_display']
     
-    senseiClient = SenseiClient(self.host,brokerPort)
+    senseiClient = SenseiClient(self.host, brokerPort)
     sindex = Sindex(storeId,name,api_key,description,storeCreated,baseurl,storeConfig,senseiClient,status,self.cookie_jar)
     while not sindex.available():
       time.sleep(0.5)
@@ -309,16 +365,27 @@ if __name__ == '__main__':
   
   senseiClient = store.getSenseiClient()
   result = senseiClient.doQuery()"""
-  
+
+
 def main(argv):
-  api_key = ""
-  if len(argv) <= 1:
-    print "please secify the api key"
-    return None
-    #client = SenseiClient()
-  else:
-    api_key = argv[1]
-    
+  usage = "Usage: %prog [options]"
+  parser = OptionParser(usage=usage)
+  parser.add_option("-n", "--host", dest="host",
+                    default="localhost", help="Host name of Sin server")
+  parser.add_option("-o", "--port", dest="port",
+                    default=8666, help="Port of Sin server")
+  parser.add_option("-u", "--user", dest="user",
+                    help="Sin user name (login id)")
+  parser.add_option("-p", "--password", dest="password",
+                    help="Sin user password")
+
+  (options, args) = parser.parse_args()
+  if options.password == None:
+    options.password = getpass.getpass()
+
+  my_client = SinClient(options.host, options.port)
+  my_client.login(options.user, options.password)
+
   import logging  
   logger = logging.getLogger("sin_client")  
   logger.setLevel(logging.DEBUG)
@@ -327,16 +394,10 @@ def main(argv):
   stream_handler.setFormatter(formatter)
   logger.addHandler(stream_handler)
 
-  
-#  def test_sql(stmt):
-#    # test(stmt)
-#    req = SenseiRequest(stmt)
-#    res = client.doQuery(req)
-#    res.display(req.get_columns(), 1000)
-    
   def cleanup():
     """ clean up when the user exit the command line
     """
+
   def getStoreName(stmt):
     if stmt.startswith("use "):
       args = stmt.split()
@@ -352,62 +413,47 @@ def main(argv):
     except:
       return False
 
+  def execute_bql(stmt):
+    req = SenseiRequest(stmt)
+    store = my_client.store_map.get(req.index)
+    if not store:
+      print "Store %s does not exist!" % req.index
+      return
+
+    client = SenseiClient(store["broker_host"], store["broker_port"])
+    if req.stmt_type == "select":
+      res = client.doQuery(req)
+      res.display(req.get_columns(), 1000)
+    elif req.stmt_type == "desc":
+      sysinfo = client.getSystemInfo()
+      sysinfo.display()
+    else:
+      print "Wrong command: %s" % stmt
 
   import readline
   store = ""
   readline.parse_and_bind("tab: complete")
   print "Sin Commandline version 0.1;"
-  print "Specify a store before using BQL to query the store (use STORE_NAME);"
   print "Type 'exit' to end this program."
   while 1:
     try:
       stmt = raw_input('> ')
-      if stmt == "exit":
+      parts = stmt.split()
+      if (len(parts) == 1 and
+          parts[0].lower() == "exit"):
         cleanup()
-        break
-      else: 
-        store = getStoreName(stmt)
-        if len(store)==0 or testStore(store, api_key) == False:
-          print "invalid store name, please specify store name"
-          print "e.g.  use STORE_NAME"
-        else:
-          break
-          
+        break;
+      elif (len(parts) == 2 and
+            parts[0].lower() == "show" and
+            parts[1].lower() in ["stores", "tables"]):
+        my_client.show_stores()
+      else:
+        execute_bql(stmt)
     except EOFError:
       print "EOF error"
       break
     except Exception as e:
-      print e.message,  "something is wrong when specifying the store name."
+      print e.message
 
-  # have the sotre name and api key now.
-  sinClient = SinClient()
-  sindex = sinClient.openStore(store, api_key)
-  if sindex.available() == True:
-    print "store status: running"
-    print "input BQL to query the store."
-    
-  def exe_sql(stmt, client):
-    # test(stmt)
-    req = SenseiRequest(stmt)
-    res = client.doQuery(req)
-    res.display(req.get_columns(), 1000)
-      
-  sensieClient = sindex.getSenseiClient()  
-  while 1:
-    try:
-      stmt = raw_input('> ')
-      if stmt == "exit":
-        cleanup()
-        break
-      else: 
-        exe_sql(stmt,sensieClient)  
-    except EOFError:
-      print "EOF error"
-      break
-    except Exception as e:
-      print "something is wrong with your BQL input."
-      
-      
-    
 if __name__ == '__main__':
     main(sys.argv)
