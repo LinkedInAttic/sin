@@ -16,7 +16,6 @@ from django.http import HttpResponseNotFound
 from django.http import HttpResponseGone
 from django.http import HttpResponseNotAllowed
 from django.http import HttpResponseServerError
-import kafka
 
 from twisted.internet import task, reactor
 
@@ -24,7 +23,7 @@ from decorators import login_required, api_key_required
 from utils import enum, generate_api_key, get_local_pub_ip
 from utils import ClusterLayout
 from utils.ClusterLayout import Rectangle, Label, SvgPlotter
-from utils import validator
+from utils import kafka_send, validator
 
 from content_store.models import ContentStore, StoreConfig
 from cluster.models import Group, Node, Membership
@@ -37,9 +36,6 @@ except ImportError:
   print "sudo easy_install ./"
   sys.exit(1)
 
-kafkaHost = settings.KAFKA_HOST
-kafkaPort = int(settings.KAFKA_PORT)
-kafkaProducer = kafka.KafkaProducer(kafkaHost, kafkaPort)
 validators = {}
 
 @login_required
@@ -64,8 +60,8 @@ def openStore(request,store_name):
 
   resp.update({
     'ok' : True,
-    'kafkaHost' : kafkaHost,
-    'kafkaPort' : kafkaPort,
+    'kafkaHost' : settings.KAFKA_HOST,
+    'kafkaPort' : settings.KAFKA_PORT,
   })
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
@@ -109,8 +105,8 @@ def newStore(request,store_name):
   resp = store.to_map(True)
   resp.update({
     'ok' : True,
-    'kafkaHost' : kafkaHost,
-    'kafkaPort' : kafkaPort,
+    'kafkaHost' : settings.KAFKA_HOST,
+    'kafkaPort' : settings.KAFKA_PORT,
   })
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
@@ -521,7 +517,7 @@ def addDocs(request,store_name):
         str = json.dumps(doc).encode('utf-8')
         messages.append(str)
       if messages:
-        kafkaProducer.send(messages, store.unique_name.encode('utf-8'))
+        kafka_send(messages, store.unique_name.encode('utf-8'))
       resp = {'ok':True,'numPosted':len(messages)}
       return HttpResponse(json.dumps(resp))
     except ValueError:
@@ -577,7 +573,7 @@ def updateDoc(request,store_name):
       for k,v in jsonDoc.items():
         existingDoc[k]=v
       
-      kafkaProducer.send([json.dumps(existingDoc).encode('utf-8')], store.unique_name.encode('utf-8'))
+      kafka_send([json.dumps(existingDoc).encode('utf-8')], store.unique_name.encode('utf-8'))
       resp = {'ok': True,'numPosted':1}
       return HttpResponse(json.dumps(resp))
   except ValueError:
@@ -658,8 +654,8 @@ def do_start_store(request, store, config_id=None, restart=False, node=None, wit
          'store'              : store,
          'index'              : index,
          'webapp'             : webapp,
-         'kafka_host'         : kafkaHost,
-         'kafka_port'         : kafkaPort,
+         'kafka_host'         : settings.KAFKA_HOST,
+         'kafka_port'         : settings.KAFKA_PORT,
          'zookeeper_url'      : settings.ZOOKEEPER_URL,
         })
 
@@ -827,7 +823,7 @@ def delDocs(request, store_name):
     for id in ids:
       delDoc = {'id':id,'isDeleted':True}
       delObjs.append(json.dumps(delDoc).encode('utf-8'))
-    kafkaProducer.send(delObjs,store.unique_name.encode('utf-8'))
+    kafka_send(delObjs,store.unique_name.encode('utf-8'))
     resp = {'ok': True,'numDeleted':len(delObjs)}
     return HttpResponse(json.dumps(resp))
   except Exception as e:

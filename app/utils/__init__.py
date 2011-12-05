@@ -1,4 +1,6 @@
-import commands, base64, hashlib, random, re, socket, time
+import commands, base64, hashlib, kafka, random, re, socket, time
+
+from django.conf import settings
 
 def totimestamp(dt):
   return time.mktime(dt.timetuple()) + dt.microsecond/1e6
@@ -32,3 +34,12 @@ def is_current_host(host, me=None):
     return True
   else:
     return False
+
+kafka_producer = None
+def kafka_send(*args, **kwargs):
+  global kafka_producer
+  if kafka_producer is None:
+    kafka_producer = kafka.KafkaProducer(settings.KAFKA_HOST, int(settings.KAFKA_PORT))
+
+  kafka_producer.send(*args, **kwargs)
+

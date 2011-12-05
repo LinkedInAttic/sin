@@ -46,7 +46,7 @@ class KafkaProducer:
         self.port = port
         self.connect()
 
-    def connect(self, retry=0):
+    def connect(self, retry = 0):
         self.connection = socket.socket()
         while retry >= 0:
             try:
@@ -66,7 +66,7 @@ class KafkaProducer:
         except socket.error, msg:
             if msg.errno == errno.EPIPE:
                 # disconnected, reconnecting...
-                self.connect(retry=3)
+                self.connect(retry = 3)
                 self.send(messages, topic, partition)
     
 if __name__ == '__main__':

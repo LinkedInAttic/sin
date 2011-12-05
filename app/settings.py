@@ -45,7 +45,7 @@ SIN_NODES = {
 
 KAFKA_HOST = 'localhost'
 
-KAFKA_PORT = '9092'
+KAFKA_PORT = 9092
 
 CACHES = {
   'default': {
