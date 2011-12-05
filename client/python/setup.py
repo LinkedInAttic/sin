@@ -12,7 +12,7 @@ setup(
     name               = 'sin-python',
     version            = '0.1',
     description        = 'This library implements a Sin client',
-    url                = 'https://github.com/wonlay/sin',
+    url                = 'https://github.com/senseidb/sin',
     packages           = find_packages(),
     install_requires   = ['sensei-python>=1.0'],
     dependency_links   = ['https://github.com/downloads/senseidb/sensei/sensei-python-1.0.tar.gz'],

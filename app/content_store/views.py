@@ -31,7 +31,7 @@ from cluster.models import Group, Node, Membership
 try:
   from sensei import SenseiClient, SenseiRequest, SenseiSelection
 except ImportError:
-  print "sensei-python is not installed. Please go to https://github.com/javasoze/sensei/downloads"
+  print "sensei-python is not installed. Please go to https://github.com/senseidb/sensei/downloads"
   print "download the latest sensei-python package, untar, cd into that directory, and run"
   print "sudo easy_install ./"
   sys.exit(1)

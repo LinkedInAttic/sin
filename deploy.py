@@ -30,7 +30,7 @@ class BaseDeployer(object):
     global global_pass
 
     self.host    = host
-    self.home    = home
+    self.home    = os.path.normpath(home)
     self.node_id = node_id
     self.login   = login
     self.server  = server
@@ -334,7 +334,7 @@ class BaseDeployer(object):
     tmpfile = '%s.tar.gz' % name
     tmpfile_local = os.path.expanduser('~/local-%s' % tmpfile)
     if not os.path.exists(tmpfile_local):
-      urllib.urlretrieve('https://github.com/downloads/javasoze/sensei/sensei-'
+      urllib.urlretrieve('https://github.com/downloads/senseidb/sensei/sensei-'
                          'python-%s.tar.gz' % version, tmpfile_local)
 
     try: self.sftp.remove(tmpfile)
@@ -431,6 +431,9 @@ class BaseDeployer(object):
 
     print self.command('mkdir -p %s' % os.path.join(self.home, 'log/sin_server'))
     print self.command('mkdir -p %s' % os.path.join(self.home, 'log/sin_agent'))
+    # remove old version:
+    print self.command("\\ls %(home)s | \\grep -v 'log' | \\awk '{print \"%(home)s/\"$0}' | \\xargs \\rm -Rf")
+
     print self.command('tar -C %s -xzf %s' % (self.home, tmpfile))
 
     print self.command('\\cp -f %s %s' % (tmp_sin_server, os.path.join(self.home, sin_server_src)))
