@@ -303,8 +303,6 @@ class SinClient:
     #storeConfig = jsonObj.get('config')
     #storeCreated = jsonObj['created']
     #storeStatus = jsonObj['status']
-    #kafkaHost = jsonObj['kafkaHost']
-    #kafkaPort = jsonObj['kafkaPort']
     #description = jsonObj.get('description',None)
     #status = jsonObj['status_display']
     

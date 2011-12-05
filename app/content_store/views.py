@@ -60,8 +60,6 @@ def openStore(request,store_name):
 
   resp.update({
     'ok' : True,
-    'kafkaHost' : settings.KAFKA_HOST,
-    'kafkaPort' : settings.KAFKA_PORT,
   })
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
@@ -105,8 +103,6 @@ def newStore(request,store_name):
   resp = store.to_map(True)
   resp.update({
     'ok' : True,
-    'kafkaHost' : settings.KAFKA_HOST,
-    'kafkaPort' : settings.KAFKA_PORT,
   })
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
 
