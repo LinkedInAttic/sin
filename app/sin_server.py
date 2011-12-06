@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, sys, logging, signal
+import os, sys, logging, signal, traceback
 
 SIN_HOME = os.path.normpath(os.path.join(os.path.normpath(__file__), '../..'))
 
@@ -56,11 +56,16 @@ class Root(resource.Resource):
 
 pool = threadpool.ThreadPool(minthreads=settings.SIN_MIN_THREAD, maxthreads=settings.SIN_MAX_THREAD)
 
-def handle_signal(signum,stackframe):
+def handle_signal(signum, stackframe):
   if signum in [signal.SIGINT, signal.SIGTERM]:
     ### Cleanup ###
     pool.stop()
     reactor.stop()
+  elif signum in [signal.SIGUSR1, signal.SIGUSR2]:
+    print 'Signal received.\nTraceback:\n' + ''.join(traceback.format_stack(stackframe))
+    if signum == signal.SIGUSR2:
+      import pdb
+      pdb.set_trace()
 
 class SinClusterListener(object):
 
@@ -88,8 +93,10 @@ class SinClusterListener(object):
           db_node.online = False
           db_node.save()
 
-signal.signal(signal.SIGHUP, handle_signal)
-signal.signal(signal.SIGINT, handle_signal)
+signal.signal(signal.SIGHUP,  handle_signal)
+signal.signal(signal.SIGUSR1, handle_signal)
+signal.signal(signal.SIGUSR2, handle_signal)
+signal.signal(signal.SIGINT,  handle_signal)
 signal.signal(signal.SIGTERM, handle_signal)
 
 def main(argv):
