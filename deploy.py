@@ -424,15 +424,16 @@ class BaseDeployer(object):
       group = m.group('group')
 
     if self.upgrade:
-      self.autostart('sin_server', off)
-      self.autostart('sin_agent', off)
+      self.autostart('sin_server', on=False)
+      self.autostart('sin_agent', on=False)
       print self.command('%s stop' % sin_server)
       print self.command('%s stop' % sin_agent)
 
     print self.command('mkdir -p %s' % os.path.join(self.home, 'log/sin_server'))
     print self.command('mkdir -p %s' % os.path.join(self.home, 'log/sin_agent'))
     # remove old version:
-    print self.command("\\ls %(home)s | \\grep -v 'log' | \\awk '{print \"%(home)s/\"$0}' | \\xargs \\rm -Rf")
+    print self.command("\\ls %(home)s | \\grep -v 'log' | \\grep -v 'admin' | "
+                       "\\awk '{print \"%(home)s/\"$0}' | \\xargs \\rm -Rf" % {'home': self.home})
 
     print self.command('tar -C %s -xzf %s' % (self.home, tmpfile))
 
