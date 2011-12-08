@@ -65,7 +65,7 @@ start() {
   ulimit -s 10240
   ulimit -c unlimited
   echo -n $"Starting $prog: "
-  nohup su $USER -c $"python $HOME/app/agent/sin_agent.py $NODE_ID </dev/null 2>&1 | /usr/sbin/cronolog $HOME/log/sin_agent/sin_agent.%Y%m%d.log </dev/null 2>&1" </dev/null >/dev/null 2>&1 &
+  nohup su $USER -c $"python $HOME/app/agent/sin_agent.py $NODE_ID </dev/null 2>&1 | /usr/sbin/cronolog $HOME/log/sin_agent/sin_agent.%Y%m%d.log 2>&1" </dev/null >/dev/null 2>&1 &
   RETVAL=$?
   [ $RETVAL -eq 0 ] && echo_success
   [ $RETVAL -ne 0 ] && echo_failure

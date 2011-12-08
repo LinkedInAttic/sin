@@ -429,8 +429,8 @@ class BaseDeployer(object):
       print self.command('%s stop' % sin_server)
       print self.command('%s stop' % sin_agent)
 
-    print self.command('mkdir -p %s' % os.path.join(self.home, 'log/sin_server'))
-    print self.command('mkdir -p %s' % os.path.join(self.home, 'log/sin_agent'))
+    print self.command('su %s -c "mkdir -p %s"' % (self.user, os.path.join(self.home, 'log/sin_server')))
+    print self.command('su %s -c "mkdir -p %s"' % (self.user, os.path.join(self.home, 'log/sin_agent')))
     # remove old version:
     print self.command("\\ls %(home)s | \\grep -v 'log' | \\grep -v 'admin' | "
                        "\\awk '{print \"%(home)s/\"$0}' | \\xargs \\rm -Rf" % {'home': self.home})
