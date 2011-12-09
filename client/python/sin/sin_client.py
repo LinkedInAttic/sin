@@ -136,7 +136,7 @@ class Sindex:
     if res.numHits > 0:
       if res.hits and len(res.hits) > 0:
         hit = res.hits[0]
-        doc = hit.srcData
+        doc = hit.get('srcdata')
     if doc:
       return doc
     else:
