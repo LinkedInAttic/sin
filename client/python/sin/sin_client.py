@@ -126,11 +126,11 @@ class Sindex:
       return None
 
     req = SenseiRequest()
-    sel = SenseiSelection("uid")
+    sel = SenseiSelection("_uid")
     sel.addSelection(str(id))
     req.count = 1
     req.fetch_stored = True
-    req.selections = [sel]
+    req.selections['_uid'] = sel
     res = self.senseiClient.doQuery(req)
     doc = None
     if res.numHits > 0:

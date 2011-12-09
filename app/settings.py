@@ -183,7 +183,7 @@ LOGGING = {
       'formatter': 'verbose'
       },
     'mail_admins': {
-      'level': 'ERROR',
+      'level': 'CRITICAL',
       'class': 'django.utils.log.AdminEmailHandler'
       }
     },

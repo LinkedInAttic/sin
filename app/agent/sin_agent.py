@@ -467,6 +467,8 @@ def handle_signal(signum, stackframe):
             p.kill()
         break
       time.sleep(0.1)
+    if cluster_client:
+      cluster_client.shutdown()
 
 signal.signal(signal.SIGHUP, handle_signal)
 signal.signal(signal.SIGINT, handle_signal)

@@ -37,6 +37,8 @@ except ImportError:
   sys.exit(1)
 
 validators = {}
+samples_lock = threading.Lock()
+samples = {}
 
 @login_required
 def storeExists(request,store_name):
@@ -512,8 +514,20 @@ def addDocs(request,store_name):
           return HttpResponseBadRequest(json.dumps(resp))
         str = json.dumps(doc).encode('utf-8')
         messages.append(str)
+
       if messages:
         kafka_send(messages, store.unique_name.encode('utf-8'))
+        with samples_lock:
+          my_samples = samples.get(store_name)
+          if my_samples is None:
+            my_samples = []
+            samples[store_name] = my_samples
+
+          if len(my_samples) < 2:
+            uid = jsonDocs[-1].get('id')
+            if uid is not None:
+              my_samples.append(uid)
+
       resp = {'ok':True,'numPosted':len(messages)}
       return HttpResponse(json.dumps(resp))
     except ValueError:
@@ -560,7 +574,7 @@ def updateDoc(request,store_name):
         return HttpResponseBadRequest(json.dumps(resp))
 
       uid = long(jsonDoc['id'])
-      existingDoc = findDoc(store,uid)
+      existingDoc = find_doc(store,uid)
 
       if not existingDoc:
         resp = {'ok':False,'error':'doc: %d does not exist' % uid}
@@ -762,22 +776,22 @@ def getSize(request,store_name):
   resp = {'store':store_name,"size":res.totalDocs}
   return HttpResponse(json.dumps(resp))
 
-def findDoc(store,id):
+def find_doc(store,id):
   senseiHost = store.broker_host
   senseiPort = store.broker_port
   senseiClient = SenseiClient(senseiHost,senseiPort)
   req = SenseiRequest()
-  sel = SenseiSelection("uid")
+  sel = SenseiSelection("_uid")
   sel.addSelection(str(id))
   req.count = 1
-  req.fetch = True
-  req.selections = [sel]
+  req.fetch_stored = True
+  req.selections['_uid'] = sel
   res = senseiClient.doQuery(req)
   doc = None
   if res.numHits > 0:
     if res.hits and len(res.hits) > 0:
       hit = res.hits[0]
-      doc = hit.srcData
+      doc = hit.get('srcdata')
   return doc
 
 @api_key_required
@@ -788,7 +802,7 @@ def getDoc(request,store_name,id):
     return HttpResponseBadRequest(json.dumps(resp))
   try:
     store = ContentStore.objects.get(name=store_name)
-    doc = findDoc(store,uid)
+    doc = find_doc(store,uid)
     resp = {'store':store_name,"uid":uid,"doc":doc}
     return HttpResponse(json.dumps(resp))
   except ContentStore.DoesNotExist:

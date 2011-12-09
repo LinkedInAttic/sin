@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, sys, logging, signal, traceback
+import os, sys, logging, signal, time, traceback
 
 SIN_HOME = os.path.normpath(os.path.join(os.path.normpath(__file__), '../..'))
 
@@ -27,7 +27,7 @@ from sincc import SinClusterClient
 from utils import enum
 
 from content_store.models import ContentStore 
-from content_store.views import do_start_store
+from content_store.views import do_start_store, find_doc, samples, samples_lock
 from cluster.models import Group, Node
 from sin_site.models import SinSite
 
@@ -56,11 +56,56 @@ class Root(resource.Resource):
 
 pool = threadpool.ThreadPool(minthreads=settings.SIN_MIN_THREAD, maxthreads=settings.SIN_MAX_THREAD)
 
+monitor_running = True
+def monitoring():
+  first_try = {}
+
+  while monitor_running:
+    with samples_lock:
+      items = list(samples.items())
+
+    for name, my_samples in items:
+      with samples_lock:
+        ids = list(my_samples)
+      if ids:
+        try:
+          store = ContentStore.objects.get(name=name)
+          doc = find_doc(store, ids[0])
+          if doc:
+            with samples_lock:
+              my_samples.pop(0)
+            try:
+              del first_try[name]
+            except: pass
+          else:
+            begin = first_try.get(name)
+            if begin:
+              if time.time() - begin > 30:
+                # Timeout
+                logger.critical("Problems with store %s, indexing delay is more than 30 seconds with UID %s" % (name, ids[0]))
+                with samples_lock:
+                  my_samples.pop(0)
+                del first_try[name]
+            else:
+              first_try[name] = time.time()
+        except Exception as e:
+          logger.exception(e)
+
+    time.sleep(5)
+
+cluster_client = None
+
 def handle_signal(signum, stackframe):
   if signum in [signal.SIGINT, signal.SIGTERM]:
     ### Cleanup ###
     pool.stop()
     reactor.stop()
+
+    global monitor_running
+    monitor_running = False
+
+    if cluster_client:
+      cluster_client.shutdown()
   elif signum in [signal.SIGUSR1, signal.SIGUSR2]:
     print 'Signal received.\nTraceback:\n' + ''.join(traceback.format_stack(stackframe))
     if signum == signal.SIGUSR2:
@@ -116,13 +161,14 @@ def main(argv):
   initialize()
 
   zookeeper.set_log_stream(open("/dev/null"))
-  cc = SinClusterClient(settings.SIN_SERVICE_NAME, settings.ZOOKEEPER_URL, settings.ZOOKEEPER_TIMEOUT)
-  cc.logger.setLevel(logging.INFO)
-  cc.logger.addHandler(logging.StreamHandler())
-  cc.add_listener(SinClusterListener())
+  global cluster_client
+  cluster_client = SinClusterClient(settings.SIN_SERVICE_NAME, settings.ZOOKEEPER_URL, settings.ZOOKEEPER_TIMEOUT)
+  cluster_client.logger.setLevel(logging.INFO)
+  cluster_client.logger.addHandler(logging.StreamHandler())
+  cluster_client.add_listener(SinClusterListener())
 
   if options.force or options.reset:
-    cc.reset()
+    cluster_client.reset()
     Node.objects.all().delete()
     logger.info("Removed all registered nodes from the system.")
     logger.info("You may want to shut down all the agents.")
@@ -133,7 +179,7 @@ def main(argv):
     if not Node.objects.filter(id=node["node_id"]).exists():
       Node.objects.create(id=node["node_id"], host=node["host"], agent_port=node["port"],
                           online=False, group=Group(pk=1))
-    cc.register_node(node["node_id"], node["host"], port=node["port"])
+    cluster_client.register_node(node["node_id"], node["host"], port=node["port"])
 
   if options.init:
     return
@@ -158,9 +204,11 @@ def main(argv):
   pool.start()
 
   def post_initialization():
-    cc.notify_all()
+    cluster_client.notify_all()
 
   reactor.callInThread(post_initialization)
+
+  reactor.callInThread(monitoring)
 
   reactor.run(installSignalHandlers=False)
 
