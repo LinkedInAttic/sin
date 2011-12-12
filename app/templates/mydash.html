@@ -363,7 +363,7 @@
       </div>
     </script>
     <script id="store-config-tmpl" type="text/x-mustache-tmpl">
-      <form action="/store/test/import-config/" method="post" enctype="multipart/form-data">
+      <form action="/store/{% templatetag openvariable %} store.attributes.name {% templatetag closevariable %}/import-config/" method="post" enctype="multipart/form-data">
         <input class="btn config_file" name="config_file" type="file" /> <input class="btn primary import" type="submit" value="Import" />
       </form>
       <div class="item-container">

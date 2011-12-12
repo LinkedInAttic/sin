@@ -4391,7 +4391,7 @@ $(function() {
     render: function() {
       var me = this;
       if (!this.options.rendered) {
-        $(this.el).html($.mustache(this.template, {}));
+        $(this.el).html($.mustache(this.template, {store: me.options.store}));
         this.options.rendered = true;
       }
       
