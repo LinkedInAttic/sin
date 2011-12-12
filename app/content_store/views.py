@@ -628,7 +628,6 @@ def addDocs(request,store_name):
         messages.append(str)
 
       if messages:
-        kafka_send(messages, store.unique_name.encode('utf-8'))
         with samples_lock:
           my_samples = samples.get(store_name)
           if my_samples is None:
@@ -639,6 +638,7 @@ def addDocs(request,store_name):
             uid = jsonDocs[-1].get('id')
             if uid is not None:
               my_samples.append(uid)
+        kafka_send(messages, store.unique_name.encode('utf-8'))
 
       resp = {'ok':True,'numPosted':len(messages)}
       return HttpResponse(json.dumps(resp))
