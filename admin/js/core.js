@@ -4373,10 +4373,19 @@ $(function() {
     template: $('#store-config-tmpl').html(),
 
     events: {
+      'submit form': 'importConfig'
     },
 
     initialize: function() {
-      _.bindAll(this, 'render');
+      _.bindAll(this, 'render', 'importConfig');
+    },
+
+    importConfig: function() {
+      var me = this;
+      if (!me.$('.config_file').val()) {
+        alert("Please select a config file to import.");
+        return false;
+      }
     },
 
     render: function() {
@@ -4390,6 +4399,7 @@ $(function() {
 
       this.collection.each(function(item) {
         if (!item.view) {
+          item.set({'store': me.options.store});
           var view = new StoreConfigItemView({
             model: item
           });

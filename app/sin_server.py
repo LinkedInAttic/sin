@@ -91,7 +91,9 @@ def monitoring():
         except Exception as e:
           logger.exception(e)
 
-    time.sleep(5)
+    c = 0
+    while monitor_running and c < 50:
+      time.sleep(.1)
 
 cluster_client = None
 

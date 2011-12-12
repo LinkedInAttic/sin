@@ -239,6 +239,7 @@
           <li><a href="javascript:_void()" class="vm_args">VM Args</a></li>
           <li><a href="javascript:_void()" class="activate">Activate</a></li>
           <li><a href="javascript:_void()" class="delete">Delete</a></li>
+          <li><a href="/store/{% templatetag openvariable %} store.attributes.name {% templatetag closevariable %}/export-config/{% templatetag openvariable %} id {% templatetag closevariable %}/{% templatetag openvariable %} store.attributes.name {% templatetag closevariable %}.tar.gz" class="export">Export</a></li>
         </ul>
 		<div class="table-row store-row store-table" style="height: 20px;">
 	        <div class="cell">Name</div>
@@ -362,6 +363,9 @@
       </div>
     </script>
     <script id="store-config-tmpl" type="text/x-mustache-tmpl">
+      <form action="/store/test/import-config/" method="post" enctype="multipart/form-data">
+        <input class="btn config_file" name="config_file" type="file" /> <input class="btn primary import" type="submit" value="Import" />
+      </form>
       <div class="item-container">
       </div>
       <div>

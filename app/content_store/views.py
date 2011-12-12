@@ -1,4 +1,4 @@
-import logging, random, re, os, subprocess, json, shutil, sys, urllib, urllib2, datetime, threading
+import logging, random, re, os, subprocess, json, shutil, sys, urllib, urllib2, uuid, datetime, tempfile, threading
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -8,8 +8,9 @@ from django.db import connection
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.sites.models import Site
+from django.core.files import File as DJFile
 from django.core.serializers.json import DateTimeAwareJSONEncoder
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.template import loader, Context
 from django.http import HttpResponseBadRequest
 from django.http import HttpResponseNotFound
@@ -19,6 +20,7 @@ from django.http import HttpResponseServerError
 
 from twisted.internet import task, reactor
 
+from http import HttpResponseFile
 from decorators import login_required, api_key_required
 from utils import enum, generate_api_key, get_local_pub_ip
 from utils import ClusterLayout
@@ -27,6 +29,7 @@ from utils import kafka_send, validator
 
 from content_store.models import ContentStore, StoreConfig
 from cluster.models import Group, Node, Membership
+from files.models import File
 
 try:
   from sensei import SenseiClient, SenseiRequest, SenseiSelection
@@ -468,16 +471,125 @@ def deleteConfig(request, store_name, config_id):
     config = StoreConfig.objects.filter(
       store=ContentStore.objects.filter(name=store_name, collaborators=request.user)).get(id=config_id)
   except StoreConfig.DoesNotExist:
-    resp['error'] = 'You do not own a config with the store name "%s" and config id "%s".' % (store_name, config_id)
+    resp['msg'] = 'You do not own a config with the store name "%s" and config id "%s".' % (store_name, config_id)
     return HttpResponse(json.dumps(resp))
 
-  if config.last_activated <= datetime.datetime.now():
-    resp['error'] = 'Active config cannot be deleted.'
+  if config.active:
+    resp['msg'] = 'Active config cannot be deleted.'
   else:
     config.delete()
     resp['ok'] = True
 
   return HttpResponse(json.dumps(resp, ensure_ascii=False, cls=DateTimeAwareJSONEncoder))
+
+@login_required
+def export_config(request, store_name, config_id, file_name):
+  resp = {
+    'ok': False,
+  }
+  try:
+    config = StoreConfig.objects.filter(
+      store=ContentStore.objects.filter(name=store_name, collaborators=request.user)).get(id=config_id)
+  except StoreConfig.DoesNotExist:
+    resp['error'] = 'You do not own a config with the store name "%s" and config id "%s".' % (store_name, config_id)
+    return HttpResponseNotFound(json.dumps(resp))
+
+  obj = {
+    'vm_args':       config.vm_args,
+    'schema':        config.schema,
+    'properties':    config.properties,
+    'custom_facets': config.custom_facets,
+    'plugins':       config.plugins,
+  }
+
+  tmp_dir = tempfile.mkdtemp()
+  try:
+    config_dir = os.path.join(tmp_dir, 'sin')
+    os.makedirs(config_dir)
+    config_file = os.path.join(config_dir, 'config.json')
+    cf = open(config_file, 'w')
+    cf.write(json.dumps(obj))
+    cf.close()
+
+    extension_dir = os.path.join(config_dir, 'extensions')
+    os.makedirs(extension_dir)
+    for ext in config.extensions.all():
+      shutil.copy(ext.the_file.path, os.path.join(extension_dir, ext.name))
+
+    archive_file = os.path.join(tmp_dir, 'sin.tar.gz')
+    os.system('tar -C %s -czf %s sin' % (tmp_dir, archive_file))
+    # shutil.make_archive(archive_file, 'gztar', tmp_dir, 'sin')
+    class MyHttpResponseFile(HttpResponseFile):
+      def close(self):
+        shutil.rmtree(tmp_dir)
+        super(MyHttpResponseFile, self).close()
+    return MyHttpResponseFile(archive_file, 'application/octet-stream')
+  except Exception as e:
+    logging.exception(e)
+    shutil.rmtree(tmp_dir)
+
+  return HttpResponseServerError(json.dumps(resp))
+
+@login_required
+def import_config(request, store_name):
+  if request.FILES:
+    try:
+      store = request.user.my_stores.get(name=store_name)
+    except ContentStore.DoesNotExist:
+      return HttpResponseRedirect('/mydash')
+    f = request.FILES.values()[0]
+    tmp_dir = tempfile.mkdtemp()
+    try:
+      config_dir = os.path.join(tmp_dir, 'sin')
+      config_file = os.path.join(config_dir, 'config.json')
+      extension_dir = os.path.join(config_dir, 'extensions')
+      archive_file = os.path.join(tmp_dir, 'sin.tar.gz')
+      af = open(archive_file, 'w')
+      for chunk in f.chunks():
+        af.write(chunk)
+      af.close()
+      os.system('tar -C %s -xzf %s' % (tmp_dir, archive_file))
+      cf = open(config_file)
+      obj = cf.read()
+      cf.close()
+      obj = json.loads(obj)
+      config = store.configs.create()
+      vm_args = obj.get('vm_args')
+      if vm_args:
+        config.vm_args = vm_args
+      schema = obj.get('schema')
+      if schema:
+        config.schema = schema
+      properties = obj.get('properties')
+      if properties:
+        config.properties = properties
+      custom_facets = obj.get('custom_facets')
+      if custom_facets:
+        config.custom_facets = custom_facets
+      plugins = obj.get('plugins')
+      if plugins:
+        config.plugins = plugins
+
+      extensions = []
+      for root, dirs, files in os.walk(extension_dir):
+        for name in files:
+          fullname = os.path.join(root, name)
+          name_on_storage = '%s.%s' % (uuid.uuid1().hex, name)
+
+          f = DJFile(open(fullname))
+          new_file = File(name=name, path='', size=f.size)
+          new_file.the_file.save(name_on_storage, f)
+
+          extensions.append(new_file)
+
+      config.extensions = extensions
+      config.save()
+    except Exception as e:
+      logging.exception(e)
+    finally:
+      shutil.rmtree(tmp_dir)
+
+  return HttpResponseRedirect('/mydash')
 
 @api_key_required
 def addDocs(request,store_name):
