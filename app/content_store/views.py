@@ -182,7 +182,7 @@ def load_index(request, store_name):
   if not uri:
     return HttpResponse(json.dumps({
       'ok'    : False,
-      'msg'   : 'Your store is not running. Index loading works only for stores that are running.',
+      'msg'   : 'Index uri is required.',
     }))
 
   store.bootstrap_uri = uri
