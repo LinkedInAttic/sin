@@ -1132,10 +1132,11 @@ def setupCluster(store):
         parts.append(j * numPartsPerNode + k)
       if remainingParts > 0 and j < remainingParts:
         parts.append(store.partitions - remainingParts + j)
-      Membership.objects.create(node = nodes[node_index],
-                                store = store,
-                                replica = i,
-                                parts = parts)
+      if parts:
+        Membership.objects.create(node = nodes[node_index],
+                                  store = store,
+                                  replica = i,
+                                  parts = parts)
 
 def buildClusterSVG(store, stream, xml_header=True):
   """Given a store, generate the SVG for its cluster layout.
