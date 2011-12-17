@@ -136,7 +136,11 @@ class ContentStore(models.Model):
 
   def get_broker_host(self):
     if not self._broker_host_cache:
-      self._broker_host_cache = self.group.nodes.order_by('?')[0].host
+      members = list(self.members.order_by('?')[:1])
+      if members:
+        self._broker_host_cache = members[0].node.host
+      else:
+        self._broker_host_cache = self.group.nodes.order_by('?')[0].host
 
     return self._broker_host_cache
 
