@@ -454,8 +454,10 @@ class BaseDeployer(object):
         # syncdb:
         print self.command('su %s -c "python %s syncdb --noinput 2>&1"' % (self.user,
                                                                            os.path.join(self.home, 'app/manage.py')))
+        print self.command('su -')
         print self.command('su %s -c "python %s -i 2>&1"' % (self.user,
                                                              os.path.join(self.home, 'app/sin_server.py')))
+        print self.command('exit')
         print self.command('%s restart' % sin_server)
 
       self.autostart('sin_agent')
