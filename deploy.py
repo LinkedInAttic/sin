@@ -546,7 +546,41 @@ class DeployerDarwin_I386(BaseDeployer):
     super(DeployerDarwin_I386, self).__init__(*args, **kwargs)
 
   def autostart(self, service, on=True):
-    print "Warn: autostart not implemented."
+    sin_server = '/Library/LaunchDaemons/com.senseidb.sin_server.plist'
+    sin_agent = '/Library/LaunchDaemons/com.senseidb.sin_agent.plist'
+    if on:
+      tmp_sin_server = 'sin_server.plist'
+      tmp_sin_agent = 'sin_agent.plist'
+
+      sin_server_src = 'start_script/mac/sin_server.plist'
+      sin_agent_src = 'start_script/mac/sin_agent.plist'
+
+      # Install:
+      try: self.sftp.remove(tmp_sin_server)
+      except: pass
+      try: self.sftp.remove(tmp_sin_agent)
+      except: pass
+
+      self.sftp.put(sin_server_src, tmp_sin_server)
+      self.sftp.put(sin_agent_src, tmp_sin_agent)
+
+      print self.command('\\cp -f %s %s' % (tmp_sin_server, sin_server))
+      print self.command('\\cp -f %s %s' % (tmp_sin_agent, sin_agent))
+
+      print self.command('\\launchctl load -F %s' % sin_server)
+      print self.command('\\launchctl load -F %s' % sin_agent)
+
+      try: self.sftp.remove(tmp_sin_server)
+      except: pass
+      try: self.sftp.remove(tmp_sin_agent)
+      except: pass
+    else:
+      print self.command('\\launchctl unload -w %s' % sin_server)
+      print self.command('\\launchctl unload -w %s' % sin_agent)
+      try: self.sftp.remove(sin_server)
+      except: pass
+      try: self.sftp.remove(sin_agent)
+      except: pass
 
   def do_install_zkpython(self):
     print 'Installing zkpython...'
