@@ -73,7 +73,7 @@ start() {
 
 stop() {
   echo $"Stopping $prog: "
-  for pid in `ps ax -o  "%p %r %a" | \grep "[p]ython $HOME/app/sin_server.py" | awk '{print $1}'`; do
+  for pid in `ps ax -o  "pid pgid args" | \grep "[p]ython $HOME/app/sin_server.py" | awk '{print $1}'`; do
     echo -n $"Stopping $prog($pid): "
     kill $pid
     RETVAL=$?
@@ -81,7 +81,7 @@ stop() {
     while [ $c -gt 0 ]; do
       let c=$c-1
       flag=1
-      for p in `ps ax -o  "%p %r %a" | \grep -E $"$pid +[0-9]+ +"`; do
+      for p in `ps ax -o  "pid pgid args" | \grep -E $"$pid +[0-9]+ +"`; do
         flag=0
         break
       done

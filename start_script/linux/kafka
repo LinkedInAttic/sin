@@ -73,8 +73,8 @@ start() {
 
 stop() {
   echo $"Stopping $prog: "
-  for pgid in `ps ax -o  "%p %r %a" | \grep .[/]bin/kafka-server-start.sh | awk '{print $2}'`; do
-    for pid in `ps ax -o  "%p %r %a" | \grep -E $"[0-9]+ +$pgid +" | \grep java | awk '{print $1}'`; do
+  for pgid in `ps ax -o  "pid pgid args" | \grep .[/]bin/kafka-server-start.sh | awk '{print $2}'`; do
+    for pid in `ps ax -o  "pid pgid args" | \grep -E $"[0-9]+ +$pgid +" | \grep java | awk '{print $1}'`; do
       echo -n $"Stopping $prog($pid): "
       kill $pid
       RETVAL=$?
@@ -82,7 +82,7 @@ stop() {
       while [ $c -gt 0 ]; do
         let c=$c-1
         flag=1
-        for p in `ps ax -o  "%p %r %a" | \grep -E $"[0-9]+ +$pgid +"`; do
+        for p in `ps ax -o  "pid pgid args" | \grep -E $"[0-9]+ +$pgid +"`; do
           flag=0
           break
         done

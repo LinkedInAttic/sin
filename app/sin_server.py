@@ -178,9 +178,19 @@ def main(argv):
       return
 
   for node in settings.SIN_NODES["nodes"]:
-    if not Node.objects.filter(id=node["node_id"]).exists():
-      Node.objects.create(id=node["node_id"], host=node["host"], agent_port=node["port"],
-                          online=False, group=Group(pk=1))
+    n, created = Node.objects.get_or_create(id=node["node_id"], defaults={
+                                                                 "id": node["node_id"],
+                                                                 "host": node["host"],
+                                                                 "agent_port": node["port"],
+                                                                 "online": False,
+                                                                 "group": Group(pk=1),
+                                                                })
+    if not created:
+      if n.host != node["host"] or n.agent_port != node["port"]:
+        n.host = node["host"]
+        n.agent_port = node["port"]
+        n.save()
+        cluster_client.remove_node(node["node_id"])
     cluster_client.register_node(node["node_id"], node["host"], port=node["port"])
 
   if options.init:

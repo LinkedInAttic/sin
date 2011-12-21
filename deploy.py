@@ -445,6 +445,7 @@ class BaseDeployer(object):
       else:
         print self.command('chown -R %s %s' % (self.user, self.home))
 
+      print self.command('mkdir -p /etc/init.d')
       print self.command('\\cp -f %s %s' % (tmp_sin_server, sin_server))
       print self.command('\\cp -f %s %s' % (tmp_sin_agent, sin_agent))
 
@@ -539,11 +540,11 @@ class DeployerRHEL6_X86_64(BaseDeployer):
     print 'cronolog installed.'
 
 class DeployerDarwin_I386(BaseDeployer):
-  def autostart(self, service, on=True):
-    print "Warn: autostart not implemented."
-
   def __init__(self, *args, **kwargs):
     super(DeployerDarwin_I386, self).__init__(*args, **kwargs)
+
+  def autostart(self, service, on=True):
+    print "Warn: autostart not implemented."
 
   def do_install_zkpython(self):
     print 'Installing zkpython...'
