@@ -62,6 +62,9 @@ class BaseDeployer(object):
       self.sftp  = self.ssh.open_sftp()
       self.shell = self.ssh.invoke_shell()
 
+      # set PS1
+      self.shell.send('export PS1="deploy $ " 2>&1\n')
+
       # Read welcome message:
       self._read_data()
       print self.command('sudo -u %s sh' % 'root')
@@ -94,7 +97,7 @@ class BaseDeployer(object):
     global global_pass
     lines = re.split(r'[\r\n]+', data)
     promot = lines[-1]
-    if re.match(r'^\[sudo\] password for \w+: $', promot):
+    if re.match(r'(^\[sudo\] password for \w+: |Password:)$', promot):
       # Need password
       if self.pass_sent:
         if data:
@@ -454,10 +457,8 @@ class BaseDeployer(object):
         # syncdb:
         print self.command('su %s -c "python %s syncdb --noinput 2>&1"' % (self.user,
                                                                            os.path.join(self.home, 'app/manage.py')))
-        print self.command('su -')
         print self.command('su %s -c "python %s -i 2>&1"' % (self.user,
                                                              os.path.join(self.home, 'app/sin_server.py')))
-        print self.command('exit')
         print self.command('%s restart' % sin_server)
 
       self.autostart('sin_agent')
