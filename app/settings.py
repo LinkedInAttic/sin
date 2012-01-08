@@ -16,6 +16,8 @@ SIN_LISTEN     = 8666
 SIN_MIN_THREAD = 16
 SIN_MAX_THREAD = 512
 
+DISABLE_HOST_CHECK = False
+
 ADMINS = (
   # ('Your Name', 'your_email@example.com'),
 )
