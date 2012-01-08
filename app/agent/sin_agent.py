@@ -508,7 +508,7 @@ if __name__ == '__main__':
     host = None
     if options.host != "":
       host = options.host
-    if is_current_host(node.get_host(), host):
+    if settings.DISABLE_HOST_CHECK or is_current_host(node.get_host(), host):
       # Force this node to be offline first.  (In the case where
       # sin_agent is stopped and then immediately restarted, the
       # ephemeral node created in the last session may still be there
