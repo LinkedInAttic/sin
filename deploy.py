@@ -62,6 +62,8 @@ class BaseDeployer(object):
       self.sftp  = self.ssh.open_sftp()
       self.shell = self.ssh.invoke_shell()
 
+      # Start a new shell with ``sh'' (in case the user is using other shells like tcsh)
+      self.shell.send('sh\n')
       # set PS1
       self.shell.send('export PS1="deploy $ " 2>&1\n')
 
@@ -96,8 +98,8 @@ class BaseDeployer(object):
   def _check_sudo(self, data):
     global global_pass
     lines = re.split(r'[\r\n]+', data)
-    promot = lines[-1]
-    if re.match(r'(^\[sudo\] password for \w+: |Password:)$', promot):
+    prompt = lines[-1]
+    if re.match(r'(^\[sudo\] password for \w+: |Password:)$', prompt):
       # Need password
       if self.pass_sent:
         if data:
@@ -118,7 +120,7 @@ class BaseDeployer(object):
       self.shell.send('%s\n' % self.password)
     else:
       if self.pass_sent:
-        if re.match(r'^[#\$] $', promot[-2:]): # Looking for shell promot '$ ' or '# '.
+        if re.match(r'^[#\$] $', prompt[-2:]): # Looking for shell prompt '$ ' or '# '.
           if len(lines) > 1:
             if re.match(r'sudo: \d+ incorrect password attempts', lines[-2]):
               # Wrong password
@@ -130,7 +132,7 @@ class BaseDeployer(object):
 
   def _read_data(self):
     d = ''
-    while not re.match(r'^[#\$] $', d[-2:]):  # Looking for shell promot '$ ' or '# '.
+    while not re.match(r'^[#\$] $', d[-2:]):  # Looking for shell prompt '$ ' or '# '.
       while not self.shell.recv_ready():
         time.sleep(.1)
       d += self.shell.recv(8192)
