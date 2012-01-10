@@ -73,7 +73,7 @@ class ContentStoreManager(models.Manager):
 
 SUPPORTED_COLUMN_TYPES = set([
   'int', 'short', 'char', 'long', 'float', 'double', 'string', 'date', 'text'])
-SUPPORTED_FACET_TYPES = set(['simple', 'path', 'range', 'multi', 'compact-multi', 'custom'])
+SUPPORTED_FACET_TYPES = set(['simple', 'path', 'range', 'multi', 'compact-multi', 'custom', 'dynamicTimeRange'])
 
 class ContentStore(models.Model):
   _broker_host_cache = None
