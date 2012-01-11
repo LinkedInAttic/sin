@@ -3845,6 +3845,7 @@ $(function() {
       switch (this.$('.type').val()) {
         case 'path':
         case 'range':
+        case 'dynamicTimeRange':
           this.$('.params-container').show();
           break;
         default:
@@ -4132,6 +4133,7 @@ $(function() {
       switch(obj.type) {
         case 'path':
         case 'range':
+        case 'dynamicTimeRange':
           break;
         default:
           params = new ContentFacetParamCollection();
