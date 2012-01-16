@@ -63,7 +63,7 @@ start() {
   ulimit -c unlimited
   echo -n $"Starting $prog: "
   cd $HOME
-  nohup su $USER -c "./bin/zookeeper-server-start.sh ./config/zookeeper.properties </dev/null 2>&1 | /usr/sbin/cronolog ./log/zookeeper/zookeeper.%Y%m%d.log 2>&1" </dev/null >/dev/null 2>&1 &
+  nohup su $USER -c "./bin/zookeeper-server-start.sh ./config/zookeeper.properties </dev/null 2>&1 | cronolog ./log/zookeeper/zookeeper.%Y%m%d.log 2>&1" </dev/null >/dev/null 2>&1 &
   RETVAL=$?
   [ $RETVAL -eq 0 ] && echo_success
   [ $RETVAL -ne 0 ] && echo_failure
