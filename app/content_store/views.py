@@ -692,6 +692,8 @@ def updateDoc(request,store_name):
         resp = {'ok':False,'error':'doc: %d does not exist' % uid}
         return HttpResponseBadRequest(json.dumps(resp))
 
+      existingDoc = json.loads(existingDoc)
+
       for k,v in jsonDoc.items():
         existingDoc[k]=v
       
@@ -702,6 +704,7 @@ def updateDoc(request,store_name):
     resp = {'ok':False,'error':'invalid json: %s' % doc}
     return HttpResponseBadRequest(json.dumps(resp))
   except Exception as e:
+    logging.exception(e)
     resp = {'ok':False,'error':e.message}
   return HttpResponseServerError(json.dumps(resp))
 

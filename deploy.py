@@ -82,9 +82,13 @@ class BaseDeployer(object):
       elif 'i386' in data:
         deployer_class = DeployerDarwin_I386
     else:
-      print 'Platform not supported. You may have to install manually by'
-      print 'following: http://linkedin.jira.com/wiki/display/SIN/Developer+Setup'
-      sys.exit(1)
+      data = self.command('apt-get --version')
+      if 'command not found' in data:
+        print 'Platform not supported. You may have to install manually by'
+        print 'following: http://linkedin.jira.com/wiki/display/SIN/Developer+Setup'
+        sys.exit(1)
+      else:
+        deployer_class = DeployerWithApt
 
     return deployer_class(self.host,
                           self.home,
@@ -493,6 +497,44 @@ class BaseDeployer(object):
     self.install_pyparsing()
     self.install_pysensei()
     self.install_sin()
+
+class DeployerWithApt(BaseDeployer):
+  def __init__(self, *args, **kwargs):
+    super(DeployerWithApt, self).__init__(*args, **kwargs)
+
+  def autostart(self, service, on=True):
+    if on:
+      print self.command('update-rc.d %s defaults' % service)
+    else:
+      print self.command('update-rc.d -f %s remove' % service)
+
+  def do_install_zkpython(self):
+    print 'Installing zkpython...'
+    self.command('apt-get -y install python-zookeeper')
+    if not self.check_zkpython():
+      raise Exception("zkpython install failed!")
+    print 'zkpython installed.'
+
+  def do_install_setuptools(self):
+    print 'Installing setuptools...'
+    print self.command('apt-get -y install python-setuptools')
+    if not self.check_setuptools():
+      raise Exception("setuptools install failed!")
+    print 'setuptools installed.'
+
+  def do_install_twisted(self):
+    print 'Installing twisted...'
+    print self.command('apt-get -y install python-twisted')
+    if not self.check_twisted():
+      raise Exception("twisted install failed!")
+    print 'twisted installed.'
+
+  def do_install_cronolog(self):
+    print 'Installing cronolog...'
+    print self.command('apt-get -y install cronolog')
+    if not self.check_cronolog():
+      raise Exception("cronolog install failed!")
+    print 'cronolog installed.'
 
 class DeployerRHEL6_X86_64(BaseDeployer):
   def __init__(self, *args, **kwargs):
