@@ -255,7 +255,7 @@ def doStartStore(name, vm_args, sensei_port, broker_port,
     architecture = "-d%s" % platform.architecture()[0][:2]
 
     cmd = ["nohup", "java", "-server", architecture] + vm_args +["-classpath", classpath,
-           "-Dlog.home=%s" % logs, "com.sensei.search.nodes.SenseiServer", conf, "&"]
+           "-Dlog.home=%s" % logs, "com.senseidb.search.node.SenseiServer", conf, "&"]
     print ' '.join(cmd)
     p = subprocess.Popen(cmd, cwd=store_home, stdout=outFile, stderr=errFile)
     running[name] = p
